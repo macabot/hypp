@@ -109,6 +109,8 @@ type Effect[S State] struct {
 type Subscription[S State] struct {
     Subscriber func(dispatch Dispatch, payload Payload) Unsubscribe
     Payload Payload
+    unsubscribe Unsubscribe
+    Disabled bool
 }
 
 type Unsubscribe func()

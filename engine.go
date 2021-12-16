@@ -64,8 +64,40 @@ func recycleNode(node Node) VNode {
     }
 }
 
+func shouldRestart(a, b Payload) bool {
+    return true // TODO implement
+}
+
 func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
-    return newSubs // TODO implement
+    var subs []Subscription[S]
+    for i := 0; i < len(oldSubs) || i < len(newSubs); i++ {
+        oldSub := oldSubs[i]
+        newSub := newSubs[i]
+        var sub Subscription[S]
+        if !newSub.Disabled {
+            if oldSub.Disabled || &newSub.Subscriber != &oldSub.Subscriber || shouldRestart(newSub.Payload, oldSub.Payload) {
+                if !oldSub.Disabled {
+                    oldSub.unsubscribe()
+                }
+                sub = Subscription[S]{
+                    Subscriber: newSub.Subscriber,
+                    Payload: newSub.Payload,
+                    unsubscribe: newSub.Subscriber(dispatch, newSub.Payload),
+                }
+            } else {
+                sub = oldSub
+            }
+        } else {
+            if !oldSub.Disabled {
+                oldSub.unsubscribe()
+            }
+            sub = Subscription[S]{
+                Disabled: true,
+            }
+        }
+        subs = append(subs, sub)
+    }
+    return subs
 }
 
 func enqueue(render func(), busy bool) {
