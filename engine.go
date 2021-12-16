@@ -2,6 +2,7 @@
 package hypp
 
 import (
+    "fmt"
     "strings"
 )
 
@@ -65,7 +66,7 @@ func recycleNode(node Node) VNode {
 }
 
 func shouldRestart(a, b Payload) bool {
-    return true // TODO implement
+    return a !== b // TODO implement
 }
 
 func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
@@ -104,17 +105,327 @@ func enqueue(render func(), busy bool) {
     // TODO implement
 }
 
+func hPropsKeys(oldProps, newProps HProps) []string {
+    seen := map[string]struct{}{}
+    keys := make([]string, len(oldProps))
+    i := 0
+    for key := range oldProps {
+        seen[key] = struct{}{}
+        keys[i] = key
+        i++
+    }
+    for key := range newProps {
+        if _, ok := seen[key]; !ok {
+            seen[key] = struct{}{}
+            keys = append(keys, key)
+        }
+    }
+    return keys
+}
+
+type stringMap map[string]string
+
+func (s stringMap) Has(key string) bool {
+    if s == nil {
+        return false
+    }
+    _, ok := s[key]
+    return ok
+}
+
+type Listener func(VNode, Event) // TODO rename to EventListener
+
+type ElementCreationOptions struct {
+    is string
+}
+
+type Driver interface {
+    createTextNode(data string) Node
+    createElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
+    createElement(tagName string, options Option[ElementCreationOptions]) Node
+}
+
+var driver Driver // Must be initalized by Driver implementation.
+
+func patchProperty(node Node, key string, oldValue, newValue interface{}, listener Listener, isSvg bool) {
+    if (key == "key") {
+        // Do nothing
+    } else if key == "style" {
+        // TODO check if value is a map
+    } else if key[0] == 'o' && key[1] == 'n' {
+        key := key[2:]
+        node.events[key] = newValue
+        if newValue == nil {
+            node.removeEventListener(key, listener) // TODO add to Node interface
+        } else if oldValue == nil {
+            node.addEventListener(key, listener) // TODO add to Node interface
+        }
+    }
+}
+
+func createNode(vdom VNode, listener Listener, isSvg bool) Node {
+    props := vdom.props
+    var node Node
+    if vdom.kind == textNode {
+        node = driver.createTextNode(vdom.tag)
+    } else {
+        isSvg = isSvg || vdom.tag == "svg"
+        options := Option[ElementCreationOptions]{}
+        if props.has("is") {
+            options.V.is = fmt.Sprintf("%v", props.get("is"))
+            options.OK = true
+        }
+        if isSvg {
+            node = driver.createElementNS(svgNS, vdom.tag, options)
+        } else {
+            node = driver.createElement(vdom.tag, options)
+        }
+    }
+
+    for k := range props {
+        patchProperty(node, k, nil, props[k], listener, isSvg)
+    }
+
+    for i := 0; i < len(vdom.children); i++ {
+        vdom.children[i] = maybeVNode(vdom.children[i])
+        node.appendChild(
+            createNode(
+                vdom.children[i],
+                listener,
+                isSvg,
+            )
+        )
+    }
+    vdom.node = node
+    return node
+}
+
 func patch(
-    parentNode Node,
+    parent Node,
     node Node,
-    vdomOld VNode,
-    vdom VNode,
-    listener func(VNode, Event),
-    busy bool,
+    oldVNode VNode,
+    newVNode VNode,
+    listener Listener,
+    isSvg bool,
 ) Option[Node] {
-    return Option[Node]{
-        V: node, // TODO implement
-        OK: true,
+    if oldVNode == newVNode {
+        // Do nothing
+    } else if !oldVNode.isNil && oldVNode.kind == textNode && newVnode.kind == textNode {
+        if oldVNode.tag != newVNode.tag {
+            node.setNodeValue(newVNode.tag)
+        }
+    } else if oldVNode.isNil || oldVNode.tag != newVNode.tag {
+        newVNode = maybeVNode(newVNode)
+        node = parent.insertBefore(
+            createNode(newVNode, listener, isSvg),
+            node,
+        )
+        if !oldVNode.isNil {
+            parent.removeChild(oldVnode.node)
+        }
+    } else {
+        var tmpVKid string
+        var oldVKid string
+
+        var oldKey string
+        var newKey string
+
+        oldProps := oldVNode.props
+        newProps := newVNode.props
+
+        oldVKids := oldVNode.children
+        newVKids := newVNode.children
+
+        oldHead := 0
+        newHead := 0
+        oldTail := len(oldVKids) - 1
+        newTail := len(NewVKids) - 1
+
+        isSvg := isSvg || newVNode.tag == "svg"
+
+        allKeys := hPropsKeys(oldProps, newProps)
+        for _, i := range allKeys {
+            var cmpVal interface{}
+            if i == "value" || i == "selected" || i == "checked" {
+                if attribute := node.getAttribute(i); attribute.OK {
+                    cmpVal = attribute.V
+                }
+            } else {
+                cmpVal = oldProps.get(i)
+            }
+            if cmpVal != newProps.get(i) {
+                patchProperty(node, i, oldProps.get(i), newProps.get(i), listener, isSvg)
+            }
+        }
+
+        for newHead <= newTail && oldHead <= oldTail {
+            oldKey := getKey(oldVKids[oldHead])
+            if oldKey == nil || oldKey != getKey(newVKids[newHead]) {
+                break
+            }
+
+            newVKids[newHEad] = maybeVNode(
+                newVKids[newHead++],
+                oldVKids[oldHead++],
+            )
+            patch(
+                node,
+                oldVKids[oldHead].node,
+                oldVKids[oldHead],
+                newVKids[newHead],
+                listener,
+                isSvg,
+            )
+        }
+
+        for newHead <= newTail && oldHead <= oldTail {
+            oldKey = getKey(oldVKids[oldTail])
+            if oldKey == nil || oldKey != getKey(newVKids[newTail]) {
+                break
+            }
+            newVKids[newTail] = maybeVNode(
+                newVKids[newTail--],
+                oldVKids[oldTail--],
+            )
+            patch(
+                node,
+                oldVKids[oldTail].node,
+                oldVKids[oldTail],
+                newVKids[newTail],
+                listener
+                isSvg,
+            )
+        }
+
+        if oldHead > oldTail {
+            for newHead <= newTail {
+                newVKids[newHead] = maybeVnode(newVKids[newHead++])
+                oldVKid = oldVKids[oldHead]
+                node.insertBefore(
+                    createNode(
+                        newVKids[newHead],
+                        listener,
+                        isSvg,
+                    ),
+                    oldVKid.node,
+                )
+            }
+        } else if newHead > newTail {
+            for oldHead <= oldTail {
+                node.removeChild(oldVKids[oldHead++].node)
+            }
+        } else {
+            keyed := stringMap{}
+            newKeyed := stringMap{}
+            for i := oldHead; i <= oldTail; i++ {
+                oldKey = oldVKids[i].key
+                if oldKey != nil {
+                    keyed[oldKey] = oldVKids[i]
+                }
+            }
+
+            for newHead <= newTail {
+                oldVKid = oldVKids[oldHead]
+                oldKey = getKey(oldVKid)
+                newVKids[newHead] = maybeVNode(newVKids[newHead], oldVKid)
+                newKey = getKey(newVKids[newHead])
+
+                if newKeyed.has(oldKey) || newKey != nil && newKey == getKey(oldVKids[oldHead + 1]) {
+                    if oldKey == nil {
+                        node.removeChild(oldVKid.node)
+                    }
+                    oldHead++
+                    continue
+                }
+
+                if newKey == nil || oldVNode.kind == ssrNode {
+                    if oldKey == nil {
+                        patch(
+                            node,
+                            oldVKid && oldVKid.node,
+                            oldVKid,
+                            newVKids[newHEad],
+                            listener,
+                            isSvg,
+                        )
+                        newHead++
+                    }
+                    oldHead++
+                } else {
+                    if (oldKey == newKey) {
+                        patch(
+                            node,
+                            oldVKid.node,
+                            oldVKid,
+                            newVKids[newHead],
+                            listener,
+                            isSvg,
+                        )
+                        newKeyed[newKey] = true
+                        oldHead++
+                    } else {
+                        tmpVKid = keyed[newKey]
+                        if tmpVKid != nil {
+                            patch(
+                                node,
+                                node.insertBefore(tmpVKid.node, oldVKid && oldVKid.node),
+                                tmpVKid,
+                                newVKids[newHead],
+                                listener,
+                                isSvg,
+                            )
+                            newKeyed[newKey] = true
+                        } else {
+                            patch(
+                                node,
+                                oldVKid && oldVKid.node,
+                                nil,
+                                newVKids[newHead],
+                                listener,
+                                isSvg,
+                            )
+                        }
+                    }
+                    newHead++
+                }
+            }
+
+            for oldHead <= oldTail {
+                oldVKid = oldVKids[oldHead++]
+                if getKey(oldVKid) == nil {
+                    node.removeChild(oldVKid.node)
+                }
+            }
+
+            for i := range keyed {
+                if newKeyed[i] == nil {
+                    node.removeChild(keyed[i].node)
+                }
+            }
+        }
+    }
+
+    newVNode.node = node
+    return node
+}
+
+func propsChanged(a, b interface{}) bool {
+    return true // TODO implement
+}
+
+func maybeVNode(newVNode, oldVNode VNode) VNode {
+    if !newVNode.isNil {
+        if newVNode.memoView != nil {
+            if oldVNode.isNil || oldVNode.memo == nil || propsChanged(oldVNode.memo, newVNode.memo) {
+                oldVNode = newVNode.memoView(newVNode.memo)
+                oldVNode.memo = newVNode.memo
+            }
+            return oldVNode
+        } else {
+            return newVNode
+        }
+    } else {
+        return text("", nil)
     }
 }
 

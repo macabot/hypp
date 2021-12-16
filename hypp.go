@@ -27,6 +27,21 @@ func (h HProps) key() Option[string] {
     return Option[string]{}
 }
 
+func (h HProps) get(key string) interface{} {
+    if h == nil {
+        return nil
+    }
+    return h[key]
+}
+
+func (h HProps) has(key string) bool {
+    if h == nil {
+        return false
+    }
+    _, ok := h[key]
+    return ok
+}
+
 func H(tag string, props HProps, children...VNode) VNode {
     return VNode{}
 }
@@ -56,8 +71,13 @@ type Node interface {
     parentNode() Option[Node]
     nodeType() int
     nodeValue() string
+    setNodeValue(nodeValue string)
     nodeName() string
     childNodes() []Node
+    insertBefore(newNode, referenceNode Node) Node
+    removeChild(child Node)
+    getAttribute(name string) Option[string]
+    appendChild(child Node) Node
 }
 
 type Subscriptions[S State] func(state S) []Subscription[S]
@@ -130,4 +150,7 @@ type VNode struct {
     memoView func(data interface{}) VNode
     memo interface{} // Indexable
     kind int
+    isNil bool
 }
+
+var NilVNode = VNode{isNil: true}
