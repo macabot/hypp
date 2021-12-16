@@ -1,6 +1,10 @@
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.js
 package hypp
 
+import (
+    "strings"
+)
+
 var ssrNode = 1
 var textNode = 3
 var svgNS = "http://www.w3.org/2000/svg"
@@ -22,7 +26,7 @@ func memo(view func(data interface{}) VNode, data interface{}) VNode {
     }
 }
 
-func text(value string, node Option[Node]) VNode {
+func text(value string, node Node) VNode {
     return VNode{
         tag: value,
         kind: textNode,
@@ -42,8 +46,22 @@ func subscriptionsID[S State](state S) []Subscription[S] {
 
 func renderID() {}
 
-func recycleNode(node VNode) VNode {
-    return node // TODO implement
+func recycleNode(node Node) VNode {
+    if node.nodeType() == textNode {
+        return text(node.nodeValue(), node)
+    } else {
+        childNodes := node.childNodes()
+        children := make([]VNode, len(childNodes))
+        for i, childNode := range childNodes {
+            children[i] = recycleNode(childNode)
+        }
+        return VNode{
+            tag: strings.ToLower(node.nodeName()),
+            children: children,
+            kind: ssrNode,
+            node: node,
+        }
+    }
 }
 
 func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {

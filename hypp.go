@@ -54,6 +54,10 @@ func (_ Action[S]) iAmActionLike() {}
 
 type Node interface {
     parentNode() Option[Node]
+    nodeType() int
+    nodeValue() string
+    nodeName() string
+    childNodes() []Node
 }
 
 type Subscriptions[S State] func(state S) []Subscription[S]
@@ -117,7 +121,7 @@ type Option[T any] struct {
 type VNode struct {
     props HProps
     children []VNode
-    node Option[Node]
+    node Node // Can be nil
     events map[string]actionLike // Action[S] | ActionAndPayload[S]
     key Option[string]
     tag string
