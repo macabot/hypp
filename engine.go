@@ -36,7 +36,7 @@ func dispatchInitializerID(dispatch Dispatch) Dispatch {
 
 func dispatchID(dispatchable Dispatchable, payload Payload) {}
 
-func subscriptionsID[S any](state S) []Subscription[S] {
+func subscriptionsID[S State](state S) []Subscription[S] {
     return nil
 }
 
@@ -46,7 +46,7 @@ func recycleNode(node VNode) VNode {
     return node // TODO implement
 }
 
-func patchSubs[S any](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
+func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
     return newSubs // TODO implement
 }
 
@@ -85,7 +85,7 @@ func (a *AppProps[S]) init() {
     }
 }
 
-func update[S comparable](props *AppProps[S], newState S) {
+func update[S State](props *AppProps[S], newState S) {
     if (props.state != newState) {
         props.state = newState
         // if _, ok := props.state.(EmptyState); ok { // FIXME
@@ -103,50 +103,50 @@ func update[S comparable](props *AppProps[S], newState S) {
     }
 }
 
-func app[S any](props AppProps[S]) Dispatch {
-    props.init()
+func app[S State](appProps AppProps[S]) Dispatch {
+    appProps.init()
     var dispatch Dispatch
 
-    // props.vdom = props.Node.V // FIXME
-    // if props.Node.OK {
-    //     props.vdom = recycleNode(props.Node.V)
+    // appProps.vdom = appProps.Node.V // FIXME
+    // if appProps.Node.OK {
+    //     appProps.vdom = recycleNode(appProps.Node.V)
     // }
 
     listener := func(this VNode, event Event) {
-        // dispatch(this.events[event.kind], event) // FIXME
+        dispatch(this.events[event.kind], event)
     }
 
-    props.render = func() {
-        vdomOld := props.vdom
-        props.vdom = props.View(props.state)
-        props.busy = false
-        props.Node = patch(
-            props.Node.V.parentNode.V,
-            props.Node.V,
+    appProps.render = func() {
+        vdomOld := appProps.vdom
+        appProps.vdom = appProps.View(appProps.state)
+        appProps.busy = false
+        appProps.Node = patch(
+            appProps.Node.V.parentNode().V,
+            appProps.Node.V,
             vdomOld,
-            props.vdom,
+            appProps.vdom,
             listener,
-            props.busy,
+            appProps.busy,
         )
     }
 
     dispatch = func(dispatchable Dispatchable, props Payload) {
 		switch v := dispatchable.(type) {
 		case StateAndEffects[S]:
-			update(&props, v.State)
+			update[S](&appProps, v.State)
 			for _, effect := range v.Effects {
 				effect.Effecter(dispatch, effect.Payload)
 			}
-		case Action:
-			dispatch(v(props.state, props), nil)
-		case ActionAndPayload:
+		case Action[S]:
+			dispatch(v(appProps.state, props), nil)
+		case ActionAndPayload[S]:
 			dispatch(v.Action, v.Payload)
-		default: // State
-			update(&props, v)
+		case S: // State
+			update[S](&appProps, v)
 		}
 	}
-	dispatch = dispatchInit(dispatch)
-	// dispatch(init, nil) // FIXME
+	dispatch = appProps.DispatchInitializer(dispatch)
+	dispatch(appProps.Init, nil)
 
 	return dispatch
 }

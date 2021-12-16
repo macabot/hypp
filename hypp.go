@@ -6,7 +6,12 @@ import (
     "fmt"
 )
 
-func App[S any](props AppProps[S]) Dispatch {
+type State interface {
+    comparable
+    Dispatchable
+}
+
+func App[S State](props AppProps[S]) Dispatch {
     return func(dispatchable Dispatchable, payload Payload) {}
 }
 
@@ -36,19 +41,26 @@ func Text(value string) VNode {
 
 type Payload interface{}
 
-type Action[S any] func(state S, payload Payload) Dispatchable
+type actionLike interface {
+    Dispatchable
+    iAmActionLike()
+}
+
+type Action[S State] func(state S, payload Payload) Dispatchable
 
 func (_ Action[S]) IAmDispatchable() {}
 
-type Node struct{
-    parentNode Option[Node]
+func (_ Action[S]) iAmActionLike() {}
+
+type Node interface {
+    parentNode() Option[Node]
 }
 
-type Subscriptions[S any] func(state S) []Subscription[S]
+type Subscriptions[S State] func(state S) []Subscription[S]
 
 type Render func()
 
-type AppProps[S any] struct {
+type AppProps[S State] struct {
     Init Dispatchable
     Subscriptions Subscriptions[S]
     DispatchInitializer func(dispatch Dispatch) Dispatch
@@ -69,26 +81,28 @@ type Dispatchable interface {
     IAmDispatchable()
 }
 
-type StateAndEffects[S any] struct {
+type StateAndEffects[S State] struct {
     State S
-    Effect []Effect[S]
+    Effects []Effect[S]
 }
 
 func (_ StateAndEffects[S]) IAmDispatchable() {}
 
-type ActionAndPayload[S any] struct {
+type ActionAndPayload[S State] struct {
     Action Action[S]
     Payload Payload
 }
 
 func (_ ActionAndPayload[S]) IAmDispatchable() {}
 
-type Effect[S any] struct {
+func (_ ActionAndPayload[S]) iAmActionLike() {}
+
+type Effect[S State] struct {
     Effecter func(dispatch Dispatch, payload Payload)
     Payload Payload
 }
 
-type Subscription[S any] struct {
+type Subscription[S State] struct {
     Subscriber func(dispatch Dispatch, payload Payload) Unsubscribe
     Payload Payload
 }
@@ -104,7 +118,7 @@ type VNode struct {
     props HProps
     children []VNode
     node Option[Node]
-    events map[string]interface{} // Action[S] | ActionAndPayload[S, P]
+    events map[string]actionLike // Action[S] | ActionAndPayload[S]
     key Option[string]
     tag string
     memoView func(data interface{}) VNode
