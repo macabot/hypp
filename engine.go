@@ -85,20 +85,24 @@ func (a *AppProps[S]) init() {
     }
 }
 
-func update[S State](props *AppProps[S], newState S) {
-    if (props.state != newState) {
-        props.state = newState
-        // if _, ok := props.state.(EmptyState); ok { // FIXME
-        //     props.dispatch = dispatchID
-        //     props.subscriptions = subscriptionsID[S]
-        //     props.render = renderID
+func update[S State](appProps *AppProps[S], newState S) {
+    if (appProps.state != newState) {
+        appProps.state = newState
+        // if appProps.state == EmptyState{} { // FIXME
+        //     appProps.dispatch = dispatchID
+        //     appProps.subscriptions = subscriptionsID[S]
+        //     appProps.render = renderID
         // }
-        if props.Subscriptions != nil {
-            props.subs = patchSubs(props.subs, props.Subscriptions(props.state), props.dispatch)
+        if appProps.Subscriptions != nil {
+            appProps.subs = patchSubs(
+                appProps.subs,
+                appProps.Subscriptions(appProps.state),
+                appProps.dispatch,
+            )
         }
-        if props.View != nil && !props.busy {
-            props.busy = true
-            enqueue(props.render, props.busy)
+        if appProps.View != nil && !appProps.busy {
+            appProps.busy = true
+            enqueue(appProps.render, appProps.busy)
         }
     }
 }
