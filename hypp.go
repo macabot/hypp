@@ -1,4 +1,5 @@
 // +build go1.18
+
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
 package hypp
 
