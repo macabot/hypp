@@ -86,8 +86,15 @@ type Node interface {
     addEventListener(kind string, listener EventListener)
     removeAttribute(name string)
     setAttribute(name string, value interface{})
-    setEvent(name string, value interface{})
+    setEvent(name string, value interface{}) // TODO should these be replaced with an 'Events() Events' func?
     getEvent(name string) interface{}
+    style() Style
+}
+
+type Style interface {
+    setProperty(propertyName, value string)
+    set(name, value string)
+    get(name string) string
 }
 
 type Subscriptions[S State] func(state S) []Subscription[S]

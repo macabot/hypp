@@ -39,14 +39,6 @@ func dispatchInitializerID(dispatch Dispatch) Dispatch {
     return dispatch
 }
 
-func dispatchID(dispatchable Dispatchable, payload Payload) {}
-
-func subscriptionsID[S State](state S) []Subscription[S] {
-    return nil
-}
-
-func renderID() {}
-
 func recycleNode(node Node) VNode {
     if node.nodeType() == textNode {
         return text(node.nodeValue(), node)
@@ -101,10 +93,6 @@ func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) [
     return subs
 }
 
-func enqueue(render func(), busy bool) {
-    // TODO implement
-}
-
 func hPropsKeys(oldProps, newProps HProps) []string {
     seen := map[string]struct{}{}
     keys := make([]string, len(oldProps))
@@ -151,6 +139,24 @@ func (s Set[T]) Set(v T) {
     s[v] = struct{}{}
 }
 
+func stylePairKeys(a, b map[string]string) []string {
+    seen := map[string]struct{}{}
+    keys := make([]string, len(a))
+    i := 0
+    for key := range a {
+        seen[key] = struct{}{}
+        keys[i] = key
+        i++
+    }
+    for key := range b {
+        if _, ok := seen[key]; !ok {
+            seen[key] = struct{}{}
+            keys = append(keys, key)
+        }
+    }
+    return keys
+}
+
 type ElementCreationOptions struct {
     is string
 }
@@ -159,6 +165,7 @@ type Driver interface {
     createTextNode(data string) Node
     createElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
     createElement(tagName string, options Option[ElementCreationOptions]) Node
+    enqueue(render func(), busy bool)
 }
 
 // TODO instead of setting a global driver pass driver to App function.
@@ -187,7 +194,20 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
     if (key == "key") {
         // Do nothing
     } else if key == "style" {
-        // TODO check if value is a map
+        oldStyle, ok1 := oldValue.(map[string]string)
+        newStyle, ok2 := newValue.(map[string]string)
+        if ok1 && ok2 {
+            for _, k := range stylePairKeys(oldStyle, newStyle) {
+                v := newStyle[k]
+                if k[0] == '-' {
+                    node.style().setProperty(k, v)
+                } else {
+                    node.style().set(k, v)
+                }
+            }
+        } else {
+            node.set(key, newValue)
+        }
     } else if key[0] == 'o' && key[1] == 'n' {
         key := key[2:]
         node.setEvent(key, newValue)
@@ -505,11 +525,6 @@ func (a *AppProps[S]) init() {
 func update[S State](appProps *AppProps[S], newState S) {
     if (appProps.state != newState) {
         appProps.state = newState
-        // if appProps.state == EmptyState{} { // FIXME
-        //     appProps.dispatch = dispatchID
-        //     appProps.subscriptions = subscriptionsID[S]
-        //     appProps.render = renderID
-        // }
         if appProps.Subscriptions != nil {
             appProps.subs = patchSubs(
                 appProps.subs,
@@ -519,7 +534,7 @@ func update[S State](appProps *AppProps[S], newState S) {
         }
         if appProps.View != nil && !appProps.busy {
             appProps.busy = true
-            enqueue(appProps.render, appProps.busy)
+            driver.enqueue(appProps.render, appProps.busy)
         }
     }
 }
@@ -528,10 +543,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
     appProps.init()
     var dispatch Dispatch
 
-    // appProps.vdom = appProps.Node.V // FIXME
-    // if appProps.Node.OK {
-    //     appProps.vdom = recycleNode(appProps.Node.V)
-    // }
+    appProps.vdom = recycleNode(appProps.Node)
 
     listener := func(this VNode, event Event) {
         dispatch(this.events[event.kind], event)
