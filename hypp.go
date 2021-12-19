@@ -67,6 +67,8 @@ func (_ Action[S]) IAmDispatchable() {}
 
 func (_ Action[S]) iAmActionLike() {}
 
+type EventListener func(VNode, Event)
+
 type Node interface {
     parentNode() Option[Node]
     nodeType() int
@@ -76,8 +78,16 @@ type Node interface {
     childNodes() []Node
     insertBefore(newNode, referenceNode Node) Node
     removeChild(child Node)
-    getAttribute(name string) Option[string]
+    get(name string) interface{}
+    has(name string) bool
+    set(name string, value interface{})
     appendChild(child Node) Node
+    removeEventListener(kind string, listener EventListener)
+    addEventListener(kind string, listener EventListener)
+    removeAttribute(name string)
+    setAttribute(name string, value interface{})
+    setEvent(name string, value interface{})
+    getEvent(name string) interface{}
 }
 
 type Subscriptions[S State] func(state S) []Subscription[S]
@@ -89,7 +99,7 @@ type AppProps[S State] struct {
     Subscriptions Subscriptions[S]
     DispatchInitializer func(dispatch Dispatch) Dispatch
     View func(state S) VNode
-    Node Option[Node]
+    Node Node
 
     vdom VNode
     dispatch Dispatch

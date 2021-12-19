@@ -66,7 +66,7 @@ func recycleNode(node Node) VNode {
 }
 
 func shouldRestart(a, b Payload) bool {
-    return a !== b // TODO implement
+    return a != b // TODO implement
 }
 
 func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
@@ -123,9 +123,9 @@ func hPropsKeys(oldProps, newProps HProps) []string {
     return keys
 }
 
-type stringMap map[string]string
+type vNodeMap map[string]VNode
 
-func (s stringMap) Has(key string) bool {
+func (s vNodeMap) Has(key string) bool {
     if s == nil {
         return false
     }
@@ -133,7 +133,23 @@ func (s stringMap) Has(key string) bool {
     return ok
 }
 
-type Listener func(VNode, Event) // TODO rename to EventListener
+func (s vNodeMap) HasOption(key Option[string]) bool {
+    if !key.OK {
+        return false
+    }
+    return s.Has(key.V)
+}
+
+type Set[T comparable] map[T]struct{}
+
+func (s Set[T]) Has(v T) bool {
+    _, ok := s[v]
+    return ok
+}
+
+func (s Set[T]) Set(v T) {
+    s[v] = struct{}{}
+}
 
 type ElementCreationOptions struct {
     is string
@@ -145,25 +161,60 @@ type Driver interface {
     createElement(tagName string, options Option[ElementCreationOptions]) Node
 }
 
+// TODO instead of setting a global driver pass driver to App function.
 var driver Driver // Must be initalized by Driver implementation.
 
-func patchProperty(node Node, key string, oldValue, newValue interface{}, listener Listener, isSvg bool) {
+func createClass(obj interface{}) string {
+    var parts []string
+    switch v := obj.(type) {
+    case string:
+        return v
+    case []string:
+        parts = v
+    case map[string]bool:
+        for k, ok := range v {
+            if ok {
+                parts = append(parts, k)
+            }
+        }
+    default:
+        return fmt.Sprint(obj)
+    }
+    return strings.Join(parts, " ")
+}
+
+func patchProperty(node Node, key string, oldValue, newValue interface{}, listener EventListener, isSvg bool) {
     if (key == "key") {
         // Do nothing
     } else if key == "style" {
         // TODO check if value is a map
     } else if key[0] == 'o' && key[1] == 'n' {
         key := key[2:]
-        node.events[key] = newValue
+        node.setEvent(key, newValue)
         if newValue == nil {
-            node.removeEventListener(key, listener) // TODO add to Node interface
+            node.removeEventListener(key, listener)
         } else if oldValue == nil {
-            node.addEventListener(key, listener) // TODO add to Node interface
+            node.addEventListener(key, listener)
+        }
+    } else if !isSvg && key != "list" && key != "from" && node.has(key) {
+        if newValue == nil {
+            node.set(key, "")
+        } else {
+            node.set(key, newValue)
+        }
+    } else {
+        if newValue != nil && newValue != false && key == "class" {
+            newValue = createClass(newValue)
+        }
+        if newValue == nil || newValue == false {
+            node.removeAttribute(key)
+        } else {
+            node.setAttribute(key, newValue)
         }
     }
 }
 
-func createNode(vdom VNode, listener Listener, isSvg bool) Node {
+func createNode(vdom VNode, listener EventListener, isSvg bool) Node {
     props := vdom.props
     var node Node
     if vdom.kind == textNode {
@@ -172,7 +223,7 @@ func createNode(vdom VNode, listener Listener, isSvg bool) Node {
         isSvg = isSvg || vdom.tag == "svg"
         options := Option[ElementCreationOptions]{}
         if props.has("is") {
-            options.V.is = fmt.Sprintf("%v", props.get("is"))
+            options.V.is = fmt.Sprint(props.get("is"))
             options.OK = true
         }
         if isSvg {
@@ -187,13 +238,13 @@ func createNode(vdom VNode, listener Listener, isSvg bool) Node {
     }
 
     for i := 0; i < len(vdom.children); i++ {
-        vdom.children[i] = maybeVNode(vdom.children[i])
+        vdom.children[i] = maybeVNode(vdom.children[i], VNode{isNil: true})
         node.appendChild(
             createNode(
                 vdom.children[i],
                 listener,
                 isSvg,
-            )
+            ),
         )
     }
     vdom.node = node
@@ -205,30 +256,30 @@ func patch(
     node Node,
     oldVNode VNode,
     newVNode VNode,
-    listener Listener,
+    listener EventListener,
     isSvg bool,
-) Option[Node] {
-    if oldVNode == newVNode {
+) Node {
+    if &oldVNode == &newVNode {
         // Do nothing
-    } else if !oldVNode.isNil && oldVNode.kind == textNode && newVnode.kind == textNode {
+    } else if !oldVNode.isNil && oldVNode.kind == textNode && newVNode.kind == textNode {
         if oldVNode.tag != newVNode.tag {
             node.setNodeValue(newVNode.tag)
         }
     } else if oldVNode.isNil || oldVNode.tag != newVNode.tag {
-        newVNode = maybeVNode(newVNode)
+        newVNode = maybeVNode(newVNode, VNode{isNil: true})
         node = parent.insertBefore(
             createNode(newVNode, listener, isSvg),
             node,
         )
         if !oldVNode.isNil {
-            parent.removeChild(oldVnode.node)
+            parent.removeChild(oldVNode.node)
         }
     } else {
-        var tmpVKid string
-        var oldVKid string
+        var tmpVKid VNode
+        var oldVKid VNode
 
-        var oldKey string
-        var newKey string
+        var oldKey Option[string]
+        var newKey Option[string]
 
         oldProps := oldVNode.props
         newProps := newVNode.props
@@ -239,7 +290,7 @@ func patch(
         oldHead := 0
         newHead := 0
         oldTail := len(oldVKids) - 1
-        newTail := len(NewVKids) - 1
+        newTail := len(newVKids) - 1
 
         isSvg := isSvg || newVNode.tag == "svg"
 
@@ -247,9 +298,7 @@ func patch(
         for _, i := range allKeys {
             var cmpVal interface{}
             if i == "value" || i == "selected" || i == "checked" {
-                if attribute := node.getAttribute(i); attribute.OK {
-                    cmpVal = attribute.V
-                }
+                cmpVal = node.get(i)
             } else {
                 cmpVal = oldProps.get(i)
             }
@@ -259,15 +308,17 @@ func patch(
         }
 
         for newHead <= newTail && oldHead <= oldTail {
-            oldKey := getKey(oldVKids[oldHead])
-            if oldKey == nil || oldKey != getKey(newVKids[newHead]) {
+            oldKey := oldVKids[oldHead].key
+            if !oldKey.OK || oldKey != newVKids[newHead].key {
                 break
             }
 
-            newVKids[newHEad] = maybeVNode(
-                newVKids[newHead++],
-                oldVKids[oldHead++],
+            newVKids[newHead] = maybeVNode(
+                newVKids[newHead],
+                oldVKids[oldHead],
             )
+            newHead++
+            oldHead++
             patch(
                 node,
                 oldVKids[oldHead].node,
@@ -279,27 +330,30 @@ func patch(
         }
 
         for newHead <= newTail && oldHead <= oldTail {
-            oldKey = getKey(oldVKids[oldTail])
-            if oldKey == nil || oldKey != getKey(newVKids[newTail]) {
+            oldKey = oldVKids[oldTail].key
+            if !oldKey.OK || oldKey != newVKids[newTail].key {
                 break
             }
             newVKids[newTail] = maybeVNode(
-                newVKids[newTail--],
-                oldVKids[oldTail--],
+                newVKids[newTail],
+                oldVKids[oldTail],
             )
+            newTail--
+            oldTail--
             patch(
                 node,
                 oldVKids[oldTail].node,
                 oldVKids[oldTail],
                 newVKids[newTail],
-                listener
+                listener,
                 isSvg,
             )
         }
 
         if oldHead > oldTail {
             for newHead <= newTail {
-                newVKids[newHead] = maybeVnode(newVKids[newHead++])
+                newVKids[newHead] = maybeVNode(newVKids[newHead], VNode{isNil: true})
+                newHead++
                 oldVKid = oldVKids[oldHead]
                 node.insertBefore(
                     createNode(
@@ -312,47 +366,35 @@ func patch(
             }
         } else if newHead > newTail {
             for oldHead <= oldTail {
-                node.removeChild(oldVKids[oldHead++].node)
+                node.removeChild(oldVKids[oldHead].node)
+                oldHead++
             }
         } else {
-            keyed := stringMap{}
-            newKeyed := stringMap{}
+            keyed := vNodeMap{}
+            newKeyed := Set[string]{}
             for i := oldHead; i <= oldTail; i++ {
                 oldKey = oldVKids[i].key
-                if oldKey != nil {
-                    keyed[oldKey] = oldVKids[i]
+                if oldKey.OK {
+                    keyed[oldKey.V] = oldVKids[i]
                 }
             }
 
             for newHead <= newTail {
                 oldVKid = oldVKids[oldHead]
-                oldKey = getKey(oldVKid)
+                oldKey = oldVKid.key
                 newVKids[newHead] = maybeVNode(newVKids[newHead], oldVKid)
-                newKey = getKey(newVKids[newHead])
+                newKey = newVKids[newHead].key
 
-                if newKeyed.has(oldKey) || newKey != nil && newKey == getKey(oldVKids[oldHead + 1]) {
-                    if oldKey == nil {
+                if (oldKey.OK && newKeyed.Has(oldKey.V)) || newKey.OK && newKey == oldVKids[oldHead + 1].key {
+                    if !oldKey.OK {
                         node.removeChild(oldVKid.node)
                     }
                     oldHead++
                     continue
                 }
 
-                if newKey == nil || oldVNode.kind == ssrNode {
-                    if oldKey == nil {
-                        patch(
-                            node,
-                            oldVKid && oldVKid.node,
-                            oldVKid,
-                            newVKids[newHEad],
-                            listener,
-                            isSvg,
-                        )
-                        newHead++
-                    }
-                    oldHead++
-                } else {
-                    if (oldKey == newKey) {
+                if !newKey.OK || oldVNode.kind == ssrNode {
+                    if !oldKey.OK {
                         patch(
                             node,
                             oldVKid.node,
@@ -361,25 +403,38 @@ func patch(
                             listener,
                             isSvg,
                         )
-                        newKeyed[newKey] = true
+                        newHead++
+                    }
+                    oldHead++
+                } else {
+                    if oldKey == newKey {
+                        patch(
+                            node,
+                            oldVKid.node,
+                            oldVKid,
+                            newVKids[newHead],
+                            listener,
+                            isSvg,
+                        )
+                        newKeyed.Set(newKey.V)
                         oldHead++
                     } else {
-                        tmpVKid = keyed[newKey]
-                        if tmpVKid != nil {
+                        tmpVKid = keyed[newKey.V]
+                        if !tmpVKid.isNil {
                             patch(
                                 node,
-                                node.insertBefore(tmpVKid.node, oldVKid && oldVKid.node),
+                                node.insertBefore(tmpVKid.node, oldVKid.node),
                                 tmpVKid,
                                 newVKids[newHead],
                                 listener,
                                 isSvg,
                             )
-                            newKeyed[newKey] = true
+                            newKeyed.Set(newKey.V)
                         } else {
                             patch(
                                 node,
-                                oldVKid && oldVKid.node,
-                                nil,
+                                oldVKid.node,
+                                VNode{isNil: true},
                                 newVKids[newHead],
                                 listener,
                                 isSvg,
@@ -391,14 +446,15 @@ func patch(
             }
 
             for oldHead <= oldTail {
-                oldVKid = oldVKids[oldHead++]
-                if getKey(oldVKid) == nil {
+                oldVKid = oldVKids[oldHead]
+                oldHead++
+                if !oldVKid.key.OK {
                     node.removeChild(oldVKid.node)
                 }
             }
 
             for i := range keyed {
-                if newKeyed[i] == nil {
+                if !newKeyed.Has(i) {
                     node.removeChild(keyed[i].node)
                 }
             }
@@ -486,8 +542,8 @@ func app[S State](appProps AppProps[S]) Dispatch {
         appProps.vdom = appProps.View(appProps.state)
         appProps.busy = false
         appProps.Node = patch(
-            appProps.Node.V.parentNode().V,
-            appProps.Node.V,
+            appProps.Node.parentNode().V,
+            appProps.Node,
             vdomOld,
             appProps.vdom,
             listener,
