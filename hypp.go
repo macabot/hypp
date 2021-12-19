@@ -12,7 +12,7 @@ type State interface {
 }
 
 func App[S State](props AppProps[S]) Dispatch {
-    return func(dispatchable Dispatchable, payload Payload) {}
+    return app[S](props)
 }
 
 type HProps map[string]interface{}
@@ -22,7 +22,7 @@ func (h HProps) key() Option[string] {
         return Option[string]{}
     }
     if key, ok := h["key"]; ok {
-        return Option[string]{V: fmt.Sprintf("%v", key), OK: ok}
+        return Option[string]{V: fmt.Sprint(key), OK: ok}
     }
     return Option[string]{}
 }
@@ -43,15 +43,15 @@ func (h HProps) has(key string) bool {
 }
 
 func H(tag string, props HProps, children...VNode) VNode {
-    return VNode{}
+    return h(tag, props, children)
 }
 
-func Memo[D any](view func(data D) VNode, data D) VNode {
-    return VNode{}
+func Memo(view func(data interface{}) VNode, data interface{}) VNode {
+    return memo(view, data)
 }
 
 func Text(value string) VNode {
-    return VNode{}
+    return text(value, nil)
 }
 
 type Payload interface{}
