@@ -43,7 +43,7 @@ func (h HProps) has(key string) bool {
     return ok
 }
 
-func H(tag string, props HProps, children...VNode) VNode {
+func H(tag string, props HProps, children ...VNode) VNode {
     return h(tag, props, children)
 }
 
@@ -57,7 +57,7 @@ func Text(value string) VNode {
 
 type Payload interface{}
 
-type actionLike interface {
+type actionLike interface { // TODO should be exported?
     Dispatchable
     iAmActionLike()
 }
