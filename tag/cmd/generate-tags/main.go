@@ -8,7 +8,7 @@ import (
 
 var fileTemplate = `// DO NOT EDIT
 // This file was generated using cmd/generate-html-tags
-package main
+package %s
 
 import "github.com/macabot/hypp"
 
@@ -27,12 +27,11 @@ func panicIf(err error) {
 }
 
 func main() {
-    filename := os.Args[0]
-    fmt.Println(filename)
-    funcs := make([]string, len(os.Args))
-    for i, arg := range os.Args[1:] {
+    packageName := os.Args[1]
+    funcs := make([]string, len(os.Args)-2)
+    for i, arg := range os.Args[2:] {
         funcs[i] = fmt.Sprintf(funcTemplate, strings.Title(arg), arg)
     }
 
-    fmt.Printf(fileTemplate, strings.Join(funcs, "\n"))
+    fmt.Printf(fileTemplate, packageName, strings.Join(funcs, "\n"))
 }

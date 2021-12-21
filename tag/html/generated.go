@@ -1,6 +1,6 @@
 // DO NOT EDIT
 // This file was generated using cmd/generate-html-tags
-package main
+package html
 
 import "github.com/macabot/hypp"
 
@@ -467,5 +467,4 @@ func Slot(props hypp.HProps, children ...hypp.VNode) hypp.VNode {
 func Template(props hypp.HProps, children ...hypp.VNode) hypp.VNode {
     return hypp.H("template", props, children...)
 }
-
 
