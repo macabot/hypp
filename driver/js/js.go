@@ -10,35 +10,40 @@ func document() js.Value {
 	return js.Global().Get("document")
 }
 
+var _ hypp.Driver = Driver{}
+
 type Driver struct{}
 
-func (d Driver) CreateTextNode(data string) Node {
-	return document().Call("createTextNode", data)
+func (d Driver) CreateTextNode(data string) hypp.Node {
+	return Node(document().Call("createTextNode", data))
 }
 
 func elementCreationOptionsToValue(options hypp.Option[hypp.ElementCreationOptions]) js.Value {
 	out := js.Undefined()
 	if options.OK {
-		out = map[string]interface{}{
-			"is": options.Is,
-		}
+		out = js.ValueOf(map[string]interface{}{
+			"is": options.V.Is,
+		})
 	}
 	return out
 }
 
-func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) Node {
-	return document().Call("createElementNS", namespaceURI, qualifiedName, elementCreationOptionsToValue(options))
+func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+	return Node(document().Call("createElementNS", namespaceURI, qualifiedName, elementCreationOptionsToValue(options)))
 }
 
-func (d Driver) CreateElement(tagName string, options Option[hypp.ElementCreationOptions]) Node {
-	return document().Call("createElement", tagName, elementCreationOptionsToValue(options))
+func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+	return Node(document().Call("createElement", tagName, elementCreationOptionsToValue(options)))
 }
 
 func (d Driver) Enqueue(render func()) {
 	js.Global().Call("requestAnimationFrame", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		render()
+		return nil
 	}))
 }
+
+var _ hypp.Node = Node{}
 
 type Node js.Value
 
@@ -93,7 +98,7 @@ func (n Node) Get(name string) hypp.Value {
 }
 
 func (n Node) Has(name string) bool {
-	return js.Value(n).Has(name)
+	return js.Value(n).Call("hasOwnProperty", name).Bool()
 }
 
 func (n Node) Set(name string, value interface{}) {
@@ -107,12 +112,14 @@ func (n Node) AppendChild(child hypp.Node) hypp.Node {
 func (n Node) RemoveEventListener(kind string, listener hypp.EventListener) {
 	js.Value(n).Call("removeEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		listener(Event(args[0]))
+		return nil
 	}))
 }
 
 func (n Node) AddEventListener(kind string, listener hypp.EventListener) {
 	js.Value(n).Call("addEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		listener[Event(args[0])]
+		listener(Event(args[0]))
+		return nil
 	}))
 }
 
@@ -124,21 +131,71 @@ func (n Node) SetAttribute(name string, value interface{}) {
 	js.Value(n).Call("setAttribute", name, value)
 }
 
+func (n Node) Events() hypp.Events {
+	return Events(js.Value(n).Get("events"))
+}
+
 func (n Node) Style() hypp.Style {
 	return Style(js.Value(n).Get("style"))
 }
 
+var _ hypp.Events = Events{}
+
 type Events js.Value
 
-func (e Events) Set(name string, value interface{}) {
+func (e Events) JSValue() js.Value {
+	return js.Value(e)
+}
+
+func (e Events) Set(name string, value hypp.Event) {
 	js.Value(e).Set(name, value)
 }
 
-func (e Events) Get(name string) hypp.Value {
-	return js.Value(e).Get(name)
+func (e Events) Get(name string) hypp.Event {
+	return Event(js.Value(e).Get(name))
 }
 
+var _ hypp.Event = Event{}
+
+type Event js.Value
+
+func (e Event) JSValue() js.Value {
+	return js.Value(e)
+}
+
+func (e Event) IAmDispatchable() {}
+
+func (e Event) Type() string {
+	return js.Value(e).Get("type").String()
+}
+
+func (e Event) PreventDefault() {
+	js.Value(e).Call("preventDefault")
+}
+
+func (e Event) Target() hypp.EventTarget {
+	return EventTarget(js.Value(e).Get("target"))
+}
+
+var _ hypp.EventTarget = EventTarget{}
+
+type EventTarget js.Value
+
+func (e EventTarget) JSValue() js.Value {
+	return js.Value(e)
+}
+
+func (e EventTarget) Value() interface{} {
+	return js.Value(e).Get("value")
+}
+
+var _ hypp.Style = Style{}
+
 type Style js.Value
+
+func (s Style) JSValue() js.Value {
+	return js.Value(s)
+}
 
 func (s Style) SetProperty(propertyName, value string) {
 	js.Value(s).Call("setProperty", propertyName, value)
@@ -149,5 +206,5 @@ func (s Style) Set(name, value string) {
 }
 
 func (s Style) Get(name string) string {
-	js.Value(s).Get(name).String()
+	return js.Value(s).Get(name).String()
 }

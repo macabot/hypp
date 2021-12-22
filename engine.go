@@ -165,7 +165,7 @@ type Driver interface {
 	CreateTextNode(data string) Node
 	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
 	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Enqueue(render func(), busy bool)
+	Enqueue(render func())
 }
 
 // TODO instead of setting a global driver pass driver to App function.
@@ -190,7 +190,7 @@ func createClass(obj interface{}) string {
 	return strings.Join(parts, " ")
 }
 
-func patchProperty(node Node, key string, oldValue, newValue interface{}, listener EventListener, isSvg bool) {
+func patchProperty(node Node, key string, oldValue, newValue interface{}, listener EventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// Do nothing
 	} else if key == "style" {
@@ -212,9 +212,9 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 		key := key[2:]
 		node.Events().Set(key, newValue.(Event))
 		if newValue == nil {
-			node.RemoveEventListener(key, listener)
+			node.RemoveEventListener(key, listener(node))
 		} else if oldValue == nil {
-			node.AddEventListener(key, listener)
+			node.AddEventListener(key, listener(node))
 		}
 	} else if !isSvg && key != "list" && key != "from" && node.Has(key) {
 		if newValue == nil {
@@ -234,7 +234,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	}
 }
 
-func createNode(vdom VNode, listener EventListener, isSvg bool) Node {
+func createNode(vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
 	props := vdom.props
 	var node Node
 	if vdom.kind == textNode {
@@ -276,7 +276,7 @@ func patch(
 	node Node,
 	oldVNode VNode,
 	newVNode VNode,
-	listener EventListener,
+	listener EventListenerGenerator,
 	isSvg bool,
 ) Node {
 	if &oldVNode == &newVNode {
@@ -505,10 +505,6 @@ func maybeVNode(newVNode, oldVNode VNode) VNode {
 	}
 }
 
-type Event interface {
-    Type() string
-}
-
 type EmptyState struct{}
 
 func (_ EmptyState) IAmDispatchable() {}
@@ -534,7 +530,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			driver.Enqueue(appProps.render, appProps.busy)
+			driver.Enqueue(appProps.render)
 		}
 	}
 }

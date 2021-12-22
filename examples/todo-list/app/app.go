@@ -12,36 +12,43 @@ type MyState struct {
 	value string
 }
 
+func (m MyState) clone() *MyState {
+	return &MyState{
+		todos: m.todos,
+		value: m.value,
+	}
+}
+
 type TodoItem struct {
 	isEditing bool
 	lastValue string
 	value     string
 }
 
-func preventDefault(action hypp.Action) hypp.Action {
-	return func(state MyState, payload hypp.Payload) hypp.Dispatchable {
+func preventDefault(action hypp.Action[*MyState]) hypp.Action[*MyState] {
+	return func(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 		event := payload.(hypp.Event)
 		event.PreventDefault()
 		return action(state, payload)
 	}
 }
 
-func withPayload(filter func(e hypp.Event) hypp.ActionAndPayload) hypp.Action {
-	return func(_ MyState, payload hypp.Payload) hypp.ActionAndPayload {
-		return filter(payload)
+func withPayload(filter func(e hypp.Event) hypp.ActionAndPayload[*MyState]) hypp.Action[*MyState] {
+	return func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+		return filter(payload.(hypp.Event))
 	}
 }
 
-func targetValue(action hypp.Action) hypp.ActionAndPayload {
-	return withPayload(func(e hypp.Event) hypp.ActionAndPayload {
-		return hypp.ActionAndPayload{
+func targetValue(action hypp.Action[*MyState]) hypp.Action[*MyState] {
+	return withPayload(func(e hypp.Event) hypp.ActionAndPayload[*MyState] {
+		return hypp.ActionAndPayload[*MyState]{
 			Action:  action,
 			Payload: e.Target().Value(),
 		}
 	})
 }
 
-func form(onsubmit hypp.ActionLike, props hypp.HProps, children []hypp.VNode) hypp.VNode {
+func form(onsubmit hypp.Action[*MyState], props hypp.HProps, children ...hypp.VNode) hypp.VNode {
 	props["onsubmit"] = preventDefault(onsubmit)
 	return html.Form(
 		props,
@@ -66,13 +73,13 @@ func submit(value string) hypp.VNode {
 	)
 }
 
-func input(oninput hypp.Action, props hypp.HProps) hypp.VNode {
+func input(oninput hypp.Action[*MyState], props hypp.HProps) hypp.VNode {
 	props["type"] = "text"
 	props["oninput"] = targetValue(oninput)
 	return html.Input(props)
 }
 
-func todosView(value string) VNode {
+func todoItemView(value string) hypp.VNode {
 	return html.Label(
 		nil,
 		checkbox(),
@@ -83,12 +90,23 @@ func todosView(value string) VNode {
 	)
 }
 
-func newValue(state MyState, value hypp.Payload) hypp.Dispatchable {
-	state.value = value
-	return value
+func todosView(title string, todos []TodoItem) []hypp.VNode {
+	ulChildren := make([]hypp.VNode, len(todos))
+	for i, todo := range todos {
+		ulChildren[i] = html.Li(nil, todoItemView(todo.value))
+	}
+	return []hypp.VNode{
+		html.H1(nil, hypp.Text(title)),
+		html.Ul(nil, ulChildren...),
+	}
 }
 
-func newTodo(state MyState, _ hypp.Payload) hypp.Dispatchable {
+func newValue(state *MyState, value hypp.Payload) hypp.Dispatchable {
+	state.value = value.(string)
+	return state
+}
+
+func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 	if len(state.todos) == 0 {
 		return state
 	}
@@ -96,13 +114,13 @@ func newTodo(state MyState, _ hypp.Payload) hypp.Dispatchable {
 	return state
 }
 
-func Run() {
-	hypp.App[MyState](hypp.AppProps{
+func Run(node hypp.Node) {
+	hypp.App[*MyState](hypp.AppProps[*MyState]{
 		Init: MyState{
 			todos: []TodoItem{{value: "Learn Hypp"}},
 			value: "",
 		},
-		View: func(state MyState) VNode {
+		View: func(state *MyState) hypp.VNode {
 			children := todosView("To-do list ✏️", state.todos)
 			children = append(children, form(
 				newTodo,
@@ -120,6 +138,6 @@ func Run() {
 				children...,
 			)
 		},
-		Node: js.Global().Get("document").Call("getElementById", "app"),
+		Node: node,
 	})
 }

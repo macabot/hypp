@@ -58,7 +58,7 @@ func Text(value string) VNode {
 
 type Payload interface{}
 
-type actionLike interface { // TODO should be exported?
+type ActionLike interface { // TODO should be exported?
 	Dispatchable
 	iAmActionLike()
 }
@@ -68,6 +68,17 @@ type Action[S State] func(state S, payload Payload) Dispatchable
 func (_ Action[S]) IAmDispatchable() {}
 
 func (_ Action[S]) iAmActionLike() {}
+
+type Event interface {
+	Dispatchable
+    Type() string
+	PreventDefault()
+	Target() EventTarget
+}
+
+type EventTarget interface {
+	Value() interface{}
+}
 
 type EventListener func(Event)
 
@@ -173,7 +184,7 @@ type VNode struct {
 	props    HProps
 	children []VNode
 	node     Node                  // Can be nil
-	events   map[string]actionLike // Action[S] | ActionAndPayload[S]
+	events   map[string]ActionLike // Action[S] | ActionAndPayload[S]
 	key      Option[string]
 	tag      string
 	memoView func(data interface{}) VNode
