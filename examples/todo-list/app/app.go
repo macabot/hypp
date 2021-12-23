@@ -13,10 +13,7 @@ type MyState struct {
 }
 
 func (m MyState) clone() *MyState {
-	return &MyState{
-		todos: m.todos,
-		value: m.value,
-	}
+	return &m
 }
 
 type TodoItem struct {
@@ -25,30 +22,30 @@ type TodoItem struct {
 	value     string
 }
 
-func preventDefault(action hypp.Action[*MyState]) hypp.Action[*MyState] {
-	return func(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func preventDefault[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
+	return func(state S, payload hypp.Payload) hypp.Dispatchable {
 		event := payload.(hypp.Event)
 		event.PreventDefault()
 		return action(state, payload)
 	}
 }
 
-func withPayload(filter func(e hypp.Event) hypp.ActionAndPayload[*MyState]) hypp.Action[*MyState] {
-	return func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+func withPayload[S hypp.State](filter func(e hypp.Event) hypp.ActionAndPayload[S]) hypp.Action[S] {
+	return func(_ S, payload hypp.Payload) hypp.Dispatchable {
 		return filter(payload.(hypp.Event))
 	}
 }
 
-func targetValue(action hypp.Action[*MyState]) hypp.Action[*MyState] {
-	return withPayload(func(e hypp.Event) hypp.ActionAndPayload[*MyState] {
-		return hypp.ActionAndPayload[*MyState]{
+func targetValue[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
+	return withPayload(func(e hypp.Event) hypp.ActionAndPayload[S] {
+		return hypp.ActionAndPayload[S]{
 			Action:  action,
 			Payload: e.Target().Value(),
 		}
 	})
 }
 
-func form(onsubmit hypp.Action[*MyState], props hypp.HProps, children ...hypp.VNode) hypp.VNode {
+func form[S hypp.State](onsubmit hypp.Action[S], props hypp.HProps, children ...hypp.VNode) hypp.VNode {
 	props["onsubmit"] = preventDefault(onsubmit)
 	return html.Form(
 		props,
@@ -73,7 +70,7 @@ func submit(value string) hypp.VNode {
 	)
 }
 
-func input(oninput hypp.Action[*MyState], props hypp.HProps) hypp.VNode {
+func input[S hypp.State](oninput hypp.Action[S], props hypp.HProps) hypp.VNode {
 	props["type"] = "text"
 	props["oninput"] = targetValue(oninput)
 	return html.Input(props)
@@ -102,6 +99,7 @@ func todosView(title string, todos []TodoItem) []hypp.VNode {
 }
 
 func newValue(state *MyState, value hypp.Payload) hypp.Dispatchable {
+	state = state.clone()
 	state.value = value.(string)
 	return state
 }
@@ -110,6 +108,7 @@ func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 	if len(state.todos) == 0 {
 		return state
 	}
+	state = state.clone()
 	state.todos = append(state.todos, TodoItem{value: state.value})
 	return state
 }
