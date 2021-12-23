@@ -115,7 +115,7 @@ func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 
 func Run(node hypp.Node) {
 	hypp.App[*MyState](hypp.AppProps[*MyState]{
-		Init: MyState{
+		Init: &MyState{ // TODO it is currently possible to pass MyState-value
 			todos: []TodoItem{{value: "Learn Hypp"}},
 			value: "",
 		},
