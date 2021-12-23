@@ -125,6 +125,7 @@ type Subscriptions[S State] func(state S) []Subscription[S]
 type Render func()
 
 type AppProps[S State] struct {
+	Driver Driver
 	Init                Dispatchable
 	Subscriptions       Subscriptions[S]
 	DispatchInitializer func(dispatch Dispatch) Dispatch

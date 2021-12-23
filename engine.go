@@ -168,9 +168,6 @@ type Driver interface {
 	Enqueue(render func())
 }
 
-// TODO instead of setting a global driver pass driver to App function.
-var driver Driver // Must be initalized by Driver implementation.
-
 func createClass(obj interface{}) string {
 	var parts []string
 	switch v := obj.(type) {
@@ -234,7 +231,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	}
 }
 
-func createNode(vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
+func createNode(driver Driver, vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
 	props := vdom.props
 	var node Node
 	if vdom.kind == textNode {
@@ -261,6 +258,7 @@ func createNode(vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
 		vdom.children[i] = maybeVNode(vdom.children[i], VNode{isNil: true})
 		node.AppendChild(
 			createNode(
+				driver,
 				vdom.children[i],
 				listener,
 				isSvg,
@@ -272,6 +270,7 @@ func createNode(vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
 }
 
 func patch(
+	driver Driver,
 	parent Node,
 	node Node,
 	oldVNode VNode,
@@ -288,7 +287,7 @@ func patch(
 	} else if oldVNode.isNil || oldVNode.tag != newVNode.tag {
 		newVNode = maybeVNode(newVNode, VNode{isNil: true})
 		node = parent.InsertBefore(
-			createNode(newVNode, listener, isSvg),
+			createNode(driver, newVNode, listener, isSvg),
 			node,
 		)
 		if !oldVNode.isNil {
@@ -340,6 +339,7 @@ func patch(
 			newHead++
 			oldHead++
 			patch(
+				driver,
 				node,
 				oldVKids[oldHead].node,
 				oldVKids[oldHead],
@@ -361,6 +361,7 @@ func patch(
 			newTail--
 			oldTail--
 			patch(
+				driver,
 				node,
 				oldVKids[oldTail].node,
 				oldVKids[oldTail],
@@ -377,6 +378,7 @@ func patch(
 				oldVKid = oldVKids[oldHead]
 				node.InsertBefore(
 					createNode(
+						driver,
 						newVKids[newHead],
 						listener,
 						isSvg,
@@ -416,6 +418,7 @@ func patch(
 				if !newKey.OK || oldVNode.kind == ssrNode {
 					if !oldKey.OK {
 						patch(
+							driver,
 							node,
 							oldVKid.node,
 							oldVKid,
@@ -429,6 +432,7 @@ func patch(
 				} else {
 					if oldKey == newKey {
 						patch(
+							driver,
 							node,
 							oldVKid.node,
 							oldVKid,
@@ -442,6 +446,7 @@ func patch(
 						tmpVKid = keyed[newKey.V]
 						if !tmpVKid.isNil {
 							patch(
+								driver,
 								node,
 								node.InsertBefore(tmpVKid.node, oldVKid.node),
 								tmpVKid,
@@ -452,6 +457,7 @@ func patch(
 							newKeyed.Set(newKey.V)
 						} else {
 							patch(
+								driver,
 								node,
 								oldVKid.node,
 								VNode{isNil: true},
@@ -530,7 +536,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			driver.Enqueue(appProps.render)
+			appProps.Driver.Enqueue(appProps.render)
 		}
 	}
 }
@@ -554,6 +560,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 		appProps.vdom = appProps.View(appProps.state)
 		appProps.busy = false
 		appProps.Node = patch(
+			appProps.Driver,
 			appProps.Node.ParentNode().V,
 			appProps.Node,
 			vdomOld,
