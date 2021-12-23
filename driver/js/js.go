@@ -1,6 +1,7 @@
 package js
 
 import (
+	"fmt"
 	"syscall/js"
 
 	"github.com/macabot/hypp"
@@ -93,8 +94,28 @@ func (n Node) RemoveChild(child hypp.Node) {
 	js.Value(n).Call("removeChild", child)
 }
 
-func (n Node) Get(name string) hypp.Value {
-	return js.Value(n).Get(name)
+func (n Node) Get(name string) hypp.Option[interface{}] {
+	if !n.Has(name) {
+		return hypp.Option[interface{}]{}
+	}
+	v := js.Value(n).Get(name)
+	kind := v.Type()
+	switch kind {
+	case js.TypeUndefined, js.TypeNull:
+		return hypp.Option[interface{}]{OK: true}
+	case js.TypeBoolean:
+		return hypp.Option[interface{}]{V: v.Bool(), OK: true}
+	case js.TypeNumber:
+		if js.Global().Get("Number").Call("isInteger", v).Bool() {
+			return hypp.Option[interface{}]{V: v.Int(), OK: true}
+		} else {
+			return hypp.Option[interface{}]{V: v.Float(), OK: true}
+		}
+	case js.TypeString:
+		return hypp.Option[interface{}]{V: v.String(), OK: true}
+	default:
+		panic(fmt.Errorf("js: cannot get Node property of type '%s'", kind))
+	}
 }
 
 func (n Node) Has(name string) bool {

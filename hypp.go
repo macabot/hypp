@@ -17,31 +17,52 @@ func App[S State](props AppProps[S]) Dispatch {
 	return app[S](props)
 }
 
-type HProps map[string]interface{}
+type Dict[K comparable, V any] map[K]V
 
-func (h HProps) key() Option[string] {
-	if h == nil {
-		return Option[string]{}
+func (d Dict[K, V]) Get(key K) Option[V] {
+	if d == nil {
+		return Option[V]{}
 	}
-	if key, ok := h["key"]; ok {
-		return Option[string]{V: fmt.Sprint(key), OK: ok}
+	v, ok := d[key]
+	return Option[V]{V: v, OK: ok}
+}
+
+func (d Dict[K, V]) Has(key K) bool {
+	if d == nil {
+		return false
+	}
+	_, ok := d[key]
+	return ok
+}
+
+func (d *Dict[K, V]) Set(key K, value V) {
+	if d == nil || *d == nil {
+		*d = map[K]V{}
+	}
+	m := *d
+	m[key] = value
+}
+
+type HProps Dict[string, interface{}]
+
+func (h HProps) Key() Option[string] {
+	if key := h.Get("key"); key.OK {
+		return Option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
 	return Option[string]{}
 }
 
-func (h HProps) get(key string) interface{} {
-	if h == nil {
-		return nil
-	}
-	return h[key]
+func (h HProps) Get(key string) Option[interface{}] {
+	return Dict[string, interface{}](h).Get(key)
 }
 
-func (h HProps) has(key string) bool {
-	if h == nil {
-		return false
-	}
-	_, ok := h[key]
-	return ok
+func (h HProps) Has(key string) bool {
+	return Dict[string, interface{}](h).Has(key)
+}
+
+func (h HProps) Set(key string, value interface{}) {
+	d := Dict[string, interface{}](h)
+	d.Set(key, value)
 }
 
 func H(tag string, props HProps, children ...VNode) VNode {
@@ -91,7 +112,7 @@ type Node interface {
 	ChildNodes() []Node
 	InsertBefore(newNode, referenceNode Node) Node
 	RemoveChild(child Node)
-	Get(name string) Value
+	Get(name string) Option[interface{}]
 	Has(name string) bool
 	Set(name string, value interface{})
 	AppendChild(child Node) Node
@@ -101,12 +122,6 @@ type Node interface {
 	SetAttribute(name string, value interface{})
 	Events() Events
 	Style() Style
-}
-
-type Value interface {
-	Int() int
-	String() string
-	Bool() bool
 }
 
 type Events interface {

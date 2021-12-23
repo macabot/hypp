@@ -46,7 +46,7 @@ func targetValue[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
 }
 
 func form[S hypp.State](onsubmit hypp.Action[S], props hypp.HProps, children ...hypp.VNode) hypp.VNode {
-	props["onsubmit"] = preventDefault(onsubmit)
+	props.Set("onsubmit", preventDefault(onsubmit))
 	return html.Form(
 		props,
 		children...,

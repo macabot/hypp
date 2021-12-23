@@ -16,4 +16,6 @@ func main() {
 		jsd.Driver{},
 		jsd.Node(el),
 	)
+
+	select {} // run Go forever
 }

@@ -14,7 +14,7 @@ func h(tag string, props HProps, children []VNode) VNode {
 	return VNode{
 		tag:      tag,
 		props:    props,
-		key:      props.key(),
+		key:      props.Key(),
 		children: children,
 		kind:     ssrNode,
 	}
@@ -239,8 +239,8 @@ func createNode(driver Driver, vdom VNode, listener EventListenerGenerator, isSv
 	} else {
 		isSvg = isSvg || vdom.tag == "svg"
 		options := Option[ElementCreationOptions]{}
-		if props.has("is") {
-			options.V.Is = fmt.Sprint(props.get("is"))
+		if props.Has("is") {
+			options.V.Is = fmt.Sprint(props.Get("is").V)
 			options.OK = true
 		}
 		if isSvg {
@@ -315,14 +315,14 @@ func patch(
 
 		allKeys := hPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
-			var cmpVal interface{}
+			var cmpVal Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
 				cmpVal = node.Get(i)
 			} else {
-				cmpVal = oldProps.get(i)
+				cmpVal = oldProps.Get(i)
 			}
-			if cmpVal != newProps.get(i) {
-				patchProperty(node, i, oldProps.get(i), newProps.get(i), listener, isSvg)
+			if cmpVal != newProps.Get(i) {
+				patchProperty(node, i, oldProps.Get(i), newProps.Get(i), listener, isSvg)
 			}
 		}
 
