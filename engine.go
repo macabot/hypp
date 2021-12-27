@@ -327,7 +327,7 @@ func patch(
 		}
 
 		for newHead <= newTail && oldHead <= oldTail {
-			oldKey := oldVKids[oldHead].key
+			oldKey = oldVKids[oldHead].key
 			if !oldKey.OK || oldKey != newVKids[newHead].key {
 				break
 			}
@@ -336,8 +336,6 @@ func patch(
 				newVKids[newHead],
 				oldVKids[oldHead],
 			)
-			newHead++
-			oldHead++
 			patch(
 				driver,
 				node,
@@ -347,6 +345,8 @@ func patch(
 				listener,
 				isSvg,
 			)
+			newHead++
+			oldHead++
 		}
 
 		for newHead <= newTail && oldHead <= oldTail {
@@ -358,8 +358,6 @@ func patch(
 				newVKids[newTail],
 				oldVKids[oldTail],
 			)
-			newTail--
-			oldTail--
 			patch(
 				driver,
 				node,
@@ -369,13 +367,17 @@ func patch(
 				listener,
 				isSvg,
 			)
+			newTail--
+			oldTail--
 		}
 
 		if oldHead > oldTail {
 			for newHead <= newTail {
 				newVKids[newHead] = maybeVNode(newVKids[newHead], VNode{isNil: true})
-				newHead++
-				oldVKid = oldVKids[oldHead]
+				oldVKid = VNode{isNil: true}
+				if oldHead < len(oldVKids) {
+					oldVKid = oldVKids[oldHead]
+				}
 				node.InsertBefore(
 					createNode(
 						driver,
@@ -385,6 +387,7 @@ func patch(
 					),
 					oldVKid.node,
 				)
+				newHead++
 			}
 		} else if newHead > newTail {
 			for oldHead <= oldTail {

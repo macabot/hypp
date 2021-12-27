@@ -44,6 +44,13 @@ func (d Driver) Enqueue(render func()) {
 	}))
 }
 
+func hyppNodeToValue(node hypp.Node) js.Value {
+	if node == nil {
+		return js.Null()
+	}
+	return node.(Node).JSValue()
+}
+
 var _ hypp.Node = Node{}
 
 type Node js.Value
@@ -87,11 +94,15 @@ func (n Node) ChildNodes() []hypp.Node {
 }
 
 func (n Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
-	return Node(js.Value(n).Call("insertBefore", newNode, referenceNode))
+	return Node(js.Value(n).Call(
+		"insertBefore",
+		hyppNodeToValue(newNode),
+		hyppNodeToValue(referenceNode),
+	))
 }
 
 func (n Node) RemoveChild(child hypp.Node) {
-	js.Value(n).Call("removeChild", child)
+	js.Value(n).Call("removeChild", hyppNodeToValue(child))
 }
 
 func (n Node) Get(name string) hypp.Option[interface{}] {
@@ -127,7 +138,7 @@ func (n Node) Set(name string, value interface{}) {
 }
 
 func (n Node) AppendChild(child hypp.Node) hypp.Node {
-	return Node(js.Value(n).Call("appendChild", child))
+	return Node(js.Value(n).Call("appendChild", hyppNodeToValue(child)))
 }
 
 func (n Node) RemoveEventListener(kind string, listener hypp.EventListener) {
