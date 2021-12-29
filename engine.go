@@ -187,6 +187,10 @@ func createClass(obj interface{}) string {
 	return strings.Join(parts, " ")
 }
 
+func isFalsy(v interface{}) bool {
+	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
+}
+
 func patchProperty(node Node, key string, oldValue, newValue interface{}, listener EventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// Do nothing
@@ -207,10 +211,11 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
-		node.Events().Set(key, newValue.(Event))
-		if newValue == nil {
+		if isFalsy(newValue) {
+			node.Events().Del(key)
 			node.RemoveEventListener(key, listener(node))
-		} else if oldValue == nil {
+		} else {
+			node.Events().Set(key, newValue.(Dispatchable))
 			node.AddEventListener(key, listener(node))
 		}
 	} else if !isSvg && key != "list" && key != "from" && node.Has(key) {

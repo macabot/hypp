@@ -2,6 +2,7 @@ package js
 
 import (
 	"fmt"
+	"sync"
 	"syscall/js"
 
 	"github.com/macabot/hypp"
@@ -164,7 +165,11 @@ func (n Node) SetAttribute(name string, value interface{}) {
 }
 
 func (n Node) Events() hypp.Events {
-	return Events(js.Value(n).Get("events"))
+	v := js.Value(n)
+	if v.Get("events").IsUndefined() {
+		js.Value(n).Set("events", map[string]interface{}{})
+	}
+	return Events(v.Get("events"))
 }
 
 func (n Node) Style() hypp.Style {
@@ -179,12 +184,46 @@ func (e Events) JSValue() js.Value {
 	return js.Value(e)
 }
 
-func (e Events) Set(name string, value hypp.Event) {
-	js.Value(e).Set(name, value)
+type GlobalDispatchables struct {
+	mu sync.Mutex
+	i int
+	v map[int]hypp.Dispatchable
 }
 
-func (e Events) Get(name string) hypp.Event {
-	return Event(js.Value(e).Get(name))
+func (g *GlobalDispatchables) Set(value hypp.Dispatchable) int {
+	g.mu.Lock()
+	i := g.i
+	g.v[i] = value
+	g.i++
+	g.mu.Unlock()
+	return i
+}
+
+func (g GlobalDispatchables) Get(i int) hypp.Dispatchable {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.v[i]
+}
+
+func (g *GlobalDispatchables) Del(i int) {
+	g.mu.Lock()
+	delete(g.v, i)
+	g.mu.Unlock()
+}
+
+var globalNodeEvents = GlobalDispatchables{v: map[int]hypp.Dispatchable{}}
+
+func (e Events) Set(name string, value hypp.Dispatchable) {
+	i := globalNodeEvents.Set(value)
+	js.Value(e).Set(name, i)
+}
+
+func (e Events) Get(name string) hypp.Dispatchable {
+	return globalNodeEvents.Get(js.Value(e).Get(name).Int())
+}
+
+func (e Events) Del(name string) {
+	globalNodeEvents.Del(js.Value(e).Get(name).Int())
 }
 
 var _ hypp.Event = Event{}
@@ -195,7 +234,7 @@ func (e Event) JSValue() js.Value {
 	return js.Value(e)
 }
 
-func (e Event) IAmDispatchable() {}
+// func (e Event) IAmDispatchable() {}
 
 func (e Event) Type() string {
 	return js.Value(e).Get("type").String()

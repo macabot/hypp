@@ -91,7 +91,7 @@ func (_ Action[S]) IAmDispatchable() {}
 func (_ Action[S]) iAmActionLike() {}
 
 type Event interface {
-	Dispatchable
+	// Dispatchable
     Type() string
 	PreventDefault()
 	Target() EventTarget
@@ -125,8 +125,9 @@ type Node interface {
 }
 
 type Events interface {
-	Set(name string, event Event)
-	Get(name string) Event
+	Set(name string, event Dispatchable)
+	Get(name string) Dispatchable
+	Del(name string)
 }
 
 type Style interface {
