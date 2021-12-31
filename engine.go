@@ -10,8 +10,8 @@ var ssrNode = 1
 var textNode = 3
 var svgNS = "http://www.w3.org/2000/svg"
 
-func h(tag string, props HProps, children []VNode) VNode {
-	return VNode{
+func h(tag string, props HProps, children []*VNode) *VNode {
+	return &VNode{
 		tag:      tag,
 		props:    props,
 		key:      props.Key(),
@@ -20,15 +20,15 @@ func h(tag string, props HProps, children []VNode) VNode {
 	}
 }
 
-func memo(view func(data interface{}) VNode, data interface{}) VNode {
-	return VNode{
+func memo(view func(data interface{}) *VNode, data interface{}) *VNode {
+	return &VNode{
 		memoView: view,
 		memo:     data,
 	}
 }
 
-func text(value string, node Node) VNode {
-	return VNode{
+func text(value string, node Node) *VNode {
+	return &VNode{
 		tag:  value,
 		kind: textNode,
 		node: node,
@@ -39,16 +39,16 @@ func dispatchInitializerID(dispatch Dispatch) Dispatch {
 	return dispatch
 }
 
-func recycleNode(node Node) VNode {
+func recycleNode(node Node) *VNode {
 	if node.NodeType() == textNode {
 		return text(node.NodeValue(), node)
 	} else {
 		childNodes := node.ChildNodes()
-		children := make([]VNode, len(childNodes))
+		children := make([]*VNode, len(childNodes))
 		for i, childNode := range childNodes {
 			children[i] = recycleNode(childNode)
 		}
-		return VNode{
+		return &VNode{
 			tag:      strings.ToLower(node.NodeName()),
 			children: children,
 			kind:     ssrNode,
@@ -111,7 +111,7 @@ func hPropsKeys(oldProps, newProps HProps) []string {
 	return keys
 }
 
-type vNodeMap map[string]VNode
+type vNodeMap map[string]*VNode
 
 func (s vNodeMap) Has(key string) bool {
 	if s == nil {
@@ -236,7 +236,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	}
 }
 
-func createNode(driver Driver, vdom VNode, listener EventListenerGenerator, isSvg bool) Node {
+func createNode(driver Driver, vdom *VNode, listener EventListenerGenerator, isSvg bool) Node {
 	props := vdom.props
 	var node Node
 	if vdom.kind == textNode {
@@ -260,7 +260,7 @@ func createNode(driver Driver, vdom VNode, listener EventListenerGenerator, isSv
 	}
 
 	for i := 0; i < len(vdom.children); i++ {
-		vdom.children[i] = maybeVNode(vdom.children[i], VNode{isNil: true})
+		vdom.children[i] = maybeVNode(vdom.children[i], nil)
 		node.AppendChild(
 			createNode(
 				driver,
@@ -274,33 +274,59 @@ func createNode(driver Driver, vdom VNode, listener EventListenerGenerator, isSv
 	return node
 }
 
+func equalProps(a, b Option[interface{}]) bool {
+	if a.OK != b.OK {
+		return false
+	}
+	switch v := a.V.(type) {
+	case int:
+		bInt, ok := b.V.(int)
+		return ok && v == bInt
+	case string:
+		bString, ok := b.V.(string)
+		return ok && v == bString
+	case bool:
+		bBool, ok := b.V.(bool)
+		return ok && v == bBool
+	default:
+		return false
+	}
+}
+
 func patch(
 	driver Driver,
 	parent Node,
 	node Node,
-	oldVNode VNode,
-	newVNode VNode,
+	oldVNode *VNode,
+	newVNode *VNode,
 	listener EventListenerGenerator,
 	isSvg bool,
 ) Node {
-	if &oldVNode == &newVNode {
+	fmt.Println("A")
+	if oldVNode == newVNode {
+		fmt.Println("B")
 		// Do nothing
-	} else if !oldVNode.isNil && oldVNode.kind == textNode && newVNode.kind == textNode {
+	} else if oldVNode != nil && oldVNode.kind == textNode && newVNode.kind == textNode {
+		fmt.Println("C")
 		if oldVNode.tag != newVNode.tag {
+			fmt.Println("D")
 			node.SetNodeValue(newVNode.tag)
 		}
-	} else if oldVNode.isNil || oldVNode.tag != newVNode.tag {
-		newVNode = maybeVNode(newVNode, VNode{isNil: true})
+	} else if oldVNode == nil || oldVNode.tag != newVNode.tag {
+		fmt.Println("E")
+		newVNode = maybeVNode(newVNode, nil)
 		node = parent.InsertBefore(
 			createNode(driver, newVNode, listener, isSvg),
 			node,
 		)
-		if !oldVNode.isNil {
+		if oldVNode != nil {
+			fmt.Println("F")
 			parent.RemoveChild(oldVNode.node)
 		}
 	} else {
-		var tmpVKid VNode
-		var oldVKid VNode
+		fmt.Println("G")
+		var tmpVKid *VNode
+		var oldVKid *VNode
 
 		var oldKey Option[string]
 		var newKey Option[string]
@@ -322,18 +348,22 @@ func patch(
 		for _, i := range allKeys {
 			var cmpVal Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
+				fmt.Println("A")
 				cmpVal = node.Get(i)
 			} else {
 				cmpVal = oldProps.Get(i)
 			}
-			if cmpVal != newProps.Get(i) {
+			if !equalProps(cmpVal, newProps.Get(i)) {
+				fmt.Println("H")
 				patchProperty(node, i, oldProps.Get(i), newProps.Get(i), listener, isSvg)
 			}
 		}
 
+		fmt.Println("I")
 		for newHead <= newTail && oldHead <= oldTail {
 			oldKey = oldVKids[oldHead].key
 			if !oldKey.OK || oldKey != newVKids[newHead].key {
+				fmt.Println("J")
 				break
 			}
 
@@ -354,9 +384,11 @@ func patch(
 			oldHead++
 		}
 
+		fmt.Println("K")
 		for newHead <= newTail && oldHead <= oldTail {
 			oldKey = oldVKids[oldTail].key
 			if !oldKey.OK || oldKey != newVKids[newTail].key {
+				fmt.Println("L")
 				break
 			}
 			newVKids[newTail] = maybeVNode(
@@ -377,11 +409,14 @@ func patch(
 		}
 
 		if oldHead > oldTail {
+			fmt.Println("M")
 			for newHead <= newTail {
-				newVKids[newHead] = maybeVNode(newVKids[newHead], VNode{isNil: true})
-				oldVKid = VNode{isNil: true}
+				newVKids[newHead] = maybeVNode(newVKids[newHead], nil)
+				oldVKid = nil
+				var oldVKidNode Node
 				if oldHead < len(oldVKids) {
 					oldVKid = oldVKids[oldHead]
+					oldVKidNode = oldVKid.node
 				}
 				node.InsertBefore(
 					createNode(
@@ -390,25 +425,29 @@ func patch(
 						listener,
 						isSvg,
 					),
-					oldVKid.node,
+					oldVKidNode,
 				)
 				newHead++
 			}
 		} else if newHead > newTail {
+			fmt.Println("N")
 			for oldHead <= oldTail {
 				node.RemoveChild(oldVKids[oldHead].node)
 				oldHead++
 			}
 		} else {
+			fmt.Println("O")
 			keyed := vNodeMap{}
 			newKeyed := Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key
 				if oldKey.OK {
+					fmt.Println("P")
 					keyed[oldKey.V] = oldVKids[i]
 				}
 			}
 
+			fmt.Println("Q")
 			for newHead <= newTail {
 				oldVKid = oldVKids[oldHead]
 				oldKey = oldVKid.key
@@ -416,7 +455,9 @@ func patch(
 				newKey = newVKids[newHead].key
 
 				if (oldKey.OK && newKeyed.Has(oldKey.V)) || newKey.OK && newKey == oldVKids[oldHead+1].key {
+					fmt.Println("R")
 					if !oldKey.OK {
+						fmt.Println("S")
 						node.RemoveChild(oldVKid.node)
 					}
 					oldHead++
@@ -424,7 +465,9 @@ func patch(
 				}
 
 				if !newKey.OK || oldVNode.kind == ssrNode {
+					fmt.Println("T")
 					if !oldKey.OK {
+						fmt.Println("U")
 						patch(
 							driver,
 							node,
@@ -438,7 +481,9 @@ func patch(
 					}
 					oldHead++
 				} else {
+					fmt.Println("V")
 					if oldKey == newKey {
+						fmt.Println("W")
 						patch(
 							driver,
 							node,
@@ -451,8 +496,10 @@ func patch(
 						newKeyed.Set(newKey.V)
 						oldHead++
 					} else {
+						fmt.Println("X")
 						tmpVKid = keyed[newKey.V]
-						if !tmpVKid.isNil {
+						if tmpVKid != nil {
+							fmt.Println("Y")
 							patch(
 								driver,
 								node,
@@ -464,11 +511,12 @@ func patch(
 							)
 							newKeyed.Set(newKey.V)
 						} else {
+							fmt.Println("Z")
 							patch(
 								driver,
 								node,
 								oldVKid.node,
-								VNode{isNil: true},
+								nil,
 								newVKids[newHead],
 								listener,
 								isSvg,
@@ -479,16 +527,20 @@ func patch(
 				}
 			}
 
+			fmt.Println("a1")
 			for oldHead <= oldTail {
 				oldVKid = oldVKids[oldHead]
 				oldHead++
 				if !oldVKid.key.OK {
+					fmt.Println("b1")
 					node.RemoveChild(oldVKid.node)
 				}
 			}
 
+			fmt.Println("c1")
 			for i := range keyed {
 				if !newKeyed.Has(i) {
+					fmt.Println("d1")
 					node.RemoveChild(keyed[i].node)
 				}
 			}
@@ -503,10 +555,10 @@ func propsChanged(a, b interface{}) bool {
 	return true // TODO implement
 }
 
-func maybeVNode(newVNode, oldVNode VNode) VNode {
-	if !newVNode.isNil {
+func maybeVNode(newVNode, oldVNode *VNode) *VNode {
+	if newVNode != nil {
 		if newVNode.memoView != nil {
-			if oldVNode.isNil || oldVNode.memo == nil || propsChanged(oldVNode.memo, newVNode.memo) {
+			if oldVNode == nil || oldVNode.memo == nil || propsChanged(oldVNode.memo, newVNode.memo) {
 				oldVNode = newVNode.memoView(newVNode.memo)
 				oldVNode.memo = newVNode.memo
 			}
@@ -569,7 +621,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 		appProps.busy = false
 		appProps.Node = patch(
 			appProps.Driver,
-			appProps.Node.ParentNode().V,
+			appProps.Node.ParentNode(),
 			appProps.Node,
 			vdomOld,
 			appProps.vdom,

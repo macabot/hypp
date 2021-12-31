@@ -60,12 +60,8 @@ func (n Node) JSValue() js.Value {
 	return js.Value(n)
 }
 
-func (n Node) ParentNode() hypp.Option[hypp.Node] {
-	parent := js.Value(n)
-	return hypp.Option[hypp.Node]{
-		V:  Node(parent),
-		OK: !parent.IsNull(),
-	}
+func (n Node) ParentNode() hypp.Node {
+	return Node(js.Value(n).Get("parentNode"))
 }
 
 func (n Node) NodeType() int {
@@ -184,13 +180,13 @@ func (e Events) JSValue() js.Value {
 	return js.Value(e)
 }
 
-type GlobalDispatchables struct {
+type dispatchablesRepo struct {
 	mu sync.Mutex
 	i int
 	v map[int]hypp.Dispatchable
 }
 
-func (g *GlobalDispatchables) Set(value hypp.Dispatchable) int {
+func (g *dispatchablesRepo) Add(value hypp.Dispatchable) int {
 	g.mu.Lock()
 	i := g.i
 	g.v[i] = value
@@ -199,31 +195,49 @@ func (g *GlobalDispatchables) Set(value hypp.Dispatchable) int {
 	return i
 }
 
-func (g GlobalDispatchables) Get(i int) hypp.Dispatchable {
+func (g *dispatchablesRepo) Set(i int, value hypp.Dispatchable) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.v[i]
+	g.v[i] = value
+	g.mu.Unlock()
 }
 
-func (g *GlobalDispatchables) Del(i int) {
+func (g *dispatchablesRepo) Del(i int) {
 	g.mu.Lock()
 	delete(g.v, i)
 	g.mu.Unlock()
 }
 
-var globalNodeEvents = GlobalDispatchables{v: map[int]hypp.Dispatchable{}}
+func (g dispatchablesRepo) Get(i int) hypp.Dispatchable {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.v[i]
+}
+
+var globalNodeEvents = dispatchablesRepo{v: map[int]hypp.Dispatchable{}}
 
 func (e Events) Set(name string, value hypp.Dispatchable) {
-	i := globalNodeEvents.Set(value)
-	js.Value(e).Set(name, i)
+	v := js.Value(e)
+	if p := v.Get(name); p.Type() == js.TypeNumber {
+		globalNodeEvents.Set(p.Int(), value)
+	} else {
+		i := globalNodeEvents.Add(value)
+		v.Set(name, i)
+	}
 }
 
 func (e Events) Get(name string) hypp.Dispatchable {
-	return globalNodeEvents.Get(js.Value(e).Get(name).Int())
+	v := js.Value(e)
+	if p := v.Get(name); p.Type() == js.TypeNumber {
+		return globalNodeEvents.Get(p.Int())
+	}
+	return nil
 }
 
 func (e Events) Del(name string) {
-	globalNodeEvents.Del(js.Value(e).Get(name).Int())
+	v := js.Value(e)
+	if p := v.Get(name); p.Type() == js.TypeNumber {
+		globalNodeEvents.Del(p.Int())
+	}
 }
 
 var _ hypp.Event = Event{}
@@ -256,8 +270,8 @@ func (e EventTarget) JSValue() js.Value {
 	return js.Value(e)
 }
 
-func (e EventTarget) Value() interface{} {
-	return js.Value(e).Get("value")
+func (e EventTarget) Value() string {
+	return js.Value(e).Get("value").String()
 }
 
 var _ hypp.Style = Style{}

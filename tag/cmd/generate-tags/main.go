@@ -15,7 +15,7 @@ import "github.com/macabot/hypp"
 %s
 `
 
-var funcTemplate = `func %s(props hypp.HProps, children ...hypp.VNode) hypp.VNode {
+var funcTemplate = `func %s(props hypp.HProps, children ...*hypp.VNode) *hypp.VNode {
     return hypp.H("%s", props, children...)
 }
 `

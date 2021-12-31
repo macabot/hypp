@@ -45,7 +45,7 @@ func targetValue[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
 	})
 }
 
-func form[S hypp.State](onsubmit hypp.Action[S], props hypp.HProps, children ...hypp.VNode) hypp.VNode {
+func form[S hypp.State](onsubmit hypp.Action[S], props hypp.HProps, children ...*hypp.VNode) *hypp.VNode {
 	props.Set("onsubmit", preventDefault(onsubmit))
 	return html.Form(
 		props,
@@ -53,7 +53,7 @@ func form[S hypp.State](onsubmit hypp.Action[S], props hypp.HProps, children ...
 	)
 }
 
-func checkbox() hypp.VNode {
+func checkbox() *hypp.VNode {
 	return html.Input(
 		hypp.HProps{
 			"type": "checkbox",
@@ -61,7 +61,7 @@ func checkbox() hypp.VNode {
 	)
 }
 
-func submit(value string) hypp.VNode {
+func submit(value string) *hypp.VNode {
 	return html.Input(
 		hypp.HProps{
 			"type":  "submit",
@@ -70,13 +70,13 @@ func submit(value string) hypp.VNode {
 	)
 }
 
-func input[S hypp.State](oninput hypp.Action[S], props hypp.HProps) hypp.VNode {
+func input[S hypp.State](oninput hypp.Action[S], props hypp.HProps) *hypp.VNode {
 	props["type"] = "text"
 	props["oninput"] = targetValue(oninput)
 	return html.Input(props)
 }
 
-func todoItemView(value string) hypp.VNode {
+func todoItemView(value string) *hypp.VNode {
 	return html.Label(
 		nil,
 		checkbox(),
@@ -87,12 +87,12 @@ func todoItemView(value string) hypp.VNode {
 	)
 }
 
-func todosView(title string, todos []TodoItem) []hypp.VNode {
-	ulChildren := make([]hypp.VNode, len(todos))
+func todosView(title string, todos []TodoItem) []*hypp.VNode {
+	ulChildren := make([]*hypp.VNode, len(todos))
 	for i, todo := range todos {
 		ulChildren[i] = html.Li(nil, todoItemView(todo.value))
 	}
-	return []hypp.VNode{
+	return []*hypp.VNode{
 		html.H1(nil, hypp.Text(title)),
 		html.Ul(nil, ulChildren...),
 	}
@@ -120,7 +120,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 			todos: []TodoItem{{value: "Learn Hypp"}},
 			value: "",
 		},
-		View: func(state *MyState) hypp.VNode {
+		View: func(state *MyState) *hypp.VNode {
 			children := todosView("To-do list ✏️", state.todos)
 			children = append(children, form(
 				newTodo,

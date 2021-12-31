@@ -65,15 +65,15 @@ func (h HProps) Set(key string, value interface{}) {
 	d.Set(key, value)
 }
 
-func H(tag string, props HProps, children ...VNode) VNode {
+func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
 }
 
-func Memo(view func(data interface{}) VNode, data interface{}) VNode {
+func Memo(view func(data interface{}) *VNode, data interface{}) *VNode {
 	return memo(view, data)
 }
 
-func Text(value string) VNode {
+func Text(value string) *VNode {
 	return text(value, nil)
 }
 
@@ -98,13 +98,13 @@ type Event interface {
 }
 
 type EventTarget interface {
-	Value() interface{}
+	Value() string
 }
 
 type EventListener func(Event)
 
 type Node interface {
-	ParentNode() Option[Node]
+	ParentNode() Node
 	NodeType() int
 	NodeValue() string
 	SetNodeValue(nodeValue string)
@@ -145,10 +145,10 @@ type AppProps[S State] struct {
 	Init                Dispatchable
 	Subscriptions       Subscriptions[S]
 	DispatchInitializer func(dispatch Dispatch) Dispatch
-	View                func(state S) VNode
+	View                func(state S) *VNode
 	Node                Node
 
-	vdom     VNode
+	vdom     *VNode
 	dispatch Dispatch
 	subs     []Subscription[S]
 	render   Render
@@ -199,15 +199,15 @@ type Option[T any] struct {
 
 type VNode struct {
 	props    HProps
-	children []VNode
+	children []*VNode
 	node     Node                  // Can be nil
 	events   map[string]ActionLike // Action[S] | ActionAndPayload[S]
 	key      Option[string]
 	tag      string
-	memoView func(data interface{}) VNode
+	memoView func(data interface{}) *VNode
 	memo     interface{} // Indexable
 	kind     int
-	isNil    bool
+	// isNil    bool
 }
 
-var NilVNode = VNode{isNil: true}
+// var NilVNode = VNode{isNil: true}
