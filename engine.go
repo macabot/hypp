@@ -215,6 +215,9 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 			node.Events().Del(key)
 			node.RemoveEventListener(key, listener(node))
 		} else {
+			if _, ok := newValue.(Dispatchable); !ok {
+				fmt.Printf("expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue)
+			}
 			node.Events().Set(key, newValue.(Dispatchable))
 			node.AddEventListener(key, listener(node))
 		}
@@ -303,6 +306,9 @@ func patch(
 	isSvg bool,
 ) Node {
 	fmt.Println("A")
+	if oldVNode != nil && oldVNode.tag == "input" {
+		fmt.Printf("%+v\n%+v\n", oldVNode, newVNode)
+	}
 	if oldVNode == newVNode {
 		fmt.Println("B")
 		// Do nothing

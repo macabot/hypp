@@ -157,6 +157,7 @@ func (n Node) RemoveAttribute(name string) {
 }
 
 func (n Node) SetAttribute(name string, value interface{}) {
+	fmt.Printf("Node.SetAttribute %+v of type %T", value, value)
 	js.Value(n).Call("setAttribute", name, value)
 }
 
