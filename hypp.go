@@ -98,7 +98,9 @@ type Node interface {
 	InsertBefore(newNode, referenceNode Node) Node
 	RemoveChild(child Node)
 	Get(name string) Option[interface{}]
-	Has(name string) bool
+	// In implements the in-operator
+	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+	In(name string) bool
 	Set(name string, value interface{})
 	AppendChild(child Node) Node
 	RemoveEventListener(kind string, listener EventListener)

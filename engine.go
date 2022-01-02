@@ -239,7 +239,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 			node.Events().Set(key, newValue.(Dispatchable))
 			node.AddEventListener(key, listener(node))
 		}
-	} else if !isSvg && key != "list" && key != "form" && node.Has(key) {
+	} else if !isSvg && key != "list" && key != "form" && node.In(key) {
 		if isFalsy(newValue) {
 			node.Set(key, "")
 		} else {

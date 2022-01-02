@@ -100,7 +100,7 @@ func (n Node) RemoveChild(child hypp.Node) {
 }
 
 func (n Node) Get(name string) hypp.Option[interface{}] {
-	if !n.Has(name) {
+	if !n.In(name) {
 		return hypp.Option[interface{}]{}
 	}
 	v := js.Value(n).Get(name)
@@ -123,8 +123,14 @@ func (n Node) Get(name string) hypp.Option[interface{}] {
 	}
 }
 
-func (n Node) Has(name string) bool {
-	return js.Value(n).Call("hasOwnProperty", name).Bool()
+func (n Node) In(name string) bool {
+	getPrototypeOf := js.Global().Get("Object").Get("getPrototypeOf")
+	for v := js.Value(n); !v.IsNull(); v = getPrototypeOf.Invoke(v) {
+		if v.Call("hasOwnProperty", name).Bool() {
+			return true
+		}
+	}
+	return false
 }
 
 func (n Node) Set(name string, value interface{}) {
