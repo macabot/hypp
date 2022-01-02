@@ -324,9 +324,6 @@ func patch(
 	isSvg bool,
 ) Node {
 	fmt.Println("A")
-	if oldVNode != nil && oldVNode.tag == "input" {
-		fmt.Printf("%+v\n%+v\n", oldVNode, newVNode)
-	}
 	if oldVNode == newVNode {
 		fmt.Println("B")
 		// Do nothing
@@ -372,7 +369,6 @@ func patch(
 		for _, i := range allKeys {
 			var cmpVal Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
-				fmt.Println("A")
 				cmpVal = node.Get(i)
 			} else {
 				cmpVal = oldProps.Get(i)

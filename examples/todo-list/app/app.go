@@ -110,6 +110,7 @@ func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 	}
 	state = state.clone()
 	state.todos = append(state.todos, TodoItem{value: state.value})
+	state.value = ""
 	return state
 }
 
