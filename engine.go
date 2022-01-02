@@ -10,7 +10,25 @@ var ssrNode = 1
 var textNode = 3
 var svgNS = "http://www.w3.org/2000/svg"
 
-func h(tag string, props HProps, children []*VNode) *VNode {
+func validateHProps(props HProps) {
+	for key, value := range props {
+		if key[0] == 'o' && key[1] == 'n' {
+			if _, ok := value.(Dispatchable); !ok {
+				fmt.Printf("WARNING: expected key '%s' to have Dispatchable value. Got %+v of type %T\n", key, value, value)
+			}
+		} else {
+			switch v := value.(type) {
+			case bool, int, float64, string:
+				// Do nothing
+			default:
+				fmt.Printf("WARNING: expected key '%s' to have value of type int, float64 or string. Got %+v of type %T\n", key, v, v)
+			}
+		}
+	}
+}
+
+func h(tag string, props HProps, children vKids) *VNode {
+	validateHProps(props)
 	return &VNode{
 		tag:      tag,
 		props:    props,
@@ -361,14 +379,14 @@ func patch(
 			}
 			if !equalProps(cmpVal, newProps.Get(i)) {
 				fmt.Println("H")
-				patchProperty(node, i, oldProps.Get(i), newProps.Get(i), listener, isSvg)
+				patchProperty(node, i, oldProps.Get(i).V, newProps.Get(i).V, listener, isSvg)
 			}
 		}
 
 		fmt.Println("I")
 		for newHead <= newTail && oldHead <= oldTail {
-			oldKey = oldVKids[oldHead].key
-			if !oldKey.OK || oldKey != newVKids[newHead].key {
+			oldKey = oldVKids.getKey(oldHead)
+			if !oldKey.OK || oldKey != newVKids.getKey(newHead) {
 				fmt.Println("J")
 				break
 			}
@@ -392,8 +410,8 @@ func patch(
 
 		fmt.Println("K")
 		for newHead <= newTail && oldHead <= oldTail {
-			oldKey = oldVKids[oldTail].key
-			if !oldKey.OK || oldKey != newVKids[newTail].key {
+			oldKey = oldVKids.getKey(oldTail)
+			if !oldKey.OK || oldKey != newVKids.getKey(newTail) {
 				fmt.Println("L")
 				break
 			}
@@ -455,12 +473,12 @@ func patch(
 
 			fmt.Println("Q")
 			for newHead <= newTail {
-				oldVKid = oldVKids[oldHead]
-				oldKey = oldVKid.key
+				oldVKid = oldVKids.get(oldHead)
+				oldKey = oldVKids.getKey(oldHead)
 				newVKids[newHead] = maybeVNode(newVKids[newHead], oldVKid)
-				newKey = newVKids[newHead].key
+				newKey = newVKids.getKey(newHead)
 
-				if (oldKey.OK && newKeyed.Has(oldKey.V)) || newKey.OK && newKey == oldVKids[oldHead+1].key {
+				if (newKeyed.Has(oldKey.V)) || (newKey.OK && newKey == oldVKids.getKey(oldHead+1)) {
 					fmt.Println("R")
 					if !oldKey.OK {
 						fmt.Println("S")
@@ -474,10 +492,14 @@ func patch(
 					fmt.Println("T")
 					if !oldKey.OK {
 						fmt.Println("U")
+						var oldVKidNode Node
+						if oldVKid != nil {
+							oldVKidNode = oldVKid.node
+						}
 						patch(
 							driver,
 							node,
-							oldVKid.node,
+							oldVKidNode,
 							oldVKid,
 							newVKids[newHead],
 							listener,
@@ -535,12 +557,12 @@ func patch(
 
 			fmt.Println("a1")
 			for oldHead <= oldTail {
-				oldVKid = oldVKids[oldHead]
-				oldHead++
-				if !oldVKid.key.OK {
+				oldVKid = oldVKids.get(oldHead)
+				if !oldVKids.getKey(oldHead).OK {
 					fmt.Println("b1")
 					node.RemoveChild(oldVKid.node)
 				}
+				oldHead++
 			}
 
 			fmt.Println("c1")

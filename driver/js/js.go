@@ -49,16 +49,12 @@ func hyppNodeToValue(node hypp.Node) js.Value {
 	if node == nil {
 		return js.Null()
 	}
-	return node.(Node).JSValue()
+	return js.Value(node.(Node))
 }
 
 var _ hypp.Node = Node{}
 
 type Node js.Value
-
-func (n Node) JSValue() js.Value {
-	return js.Value(n)
-}
 
 func (n Node) ParentNode() hypp.Node {
 	return Node(js.Value(n).Get("parentNode"))
@@ -99,6 +95,7 @@ func (n Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
 }
 
 func (n Node) RemoveChild(child hypp.Node) {
+	n.Events().(Events).deleteAll()
 	js.Value(n).Call("removeChild", hyppNodeToValue(child))
 }
 
@@ -157,7 +154,6 @@ func (n Node) RemoveAttribute(name string) {
 }
 
 func (n Node) SetAttribute(name string, value interface{}) {
-	fmt.Printf("Node.SetAttribute %+v of type %T", value, value)
 	js.Value(n).Call("setAttribute", name, value)
 }
 
@@ -176,10 +172,6 @@ func (n Node) Style() hypp.Style {
 var _ hypp.Events = Events{}
 
 type Events js.Value
-
-func (e Events) JSValue() js.Value {
-	return js.Value(e)
-}
 
 type dispatchablesRepo struct {
 	mu sync.Mutex
@@ -241,15 +233,18 @@ func (e Events) Del(name string) {
 	}
 }
 
+func (e Events) deleteAll() {
+	names := js.Global().Get("Object").Call("keys", js.Value(e))
+	l := names.Length()
+	for i := 0; i < l; i++ {
+		name := names.Index(i).String()
+		e.Del(name)
+	}
+}
+
 var _ hypp.Event = Event{}
 
 type Event js.Value
-
-func (e Event) JSValue() js.Value {
-	return js.Value(e)
-}
-
-// func (e Event) IAmDispatchable() {}
 
 func (e Event) Type() string {
 	return js.Value(e).Get("type").String()
@@ -267,10 +262,6 @@ var _ hypp.EventTarget = EventTarget{}
 
 type EventTarget js.Value
 
-func (e EventTarget) JSValue() js.Value {
-	return js.Value(e)
-}
-
 func (e EventTarget) Value() string {
 	return js.Value(e).Get("value").String()
 }
@@ -278,10 +269,6 @@ func (e EventTarget) Value() string {
 var _ hypp.Style = Style{}
 
 type Style js.Value
-
-func (s Style) JSValue() js.Value {
-	return js.Value(s)
-}
 
 func (s Style) SetProperty(propertyName, value string) {
 	js.Value(s).Call("setProperty", propertyName, value)

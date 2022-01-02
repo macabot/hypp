@@ -17,33 +17,7 @@ func App[S State](props AppProps[S]) Dispatch {
 	return app[S](props)
 }
 
-type Dict[K comparable, V any] map[K]V
-
-func (d Dict[K, V]) Get(key K) Option[V] {
-	if d == nil {
-		return Option[V]{}
-	}
-	v, ok := d[key]
-	return Option[V]{V: v, OK: ok}
-}
-
-func (d Dict[K, V]) Has(key K) bool {
-	if d == nil {
-		return false
-	}
-	_, ok := d[key]
-	return ok
-}
-
-func (d *Dict[K, V]) Set(key K, value V) {
-	if d == nil || *d == nil {
-		*d = map[K]V{}
-	}
-	m := *d
-	m[key] = value
-}
-
-type HProps Dict[string, interface{}]
+type HProps map[string]interface{}
 
 func (h HProps) Key() Option[string] {
 	if key := h.Get("key"); key.OK {
@@ -53,16 +27,27 @@ func (h HProps) Key() Option[string] {
 }
 
 func (h HProps) Get(key string) Option[interface{}] {
-	return Dict[string, interface{}](h).Get(key)
+	if h == nil {
+		return Option[interface{}]{}
+	}
+	v, ok := h[key]
+	return Option[interface{}]{V: v, OK: ok}
 }
 
 func (h HProps) Has(key string) bool {
-	return Dict[string, interface{}](h).Has(key)
+	if h == nil {
+		return false
+	}
+	_, ok := h[key]
+	return ok
 }
 
-func (h HProps) Set(key string, value interface{}) {
-	d := Dict[string, interface{}](h)
-	d.Set(key, value)
+func (h *HProps) Set(key string, value interface{}) {
+	if *h == nil {
+		*h = HProps{}
+	}
+	m := *h
+	m[key] = value
 }
 
 func H(tag string, props HProps, children ...*VNode) *VNode {
@@ -199,7 +184,7 @@ type Option[T any] struct {
 
 type VNode struct {
 	props    HProps
-	children []*VNode
+	children vKids
 	node     Node                  // Can be nil
 	events   map[string]ActionLike // Action[S] | ActionAndPayload[S]
 	key      Option[string]
@@ -208,6 +193,22 @@ type VNode struct {
 	memo     interface{} // Indexable
 	kind     int
 	// isNil    bool
+}
+
+type vKids []*VNode
+
+func (v vKids) getKey(i int) Option[string] {
+	if i < len(v) {
+		return v[i].key
+	}
+	return Option[string]{}
+}
+
+func (v vKids) get(i int) *VNode {
+	if i < len(v) {
+		return v[i]
+	}
+	return nil
 }
 
 // var NilVNode = VNode{isNil: true}
