@@ -237,7 +237,9 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 				fmt.Printf("expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue)
 			}
 			node.Events().Set(key, newValue.(Dispatchable))
-			node.AddEventListener(key, listener(node))
+			if isFalsy(oldValue) {
+				node.AddEventListener(key, listener(node))
+			}
 		}
 	} else if !isSvg && key != "list" && key != "form" && node.In(key) {
 		if isFalsy(newValue) {
