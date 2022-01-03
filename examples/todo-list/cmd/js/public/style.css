@@ -1,0 +1,21 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+body {
+  font-size: 1.5em;
+}
+
+ul {
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+form {
+  display: flex;
+}
+
+input[type=checkbox]:checked + span {
+  text-decoration: line-through;
+}
