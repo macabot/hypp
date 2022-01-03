@@ -64,7 +64,7 @@ func Text(value string) *VNode {
 
 type Payload interface{}
 
-type ActionLike interface { // TODO should be exported?
+type ActionLike interface {
 	Dispatchable
 	iAmActionLike()
 }
@@ -194,7 +194,6 @@ type VNode struct {
 	memoView func(data interface{}) *VNode
 	memo     interface{} // Indexable
 	kind     int
-	// isNil    bool
 }
 
 type vKids []*VNode
@@ -212,5 +211,3 @@ func (v vKids) get(i int) *VNode {
 	}
 	return nil
 }
-
-// var NilVNode = VNode{isNil: true}
