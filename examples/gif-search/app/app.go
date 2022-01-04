@@ -2,7 +2,10 @@
 package app
 
 import (
+    "encoding/json"
     "errors"
+    "fmt"
+    "net/http"
     "strings"
 
     "github.com/macabot/hypp"
@@ -21,20 +24,56 @@ func (m MyState) clone() *MyState {
     return &m
 }
 
-type giphyItem struct {
-    Images struct {
-        Original struct {
-            URL string `json:"url"`
-        } `json:"original"`
-    } `json:"images"`
+type giphyBody struct {
+    Data []struct {
+        Images struct {
+            Original struct {
+                URL string `json:"url"`
+            } `json:"original"`
+        } `json:"images"`
+    } `json:"data"`
 }
 
 var giphyURL = "https://api.giphy.com/v1/gifs/search"
 var apiKey = "" // TODO initialize
 
-func getJSON(url string, props)
+type requestProps struct {
+    url string
+    onErr func(err error) hypp.Dispatchable
+    onOK func(items giphyBody) hypp.Dispatchable
+}
 
-func input(oninput func(value string) hypp.Effect, props hypp.HProps) *hypp.VNode {
+func request(dispatch hypp.Dispatch, payload hypp.Payload) {
+    props := payload.(requestProps)
+    go func() {
+        res, err := http.Get(props.url)
+        if err != nil {
+            dispatch(props.onErr(err), nil)
+            return
+        }
+        defer res.Body.Close()
+        if res.StatusCode >= 200 && res.StatusCode < 300 {
+            dispatch(props.onErr(fmt.Errorf("unexpected status code %d", res.StatusCode)), nil)
+            return
+        }
+        var body giphyBody
+        if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+            dispatch(props.onErr(err), nil)
+            return
+        }
+        dispatch(props.onOK(body), nil)
+    }()
+}
+
+func getJSON[S hypp.State](url string, props requestProps) hypp.Effect[S] {
+    props.url = url
+    return hypp.Effect[S]{
+        Effecter: request,
+        Payload: props,
+    }
+}
+
+func input[S hypp.State](oninput func(value string) hypp.ActionAndPayload[S], props hypp.HProps) *hypp.VNode {
     props.Set("oninput", func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
         return oninput(payload.(hypp.Event).Target().Value())
     })
@@ -53,35 +92,38 @@ func p(text string) *hypp.VNode {
     return html.P(nil, hypp.Text(text))
 }
 
-func downloadGif(query string) hypp.Dispatchable {
-    return getJSON(
+func downloadGif[S hypp.State](query string) hypp.Effect[S] {
+    return getJSON[S](
         fmt.Sprintf("%s?q=%s&api_key=%s", giphyURL, query, apiKey),
-        func(err error) hypp.Dispatchable {
-            return hypp.ActionAndPayload{
-                Action: gotError,
-                Payload: err,
-            }
-        },
-        func(items []giphyItem) hypp.Dispatchable {
-            payload := ""
-            if len(items) > 0 {
-                payload = items[0].Images.Original.URL
-            }
-            return hypp.ActionAndPayload{
-                Action: gotUrl,
-                Payload: payload,
-            }
+        requestProps{
+            onErr: func(err error) hypp.Dispatchable {
+                return hypp.ActionAndPayload[*MyState]{
+                    Action: gotError,
+                    Payload: err,
+                }
+            },
+            onOK: func(body giphyBody) hypp.Dispatchable {
+                payload := ""
+                if len(body.Data) > 0 {
+                    payload = body.Data[0].Images.Original.URL
+                }
+                return hypp.ActionAndPayload[*MyState]{
+                    Action: gotURL,
+                    Payload: payload,
+                }
+            },
         },
     )
 }
 
 var errUnexpected = errors.New("Unexpected error, try again later?")
 
-func gotError(state *MyState, err error) *MyState {
+func gotError(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+    err := payload.(error)
     state = state.clone()
     state.isFetching = false
-    if error != nil {
-        state.err = error
+    if err != nil {
+        state.err = err
     } else {
         state.err = errUnexpected
     }
@@ -89,7 +131,8 @@ func gotError(state *MyState, err error) *MyState {
     return state
 }
 
-func gotURL(state *MyState, url string) *MyState {
+func gotURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+    url := payload.(string)
     state = state.clone()
     state.isFetching = false
     if state.query != "" {
@@ -100,37 +143,38 @@ func gotURL(state *MyState, url string) *MyState {
     return state
 }
 
-func getURL(state *MyState, query string) hypp.StateAndEffects {
+func getURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+    query := payload.(string)
     state = state.clone()
     state.isFetching = true
     state.query = query
     state.err = nil
-    state.url = nil
-    return hypp.StateAndEffects{
+    state.url = ""
+    return hypp.StateAndEffects[*MyState]{
         State: state,
-        Effects: []hypp.Effect{
-            downloadGif(query),
+        Effects: []hypp.Effect[*MyState]{
+            downloadGif[*MyState](query),
         },
     }
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-    hypp.App[*MyState](hypp.AppProps{
+    hypp.App[*MyState](hypp.AppProps[*MyState]{
         Driver: driver,
         Init: &MyState{},
         View: func(state *MyState) *hypp.VNode {
             var content *hypp.VNode
-            if state.error != nil {
-                content = p(state.error)
+            if state.err != nil {
+                content = p(state.err.Error())
             } else {
                 content = img(state.url)
             }
-            html.Main(
+            return html.Main(
                 nil,
                 title("GIF Search 💬💁‍♂️"),
-                input(func(value string) hypp.Effect {
-                    return hypp.Effect{
-                        Effecter: getURL,
+                input(func(value string) hypp.ActionAndPayload[*MyState] {
+                    return hypp.ActionAndPayload[*MyState]{
+                        Action: getURL,
                         Payload: strings.TrimSpace(value),
                     }
                 }, map[string]interface{}{
