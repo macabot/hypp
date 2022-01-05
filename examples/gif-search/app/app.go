@@ -35,7 +35,7 @@ type giphyBody struct {
 }
 
 var giphyURL = "https://api.giphy.com/v1/gifs/search"
-var apiKey = "" // TODO initialize
+var APIKey = ""
 
 type requestProps struct {
     url string
@@ -52,7 +52,7 @@ func request(dispatch hypp.Dispatch, payload hypp.Payload) {
             return
         }
         defer res.Body.Close()
-        if res.StatusCode >= 200 && res.StatusCode < 300 {
+        if res.StatusCode < 200 || res.StatusCode >= 300 {
             dispatch(props.onErr(fmt.Errorf("unexpected status code %d", res.StatusCode)), nil)
             return
         }
@@ -74,9 +74,9 @@ func getJSON[S hypp.State](url string, props requestProps) hypp.Effect[S] {
 }
 
 func input[S hypp.State](oninput func(value string) hypp.ActionAndPayload[S], props hypp.HProps) *hypp.VNode {
-    props.Set("oninput", func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+    props.Set("oninput", hypp.Action[*MyState](func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
         return oninput(payload.(hypp.Event).Target().Value())
-    })
+    }))
     return html.Input(props)
 }
 
@@ -94,7 +94,7 @@ func p(text string) *hypp.VNode {
 
 func downloadGif[S hypp.State](query string) hypp.Effect[S] {
     return getJSON[S](
-        fmt.Sprintf("%s?q=%s&api_key=%s", giphyURL, query, apiKey),
+        fmt.Sprintf("%s?q=%s&api_key=%s", giphyURL, query, APIKey),
         requestProps{
             onErr: func(err error) hypp.Dispatchable {
                 return hypp.ActionAndPayload[*MyState]{
