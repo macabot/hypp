@@ -1,0 +1,37 @@
+@import "https://unpkg.com/water.css@2/out/light.min.css";
+
+body {
+  display: grid;
+  font-size: 1.5em;
+  place-items: center;
+  height: 100vh;
+}
+
+.display {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 2.5em;
+  margin-bottom: 12px;
+  padding: 0.2em 0.4em;
+  text-align: right;
+}
+
+.keys {
+  display: grid;
+  grid-gap: 0.1em;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.keys .function {
+  background: lightgray;
+}
+
+.keys .equal {
+  background: rgb(75, 150, 255);
+  grid-column: -2;
+  grid-row: 2 / span 4;
+}
+
+.keys .zero {
+  grid-column: span 2;
+}
