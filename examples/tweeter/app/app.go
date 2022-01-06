@@ -44,7 +44,7 @@ func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
     return newState
 }
 
-func tweet(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func tweet(_ *MyState, _ hypp.Payload) hypp.Dispatchable {
     return &MyState{count: maxLength}
 }
 
