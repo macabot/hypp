@@ -1,0 +1,10 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+body {
+  font-size: 1.5em;
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+}
