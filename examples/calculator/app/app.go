@@ -24,11 +24,10 @@ var computer = map[string]func(a, b float64) float64 {
     "×": func(a, b float64) float64 { return a * b },
     "÷": func(a, b float64) float64 { return a / b },
 }
+var computerKeys = []string{"+", "-", "×", "÷"}
 
-var initialState = &MyState{}
-
-func clear() *MyState {
-    return initialState
+func clear(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+    return &MyState{}
 }
 
 func newDigit(state *MyState, payload hypp.Payload) hypp.Dispatchable {
@@ -57,12 +56,77 @@ func newFn(state *MyState, payload hypp.Payload) hypp.Dispatchable {
     return newState
 }
 
+func equal(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+    newState := state.clone()
+    newState.hasCarry = true
+    if !state.hasCarry {
+        newState.carry = state.value
+    }
+    if state.fn != "" {
+        a := state.carry
+        b := state.value
+        if state.hasCarry {
+            a = state.value
+            b = state.carry
+        }
+        newState.value = computer[state.fn](a, b)
+    }
+    return newState
+}
+
+func displayView(value float64) *hypp.VNode {
+    return html.Div(hypp.HProps{"class": "display"}, hypp.Textf("%f", value))
+}
+
+func keysView(children ...*hypp.VNode) *hypp.VNode {
+    return html.Div(hypp.HProps{"class": "keys"}, children...)
+}
+
+func fnView(keys []string) []*hypp.VNode {
+    out := make([]*hypp.VNode, len(keys))
+    for i, fn := range keys {
+        out[i] = html.Button(hypp.HProps{
+            "class": "function",
+            "onclick": hypp.ActionAndPayload[*MyState]{Action: newFn, Payload: fn},
+        }, hypp.Text(fn))
+    }
+    return out
+}
+
+func digitsView(digits []float64) []*hypp.VNode {
+    out := make([]*hypp.VNode, len(digits))
+    for i, digit := range digits {
+        out[i] = html.Button(hypp.HProps{
+            "class": map[string]bool{
+                "zero": digit == 0,
+            },
+            "onclick": hypp.ActionAndPayload[*MyState]{Action: newDigit, Payload: digit},
+        }, hypp.Textf("%.0f", digit))
+    }
+    return out
+}
+
+func acView() *hypp.VNode {
+    return html.Button(hypp.HProps{"onclick": hypp.Action[*MyState](clear)}, hypp.Text("AC"))
+}
+
+func eqView() *hypp.VNode {
+    return html.Button(hypp.HProps{"onclick": hypp.Action[*MyState](equal), "class": "equal"}, hypp.Text("="))
+}
+
 func Run(driver hypp.Driver, node hypp.Node) {
     hypp.App[*MyState](hypp.AppProps[*MyState]{
         Driver: driver,
-        Init: &MyState{}, // TODO
+        Init: &MyState{},
         View: func(state *MyState) *hypp.VNode {
-            // TODO
+            keys := fnView(computerKeys)
+            keys = append(keys, digitsView([]float64{7, 8, 9, 4, 5, 6, 1, 2, 3, 0})...)
+            keys = append(keys, acView(), eqView())
+            return html.Main(
+                nil,
+                displayView(state.value),
+                keysView(keys...),
+            )
         },
         Node: node,
     })

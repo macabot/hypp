@@ -10,25 +10,32 @@ var ssrNode = 1
 var textNode = 3
 var svgNS = "http://www.w3.org/2000/svg"
 
-func validateHProps(props HProps) {
+func validateHProps(props HProps, tag string) {
 	for key, value := range props {
 		if key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
-				fmt.Printf("WARNING: expected key '%s' to have Dispatchable value. Got %+v of type %T\n", key, value, value)
+				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
+			}
+		} else if key == "class" {
+			switch v := value.(type) {
+			case bool, int, float64, string, []string, map[string]bool:
+				// Do nothing
+			default:
+				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
 			}
 		} else {
 			switch v := value.(type) {
 			case bool, int, float64, string:
 				// Do nothing
 			default:
-				fmt.Printf("WARNING: expected key '%s' to have value of type int, float64 or string. Got %+v of type %T\n", key, v, v)
+				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64 or string. Got %+v of type %T\n", tag, key, v, v)
 			}
 		}
 	}
 }
 
 func h(tag string, props HProps, children vKids) *VNode {
-	validateHProps(props)
+	validateHProps(props, tag)
 	return &VNode{
 		tag:      tag,
 		props:    props,

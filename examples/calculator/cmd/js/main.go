@@ -4,7 +4,7 @@ import (
 	"syscall/js"
 
 	jsd "github.com/macabot/hypp/driver/js"
-	"github.com/macabot/hypp/examples/gif-search/app"
+	"github.com/macabot/hypp/examples/calculator/app"
 )
 
 func main() {
