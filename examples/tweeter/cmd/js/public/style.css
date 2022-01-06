@@ -1,0 +1,27 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+body {
+  display: flex;
+  font-size: 1.5em;
+  justify-content: center;
+}
+
+main {
+  width: clamp(45ch, 50%, 75ch);
+  display: flex;
+  flex-direction: column;
+}
+
+textarea {
+	transition: .2s;
+  resize: none;
+  overflow: hidden;
+}
+
+section {
+  display: flex;
+}
+
+button {
+  margin: 0 0 0 auto;
+}
