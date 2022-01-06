@@ -62,6 +62,10 @@ func Text(value string) *VNode {
 	return text(value, nil)
 }
 
+func Textf(format string, a ...interface{}) *VNode {
+	return Text(fmt.Sprintf(format, a...))
+}
+
 type Payload interface{}
 
 type ActionLike interface {
