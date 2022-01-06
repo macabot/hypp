@@ -2,6 +2,8 @@
 package app
 
 import (
+    "strconv"
+
     "github.com/macabot/hypp"
     "github.com/macabot/hypp/tag/html"
 )
@@ -32,14 +34,14 @@ func clear(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
 
 func newDigit(state *MyState, payload hypp.Payload) hypp.Dispatchable {
     number := payload.(float64)
-    state.clone()
-    state.hasCarry = false
+    newState := state.clone()
+    newState.hasCarry = false
     v := 0.0
     if !state.hasCarry {
         v = state.value
     }
-    state.value = v * 10 + number
-    return state
+    newState.value = v * 10 + number
+    return newState
 }
 
 func newFn(state *MyState, payload hypp.Payload) hypp.Dispatchable {
@@ -75,7 +77,7 @@ func equal(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 }
 
 func displayView(value float64) *hypp.VNode {
-    return html.Div(hypp.HProps{"class": "display"}, hypp.Textf("%f", value))
+    return html.Div(hypp.HProps{"class": "display"}, hypp.Text(strconv.FormatFloat(value, 'f', -1, 64)))
 }
 
 func keysView(children ...*hypp.VNode) *hypp.VNode {
