@@ -16,7 +16,7 @@ func (m MyState) clone() *MyState {
     return &m
 }
 
-func button[S hypp.State](onclick hypp.Action[S], text string, props hypp.HProps) *hypp.VNode {
+func button(onclick hypp.Dispatchable, text string, props hypp.HProps) *hypp.VNode {
     props.Set("onclick", onclick)
     return html.Button(props, hypp.Text(text))
 }
@@ -42,10 +42,6 @@ func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
         newState.count = state.count + len(state.content) - len(cl.content)
     }
     return newState
-}
-
-func tweet(_ *MyState, _ hypp.Payload) hypp.Dispatchable {
-    return &MyState{count: maxLength}
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
@@ -76,7 +72,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
                 html.Section(
                     nil,
                     hypp.Textf("%d", state.count),
-                    button(tweet, "Tweet", hypp.HProps{
+                    button(&MyState{}, "Tweet", hypp.HProps{
                         "disabled": state.count >= maxLength,
                     }),
                 ),
