@@ -80,7 +80,8 @@ func (_ Action[S]) IAmDispatchable() {}
 func (_ Action[S]) iAmActionLike() {}
 
 type Event interface {
-	// Dispatchable
+	EscapeToValue() Value
+
     Type() string
 	PreventDefault()
 	Target() EventTarget
@@ -89,6 +90,66 @@ type Event interface {
 type EventTarget interface {
 	Value() string
 }
+
+type Value interface {
+	Bool() bool
+	Call(m string, args ...interface{}) Value
+	Delete(p string)
+	Equal(w Value) bool
+	Float() float64
+	Get(p string) Value
+	Index(i int) Value
+	InstanceOf(t Value) bool
+	Int() int
+	Invoke(args ...interface{}) Value
+	IsNaN() bool
+	IsNull() bool
+	IsUndefined() bool
+	Length() int
+	New(args ...interface{}) Value
+	Set(p string, x interface{})
+	SetIndex(i int, x interface{})
+	String() string
+	Truthy() bool
+	Type() Type
+}
+
+type Type int
+
+const (
+	TypeUndefined Type = iota
+	TypeNull
+	TypeBoolean
+	TypeNumber
+	TypeString
+	TypeSymbol
+	TypeObject
+	TypeFunction
+)
+
+func (t Type) String() string {
+	switch t {
+	case TypeUndefined:
+		return "undefined"
+	case TypeNull:
+		return "null"
+	case TypeBoolean:
+		return "boolean"
+	case TypeNumber:
+		return "number"
+	case TypeString:
+		return "string"
+	case TypeSymbol:
+		return "symbol"
+	case TypeObject:
+		return "object"
+	case TypeFunction:
+		return "function"
+	default:
+		panic("bad type")
+	}
+}
+
 
 type EventListener func(Event)
 
@@ -127,9 +188,20 @@ type Style interface {
 	Get(name string) string
 }
 
-type Subscriptions[S State] func(state S) []Subscription[S]
+type Subscriptions[S State] func(state S) []Subscription
 
 type Render func()
+
+type ElementCreationOptions struct {
+	Is string
+}
+
+type Driver interface {
+	CreateTextNode(data string) Node
+	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
+	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
+	Enqueue(render func())
+}
 
 type AppProps[S State] struct {
 	Driver Driver
@@ -141,7 +213,7 @@ type AppProps[S State] struct {
 
 	vdom     *VNode
 	dispatch Dispatch
-	subs     []Subscription[S]
+	subs     []Subscription
 	render   Render
 	busy     bool
 	state    S
@@ -174,7 +246,7 @@ type Effect[S State] struct {
 	Payload  Payload
 }
 
-type Subscription[S State] struct {
+type Subscription struct {
 	Subscriber  func(dispatch Dispatch, payload Payload) Unsubscribe
 	Payload     Payload
 	unsubscribe Unsubscribe

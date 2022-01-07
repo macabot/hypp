@@ -16,19 +16,25 @@ func validateHProps(props HProps, tag string) {
 			if _, ok := value.(Dispatchable); !ok {
 				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
 			}
-		} else if key == "class" {
-			switch v := value.(type) {
-			case bool, int, float64, string, []string, map[string]bool:
-				// Do nothing
-			default:
-				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
-			}
 		} else {
-			switch v := value.(type) {
+			switch value.(type) {
 			case bool, int, float64, string:
-				// Do nothing
-			default:
-				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64 or string. Got %+v of type %T\n", tag, key, v, v)
+				continue
+			}
+			if key == "class" {
+				switch v := value.(type) {
+				case []string, map[string]bool:
+					// Do nothing
+				default:
+					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
+				}
+			} else if key == "style" {
+				switch v := value.(type) {
+				case map[string]string:
+					// Do nothing
+				default:
+					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string or map[string]string. Got %+v of type %T\n", tag, key, v, v)
+				}
 			}
 		}
 	}
@@ -86,18 +92,18 @@ func shouldRestart(a, b Payload) bool {
 	return a != b // TODO implement
 }
 
-func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
-	var subs []Subscription[S]
+func patchSubs(oldSubs, newSubs []Subscription, dispatch Dispatch) []Subscription {
+	var subs []Subscription
 	for i := 0; i < len(oldSubs) || i < len(newSubs); i++ {
 		oldSub := oldSubs[i]
 		newSub := newSubs[i]
-		var sub Subscription[S]
+		var sub Subscription
 		if !newSub.Disabled {
 			if oldSub.Disabled || &newSub.Subscriber != &oldSub.Subscriber || shouldRestart(newSub.Payload, oldSub.Payload) {
 				if !oldSub.Disabled {
 					oldSub.unsubscribe()
 				}
-				sub = Subscription[S]{
+				sub = Subscription{
 					Subscriber:  newSub.Subscriber,
 					Payload:     newSub.Payload,
 					unsubscribe: newSub.Subscriber(dispatch, newSub.Payload),
@@ -109,7 +115,7 @@ func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) [
 			if !oldSub.Disabled {
 				oldSub.unsubscribe()
 			}
-			sub = Subscription[S]{
+			sub = Subscription{
 				Disabled: true,
 			}
 		}
@@ -180,17 +186,6 @@ func stylePairKeys(a, b map[string]string) []string {
 		}
 	}
 	return keys
-}
-
-type ElementCreationOptions struct {
-	Is string
-}
-
-type Driver interface {
-	CreateTextNode(data string) Node
-	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
-	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Enqueue(render func())
 }
 
 func createClass(obj interface{}) string {

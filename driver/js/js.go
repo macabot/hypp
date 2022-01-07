@@ -248,9 +248,51 @@ func (e Events) deleteAll() {
 	}
 }
 
+var _ hypp.Value = Value{}
+
+type Value struct{
+	js.Value
+}
+
+func (v Value) Call(m string, args ...interface{}) hypp.Value {
+	return Value{v.Value.Call(m, args...)}
+}
+
+func (v Value) Equal(w hypp.Value) bool {
+	return v.Value.Equal(w.(Value).Value)
+}
+
+func (v Value) Get(p string) hypp.Value {
+	return Value{v.Value.Get(p)}
+}
+
+func (v Value) Index(i int) hypp.Value {
+	return Value{v.Value.Index(i)}
+}
+
+func (v Value) InstanceOf(t hypp.Value) bool {
+	return v.Value.InstanceOf(t.(Value).Value)
+}
+
+func (v Value) Invoke(args ...interface{}) hypp.Value {
+	return Value{v.Value.Invoke(args...)}
+}
+
+func (v Value) New(args ...interface{}) hypp.Value {
+	return Value{v.Value.New(args...)}
+}
+
+func (v Value) Type() hypp.Type {
+	return hypp.Type(v.Value.Type())
+}
+
 var _ hypp.Event = Event{}
 
 type Event js.Value
+
+func (e Event) EscapeToValue() hypp.Value {
+	return Value{js.Value(e)}
+}
 
 func (e Event) Type() string {
 	return js.Value(e).Get("type").String()
