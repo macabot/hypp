@@ -1,0 +1,15 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  height: 100vw;
+}
+
+.draggable {
+  font-size: 6em;
+  cursor: move;
+  user-select: none;
+}
