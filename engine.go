@@ -16,19 +16,25 @@ func validateHProps(props HProps, tag string) {
 			if _, ok := value.(Dispatchable); !ok {
 				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
 			}
-		} else if key == "class" {
-			switch v := value.(type) {
-			case bool, int, float64, string, []string, map[string]bool:
-				// Do nothing
-			default:
-				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
-			}
 		} else {
-			switch v := value.(type) {
+			switch value.(type) {
 			case bool, int, float64, string:
-				// Do nothing
-			default:
-				fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64 or string. Got %+v of type %T\n", tag, key, v, v)
+				continue
+			}
+			if key == "class" {
+				switch v := value.(type) {
+				case []string, map[string]bool:
+					// Do nothing
+				default:
+					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
+				}
+			} else if key == "style" {
+				switch v := value.(type) {
+				case map[string]string:
+					// Do nothing
+				default:
+					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string or map[string]string. Got %+v of type %T\n", tag, key, v, v)
+				}
 			}
 		}
 	}
@@ -86,18 +92,27 @@ func shouldRestart(a, b Payload) bool {
 	return a != b // TODO implement
 }
 
-func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) []Subscription[S] {
-	var subs []Subscription[S]
+type subscriptions []Subscription
+
+func (s subscriptions) Index(i int) Subscription {
+	if i < len(s) {
+		return s[i]
+	}
+	return Subscription{Disabled: true}
+}
+
+func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription {
+	var subs []Subscription
 	for i := 0; i < len(oldSubs) || i < len(newSubs); i++ {
-		oldSub := oldSubs[i]
-		newSub := newSubs[i]
-		var sub Subscription[S]
+		oldSub := oldSubs.Index(i)
+		newSub := newSubs.Index(i)
+		var sub Subscription
 		if !newSub.Disabled {
 			if oldSub.Disabled || &newSub.Subscriber != &oldSub.Subscriber || shouldRestart(newSub.Payload, oldSub.Payload) {
 				if !oldSub.Disabled {
 					oldSub.unsubscribe()
 				}
-				sub = Subscription[S]{
+				sub = Subscription{
 					Subscriber:  newSub.Subscriber,
 					Payload:     newSub.Payload,
 					unsubscribe: newSub.Subscriber(dispatch, newSub.Payload),
@@ -109,7 +124,7 @@ func patchSubs[S State](oldSubs, newSubs []Subscription[S], dispatch Dispatch) [
 			if !oldSub.Disabled {
 				oldSub.unsubscribe()
 			}
-			sub = Subscription[S]{
+			sub = Subscription{
 				Disabled: true,
 			}
 		}
@@ -164,33 +179,27 @@ func (s Set[T]) Set(v T) {
 	s[v] = struct{}{}
 }
 
-func stylePairKeys(a, b map[string]string) []string {
+func stylePairKeys(x, y interface{}) []string {
 	seen := map[string]struct{}{}
-	keys := make([]string, len(a))
-	i := 0
-	for key := range a {
-		seen[key] = struct{}{}
-		keys[i] = key
-		i++
-	}
-	for key := range b {
-		if _, ok := seen[key]; !ok {
+	var keys []string
+
+	if a, ok := x.(map[string]string); ok {
+		for key := range a {
 			seen[key] = struct{}{}
 			keys = append(keys, key)
 		}
 	}
+
+	if b, ok := y.(map[string]string); ok {
+		for key := range b {
+			if _, ok := seen[key]; !ok {
+				seen[key] = struct{}{}
+				keys = append(keys, key)
+			}
+		}
+	}
+
 	return keys
-}
-
-type ElementCreationOptions struct {
-	Is string
-}
-
-type Driver interface {
-	CreateTextNode(data string) Node
-	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
-	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Enqueue(render func())
 }
 
 func createClass(obj interface{}) string {
@@ -220,19 +229,17 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	if key == "key" {
 		// Do nothing
 	} else if key == "style" {
-		oldStyle, ok1 := oldValue.(map[string]string)
-		newStyle, ok2 := newValue.(map[string]string)
-		if ok1 && ok2 {
-			for _, k := range stylePairKeys(oldStyle, newStyle) {
-				v := newStyle[k]
-				if k[0] == '-' {
-					node.Style().SetProperty(k, v)
-				} else {
-					node.Style().Set(k, v)
-				}
+		newStyle, isNewStyle := newValue.(map[string]string)
+		for _, k := range stylePairKeys(oldValue, newValue) {
+			oldValue := ""
+			if isNewStyle && newStyle != nil {
+				oldValue = newStyle[k]
 			}
-		} else {
-			node.Set(key, newValue)
+			if k[0] == '-' {
+				node.Style().SetProperty(k, oldValue)
+			} else {
+				node.Style().Set(k, oldValue)
+			}
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
@@ -241,7 +248,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 			node.RemoveEventListener(key, listener(node))
 		} else {
 			if _, ok := newValue.(Dispatchable); !ok {
-				fmt.Printf("expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue)
+				fmt.Printf("WARNING: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue)
 			}
 			node.Events().Set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
@@ -608,13 +615,12 @@ type EventListenerGenerator func(this Node) EventListener
 
 func app[S State](appProps AppProps[S]) Dispatch {
 	appProps.init()
-	var dispatch Dispatch
 
 	appProps.vdom = recycleNode(appProps.Node)
 
     listener := func(this Node) EventListener {
         return func(event Event) {
-            dispatch(this.Events().Get(event.Type()), event)
+            appProps.dispatch(this.Events().Get(event.Type()), event)
         }
     }
 
@@ -633,25 +639,25 @@ func app[S State](appProps AppProps[S]) Dispatch {
 		)
 	}
 
-	dispatch = func(dispatchable Dispatchable, props Payload) {
+	appProps.dispatch = func(dispatchable Dispatchable, props Payload) {
 		switch v := dispatchable.(type) {
 		case StateAndEffects[S]:
 			update[S](&appProps, v.State)
 			for _, effect := range v.Effects {
-				effect.Effecter(dispatch, effect.Payload)
+				effect.Effecter(appProps.dispatch, effect.Payload)
 			}
 		case Action[S]:
-			dispatch(v(appProps.state, props), nil)
+			appProps.dispatch(v(appProps.state, props), nil)
 		case ActionAndPayload[S]:
-			dispatch(v.Action, v.Payload)
+			appProps.dispatch(v.Action, v.Payload)
 		case S: // State
 			update[S](&appProps, v)
 		default:
 			panic(fmt.Errorf("hypp: dispatchable has unexpected type '%[1]T'. Expected type 'StateAndEffects[%[2]T]', 'Action[%[2]T]', 'ActionAndPayload[%[2]T]' or '%[2]T'", dispatchable, appProps.state))
 		}
 	}
-	dispatch = appProps.DispatchInitializer(dispatch)
-	dispatch(appProps.Init, nil)
+	appProps.dispatch = appProps.DispatchInitializer(appProps.dispatch)
+	appProps.dispatch(appProps.Init, nil)
 
-	return dispatch
+	return appProps.dispatch
 }
