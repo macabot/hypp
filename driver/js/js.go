@@ -45,6 +45,28 @@ func (d Driver) Enqueue(render func()) {
 	}))
 }
 
+func (d Driver) Window() hypp.Window {
+	return Window(js.Global())
+}
+
+var _ hypp.Window = Window{}
+
+type Window js.Value
+
+func (w Window) RemoveEventListener(kind string, listener hypp.EventListener) {
+	js.Value(w).Call("removeEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		listener(Event(args[0]))
+		return nil
+	}))
+}
+
+func (w Window) AddEventListener(kind string, listener hypp.EventListener) {
+	js.Value(w).Call("addEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		listener(Event(args[0]))
+		return nil
+	}))
+}
+
 func hyppNodeToValue(node hypp.Node) js.Value {
 	if node == nil {
 		return js.Null()
@@ -133,7 +155,17 @@ func (n Node) In(name string) bool {
 	return false
 }
 
+func validateValue(value interface{}) {
+	switch value.(type) {
+	case nil, bool, int, float64, string:
+		// Do nothing
+	default:
+		fmt.Printf("WARNING: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value)
+	}
+}
+
 func (n Node) Set(name string, value interface{}) {
+	validateValue(value)
 	js.Value(n).Set(name, value)
 }
 
@@ -248,9 +280,51 @@ func (e Events) deleteAll() {
 	}
 }
 
+var _ hypp.Value = Value{}
+
+type Value struct{
+	js.Value
+}
+
+func (v Value) Call(m string, args ...interface{}) hypp.Value {
+	return Value{v.Value.Call(m, args...)}
+}
+
+func (v Value) Equal(w hypp.Value) bool {
+	return v.Value.Equal(w.(Value).Value)
+}
+
+func (v Value) Get(p string) hypp.Value {
+	return Value{v.Value.Get(p)}
+}
+
+func (v Value) Index(i int) hypp.Value {
+	return Value{v.Value.Index(i)}
+}
+
+func (v Value) InstanceOf(t hypp.Value) bool {
+	return v.Value.InstanceOf(t.(Value).Value)
+}
+
+func (v Value) Invoke(args ...interface{}) hypp.Value {
+	return Value{v.Value.Invoke(args...)}
+}
+
+func (v Value) New(args ...interface{}) hypp.Value {
+	return Value{v.Value.New(args...)}
+}
+
+func (v Value) Type() hypp.Type {
+	return hypp.Type(v.Value.Type())
+}
+
 var _ hypp.Event = Event{}
 
 type Event js.Value
+
+func (e Event) EscapeToValue() hypp.Value {
+	return Value{js.Value(e)}
+}
 
 func (e Event) Type() string {
 	return js.Value(e).Get("type").String()
@@ -260,15 +334,15 @@ func (e Event) PreventDefault() {
 	js.Value(e).Call("preventDefault")
 }
 
-func (e Event) Target() hypp.EventTarget {
-	return EventTarget(js.Value(e).Get("target"))
+func (e Event) Target() hypp.EventTargetValuer {
+	return EventTargetValuer(js.Value(e).Get("target"))
 }
 
-var _ hypp.EventTarget = EventTarget{}
+var _ hypp.EventTargetValuer = EventTargetValuer{}
 
-type EventTarget js.Value
+type EventTargetValuer js.Value
 
-func (e EventTarget) Value() string {
+func (e EventTargetValuer) Value() string {
 	return js.Value(e).Get("value").String()
 }
 
