@@ -21,7 +21,7 @@ func (m MyState) clone() *MyState {
     return &m
 }
 
-var window hypp.Node
+var window hypp.Window
 
 type mouseProps struct {
     name string
@@ -30,7 +30,7 @@ type mouseProps struct {
 
 func on(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
     props := payload.(mouseProps)
-    listener := func(event hypp.Event)  {
+    listener := func(event hypp.Event) {
         dispatch(props.dispatchable, event)
     }
     window.AddEventListener(props.name, listener)
@@ -91,6 +91,7 @@ func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
+    window = driver.Window()
     hypp.App[*MyState](hypp.AppProps[*MyState]{
         Driver: driver,
         Init: &MyState{x: 5, y: 20},
@@ -104,6 +105,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
             return html.Main(
                 nil,
                 draggable(draggableContent, hypp.HProps{
+                    "onmousedown": hypp.Action[*MyState](drag),
                     "style": map[string]string{
                         "cursor": "move",
                         "left": fmt.Sprintf("%dpx", state.x - state.offsetX),

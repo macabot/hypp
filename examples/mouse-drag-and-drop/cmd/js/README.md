@@ -11,3 +11,5 @@ Start a server in the `public` directory. E.g.:
 ```shell
 $ python3 -m http.server
 ```
+
+TODO: fix performance

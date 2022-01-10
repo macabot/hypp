@@ -84,10 +84,10 @@ type Event interface {
 
     Type() string
 	PreventDefault()
-	Target() EventTarget
+	Target() EventTargetValuer
 }
 
-type EventTarget interface {
+type EventTargetValuer interface {
 	Value() string
 }
 
@@ -153,7 +153,13 @@ func (t Type) String() string {
 
 type EventListener func(Event)
 
+type EventTarget interface {
+	RemoveEventListener(kind string, listener EventListener)
+	AddEventListener(kind string, listener EventListener)
+}
+
 type Node interface {
+	EventTarget
 	ParentNode() Node
 	NodeType() int
 	NodeValue() string
@@ -168,12 +174,14 @@ type Node interface {
 	In(name string) bool
 	Set(name string, value interface{})
 	AppendChild(child Node) Node
-	RemoveEventListener(kind string, listener EventListener)
-	AddEventListener(kind string, listener EventListener)
 	RemoveAttribute(name string)
 	SetAttribute(name string, value interface{})
 	Events() Events
 	Style() Style
+}
+
+type Window interface {
+	EventTarget
 }
 
 type Events interface {
@@ -201,6 +209,7 @@ type Driver interface {
 	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
 	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
 	Enqueue(render func())
+	Window() Window
 }
 
 type AppProps[S State] struct {

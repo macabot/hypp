@@ -45,6 +45,28 @@ func (d Driver) Enqueue(render func()) {
 	}))
 }
 
+func (d Driver) Window() hypp.Window {
+	return Window(js.Global())
+}
+
+var _ hypp.Window = Window{}
+
+type Window js.Value
+
+func (w Window) RemoveEventListener(kind string, listener hypp.EventListener) {
+	js.Value(w).Call("removeEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		listener(Event(args[0]))
+		return nil
+	}))
+}
+
+func (w Window) AddEventListener(kind string, listener hypp.EventListener) {
+	js.Value(w).Call("addEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		listener(Event(args[0]))
+		return nil
+	}))
+}
+
 func hyppNodeToValue(node hypp.Node) js.Value {
 	if node == nil {
 		return js.Null()
@@ -133,7 +155,17 @@ func (n Node) In(name string) bool {
 	return false
 }
 
+func validateValue(value interface{}) {
+	switch value.(type) {
+	case nil, bool, int, float64, string:
+		// Do nothing
+	default:
+		fmt.Printf("WARNING: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value)
+	}
+}
+
 func (n Node) Set(name string, value interface{}) {
+	validateValue(value)
 	js.Value(n).Set(name, value)
 }
 
@@ -302,15 +334,15 @@ func (e Event) PreventDefault() {
 	js.Value(e).Call("preventDefault")
 }
 
-func (e Event) Target() hypp.EventTarget {
-	return EventTarget(js.Value(e).Get("target"))
+func (e Event) Target() hypp.EventTargetValuer {
+	return EventTargetValuer(js.Value(e).Get("target"))
 }
 
-var _ hypp.EventTarget = EventTarget{}
+var _ hypp.EventTargetValuer = EventTargetValuer{}
 
-type EventTarget js.Value
+type EventTargetValuer js.Value
 
-func (e EventTarget) Value() string {
+func (e EventTargetValuer) Value() string {
 	return js.Value(e).Get("value").String()
 }
 
