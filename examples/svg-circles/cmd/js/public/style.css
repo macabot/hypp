@@ -1,0 +1,11 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+body {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+}
+
+main {
+  width: 100%;
+}
