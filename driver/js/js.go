@@ -174,17 +174,28 @@ func (n Node) AppendChild(child hypp.Node) hypp.Node {
 }
 
 func (n Node) RemoveEventListener(kind string, listener hypp.EventListener) {
-	js.Value(n).Call("removeEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		listener(Event(args[0]))
-		return nil
-	}))
+	v := js.Value(n)
+	if eventListeners := v.Get("eventListeners"); !eventListeners.IsUndefined() {
+		if eventListener := eventListeners.Get(kind); !eventListener.IsUndefined() {
+			v.Call("removeEventListener", kind, eventListener)
+		}
+	}
 }
 
 func (n Node) AddEventListener(kind string, listener hypp.EventListener) {
-	js.Value(n).Call("addEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	eventListener := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		listener(Event(args[0]))
 		return nil
-	}))
+	})
+
+	v := js.Value(n)
+	// TODO scope 'eventListeners', as well as 'events', under 'hypp'?
+	if eventListeners := v.Get("eventListeners"); eventListeners.IsUndefined() {
+		v.Set("eventListeners", map[string]interface{}{kind: eventListener})
+	} else {
+		eventListeners.Set(kind, eventListener)
+	}
+	v.Call("addEventListener", kind, eventListener)
 }
 
 func (n Node) RemoveAttribute(name string) {
