@@ -153,9 +153,13 @@ func (t Type) String() string {
 
 type EventListener func(Event)
 
+type EventListenerID interface {
+	IAmAnEventListenerID()
+}
+
 type EventTarget interface {
-	RemoveEventListener(kind string, listener EventListener)
-	AddEventListener(kind string, listener EventListener)
+	RemoveEventListener(kind string, listenerID EventListenerID)
+	AddEventListener(kind string, listener EventListener) EventListenerID
 }
 
 type Node interface {
@@ -178,6 +182,8 @@ type Node interface {
 	SetAttribute(name string, value interface{})
 	Events() Events
 	Style() Style
+	EventListenerID(kind string) EventListenerID
+	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
 
 type Window interface {
