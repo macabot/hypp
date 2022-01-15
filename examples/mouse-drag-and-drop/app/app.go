@@ -33,9 +33,9 @@ func on(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
     listener := func(event hypp.Event) {
         dispatch(props.dispatchable, event)
     }
-    window.AddEventListener(props.name, listener)
+    id := window.AddEventListener(props.name, listener)
     return func() {
-        window.RemoveEventListener(props.name, listener)
+        window.RemoveEventListener(props.name, id)
     }
 }
 

@@ -53,18 +53,12 @@ var _ hypp.Window = Window{}
 
 type Window js.Value
 
-func (w Window) RemoveEventListener(kind string, listener hypp.EventListener) {
-	js.Value(w).Call("removeEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		listener(Event(args[0]))
-		return nil
-	}))
+func (w Window) RemoveEventListener(kind string, listenerID hypp.EventListenerID) {
+	EventTarget(w).RemoveEventListener(kind, listenerID)
 }
 
-func (w Window) AddEventListener(kind string, listener hypp.EventListener) {
-	js.Value(w).Call("addEventListener", kind, js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		listener(Event(args[0]))
-		return nil
-	}))
+func (w Window) AddEventListener(kind string, listener hypp.EventListener) hypp.EventListenerID {
+	return EventTarget(w).AddEventListener(kind, listener)
 }
 
 func hyppNodeToValue(node hypp.Node) js.Value {
@@ -73,6 +67,29 @@ func hyppNodeToValue(node hypp.Node) js.Value {
 	}
 	return js.Value(node.(Node))
 }
+
+var _ hypp.EventTarget = EventTarget{}
+
+type EventTarget js.Value
+
+func (e EventTarget) RemoveEventListener(kind string, listenerID hypp.EventListenerID) {
+	js.Value(e).Call("removeEventListener", kind, js.Value(listenerID.(EventListenerID)))
+}
+
+func (e EventTarget) AddEventListener(kind string, listener hypp.EventListener) hypp.EventListenerID {
+	f := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		listener(Event(args[0]))
+		return nil
+	})
+	js.Value(e).Call("addEventListener", kind, f)
+	return EventListenerID(js.ValueOf(f))
+}
+
+var _ hypp.EventListenerID = EventListenerID{}
+
+type EventListenerID js.Value
+
+func (e EventListenerID) IAmAnEventListenerID() {}
 
 var _ hypp.Node = Node{}
 
@@ -173,29 +190,12 @@ func (n Node) AppendChild(child hypp.Node) hypp.Node {
 	return Node(js.Value(n).Call("appendChild", hyppNodeToValue(child)))
 }
 
-func (n Node) RemoveEventListener(kind string, listener hypp.EventListener) {
-	v := js.Value(n)
-	if eventListeners := v.Get("eventListeners"); !eventListeners.IsUndefined() {
-		if eventListener := eventListeners.Get(kind); !eventListener.IsUndefined() {
-			v.Call("removeEventListener", kind, eventListener)
-		}
-	}
+func (n Node) RemoveEventListener(kind string, listenerID hypp.EventListenerID) {
+	EventTarget(n).RemoveEventListener(kind, listenerID)
 }
 
-func (n Node) AddEventListener(kind string, listener hypp.EventListener) {
-	eventListener := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		listener(Event(args[0]))
-		return nil
-	})
-
-	v := js.Value(n)
-	// TODO scope 'eventListeners', as well as 'events', under 'hypp'?
-	if eventListeners := v.Get("eventListeners"); eventListeners.IsUndefined() {
-		v.Set("eventListeners", map[string]interface{}{kind: eventListener})
-	} else {
-		eventListeners.Set(kind, eventListener)
-	}
-	v.Call("addEventListener", kind, eventListener)
+func (n Node) AddEventListener(kind string, listener hypp.EventListener) hypp.EventListenerID {
+	return EventTarget(n).AddEventListener(kind, listener)
 }
 
 func (n Node) RemoveAttribute(name string) {
@@ -216,6 +216,29 @@ func (n Node) Events() hypp.Events {
 
 func (n Node) Style() hypp.Style {
 	return Style(js.Value(n).Get("style"))
+}
+
+func (n Node) EventListenerID(kind string) hypp.EventListenerID {
+	listeners := js.Value(n).Get("eventListeners")
+	if listeners.IsUndefined() {
+		return nil
+	}
+	listener := listeners.Get(kind)
+	if listener.IsUndefined() {
+		return nil
+	}
+	return EventListenerID(listener)
+}
+
+func (n Node) SetEventListenerID(kind string, eventListenerID hypp.EventListenerID) {
+	v := js.Value(n)
+	id := js.Value(eventListenerID.(EventListenerID))
+	listeners := v.Get("eventListeners")
+	if listeners.IsUndefined() {
+		v.Set("eventListeners", map[string]interface{}{kind: id})
+	} else {
+		listeners.Set(kind, id)
+	}
 }
 
 var _ hypp.Events = Events{}
