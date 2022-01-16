@@ -45,7 +45,7 @@ func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-    hypp.App[*MyState](hypp.AppProps[*MyState]{
+    hypp.App(hypp.AppProps[*MyState]{
         Driver: driver,
         Init: &MyState{count: maxLength},
         View: func(state *MyState) *hypp.VNode {
