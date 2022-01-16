@@ -92,7 +92,7 @@ func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 
 func Run(driver hypp.Driver, node hypp.Node) {
     window = driver.Window()
-    hypp.App[*MyState](hypp.AppProps[*MyState]{
+    hypp.App(hypp.AppProps[*MyState]{
         Driver: driver,
         Init: &MyState{x: 5, y: 20},
         View: func(state *MyState) *hypp.VNode {
