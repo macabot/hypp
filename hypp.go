@@ -242,7 +242,7 @@ type Dispatchable interface {
 
 type StateAndEffects[S State] struct {
 	State   S
-	Effects []Effect[S]
+	Effects []Effect
 }
 
 func (_ StateAndEffects[S]) IAmDispatchable() {}
@@ -256,7 +256,7 @@ func (_ ActionAndPayload[S]) IAmDispatchable() {}
 
 func (_ ActionAndPayload[S]) iAmActionLike() {}
 
-type Effect[S State] struct {
+type Effect struct {
 	Effecter func(dispatch Dispatch, payload Payload)
 	Payload  Payload
 }
