@@ -2,7 +2,6 @@
 package app
 
 import (
-    "fmt"
     "math"
     "time"
 
@@ -18,6 +17,15 @@ type MyState struct {
 
 func (m MyState) clone() *MyState {
     return &m
+}
+
+func angle(t time.Time) float64 {
+    return (2 * math.Pi * float64(t.Unix())) / 60
+}
+
+type timeProps struct {
+    delay time.Duration
+    dispatchable hypp.Dispatchable
 }
 
 func interval(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
@@ -38,7 +46,7 @@ func interval(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
 
 func getTime(dispatch hypp.Dispatch, payload hypp.Payload) {
     props := payload.(timeProps)
-    dispatch(props.action, time.Now())
+    dispatch(props.dispatchable, time.Now())
 }
 
 func every(delay time.Duration, dispatchable hypp.Dispatchable) hypp.Subscription {
@@ -51,7 +59,7 @@ func every(delay time.Duration, dispatchable hypp.Dispatchable) hypp.Subscriptio
 func now(dispatchable hypp.Dispatchable) hypp.Effect {
     return hypp.Effect{
         Effecter: getTime,
-        Payload: timeProps{dispatchable: dispatchable}
+        Payload: timeProps{dispatchable: dispatchable},
     }
 }
 
@@ -64,7 +72,12 @@ func tick(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 func Run(driver hypp.Driver, node hypp.Node) {
     hypp.App(hypp.AppProps[*MyState]{
         Driver: driver,
-        Init: &MyState{} // TODO,
+        Init: hypp.StateAndEffects[*MyState]{
+            State: &MyState{},
+            Effects: []hypp.Effect{
+                now(hypp.Action[*MyState](tick)),
+            },
+        },
         View: func(state *MyState) *hypp.VNode {
             return html.Svg(
                 hypp.HProps{
@@ -77,7 +90,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
                     "cy": 50,
                     "r": 45,
                     "stroke": "#0366d6",
-                    "fille": "white",
+                    "fill": "white",
                 }),
                 svg.Line(hypp.HProps{
                     "x1": 50,
@@ -86,7 +99,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
                     "y2": 50 + 40 * math.Sin(angle(state.time)),
                     "stroke": "#0366d6",
                     "stroke-width": 3,
-                })
+                }),
             )
         },
         Subscriptions: func(state *MyState) []hypp.Subscription {
