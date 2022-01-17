@@ -65,9 +65,9 @@ func request(dispatch hypp.Dispatch, payload hypp.Payload) {
     }()
 }
 
-func getJSON[S hypp.State](url string, props requestProps) hypp.Effect[S] {
+func getJSON(url string, props requestProps) hypp.Effect {
     props.url = url
-    return hypp.Effect[S]{
+    return hypp.Effect{
         Effecter: request,
         Payload: props,
     }
@@ -92,8 +92,8 @@ func p(text string) *hypp.VNode {
     return html.P(nil, hypp.Text(text))
 }
 
-func downloadGif[S hypp.State](query string) hypp.Effect[S] {
-    return getJSON[S](
+func downloadGif(query string) hypp.Effect {
+    return getJSON(
         fmt.Sprintf("%s?q=%s&api_key=%s", giphyURL, query, APIKey),
         requestProps{
             onErr: func(err error) hypp.Dispatchable {
@@ -152,8 +152,8 @@ func getURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
     state.url = ""
     return hypp.StateAndEffects[*MyState]{
         State: state,
-        Effects: []hypp.Effect[*MyState]{
-            downloadGif[*MyState](query),
+        Effects: []hypp.Effect{
+            downloadGif(query),
         },
     }
 }
