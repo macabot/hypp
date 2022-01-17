@@ -1,0 +1,11 @@
+@import "https://unpkg.com/water.css@2.0.0/out/water.min.css";
+
+body {
+  font-size: 1.5em;
+  display: flex;
+  justify-content: center;
+}
+
+section {
+  display: flex;
+}
