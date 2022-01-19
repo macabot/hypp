@@ -53,12 +53,26 @@ var _ hypp.Window = Window{}
 
 type Window js.Value
 
+func (w Window) EscapeToValue() hypp.Value {
+	return EscapeToValuer(w).EscapeToValue()
+}
+
 func (w Window) RemoveEventListener(kind string, listenerID hypp.EventListenerID) {
 	EventTarget(w).RemoveEventListener(kind, listenerID)
 }
 
 func (w Window) AddEventListener(kind string, listener hypp.EventListener) hypp.EventListenerID {
 	return EventTarget(w).AddEventListener(kind, listener)
+}
+
+func (w Window) RequestAnimationFrame(f func()) int {
+	return js.Value(w).Call(
+		"requestAnimationFrame",
+		js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			f()
+			return nil
+		}),
+	).Int()
 }
 
 func hyppNodeToValue(node hypp.Node) js.Value {
@@ -352,12 +366,20 @@ func (v Value) Type() hypp.Type {
 	return hypp.Type(v.Value.Type())
 }
 
+var _ hypp.EscapeToValuer = EscapeToValuer{}
+
+type EscapeToValuer js.Value
+
+func (e EscapeToValuer) EscapeToValue() hypp.Value {
+	return Value{js.Value(e)}
+}
+
 var _ hypp.Event = Event{}
 
 type Event js.Value
 
 func (e Event) EscapeToValue() hypp.Value {
-	return Value{js.Value(e)}
+	return EscapeToValuer(e).EscapeToValue()
 }
 
 func (e Event) Type() string {
