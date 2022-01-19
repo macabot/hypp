@@ -80,8 +80,7 @@ func (_ Action[S]) IAmDispatchable() {}
 func (_ Action[S]) iAmActionLike() {}
 
 type Event interface {
-	EscapeToValue() Value
-
+	EscapeToValuer
     Type() string
 	PreventDefault()
 	Target() EventTargetValuer
@@ -186,8 +185,14 @@ type Node interface {
 	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
 
+type EscapeToValuer interface {
+	EscapeToValue() Value
+}
+
 type Window interface {
+	EscapeToValuer
 	EventTarget
+	RequestAnimationFrame(f func()) int
 }
 
 type Events interface {
