@@ -1,24 +1,65 @@
 //go:build go1.18
-// +build go1.18
-
-// This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
+// Package hypp creates reactive web applications.
 package hypp
+// This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
 
 import (
 	"fmt"
 )
 
+// State constrains the state that is used in the hypp application.
+// It must be comparable and Dispatchable.
+//
+// Most often you will embed the EmptyState:
+//	package example
+//
+//	type MyState struct {
+//		hypp.EmptyState
+//	}
+//
+// Alternatively, you can explicitly make your state Dispatchable:
+//	package example
+//
+//	type MyState string
+//
+//	func(_ MyState) IAmDispatchable() {}
 type State interface {
 	comparable
 	Dispatchable
 }
 
+// EmptyState implements the State constraint.
+// Embed the EmptyState in your state to implement the State constraint:
+//	package example
+//
+//	type MyState struct {
+//		hypp.EmptyState
+//		Foo string
+//		Bar int
+//	}
+type EmptyState struct{}
+
+// IAmDispatchable makes the EmptyState Dispatchable.
+func (_ EmptyState) IAmDispatchable() {}
+
+// App creates a new application.
 func App[S State](props AppProps[S]) Dispatch {
 	return app[S](props)
 }
 
+// HProps are the properties to create a *VNode.
+//
+// The allowed value type depends on the key:
+//	| Key               | Value type                                            |
+//	| ----------------- | ----------------------------------------------------- |
+//	| Starts with "on"  | Dispatchable                                          |
+//	| "class"           | bool, int, float64, string, []string, map[string]bool |
+//	| "style"           | bool, int, float64, string, map[string]string         |
+//	| Other             | bool, int, float64, string                            |
 type HProps map[string]interface{}
 
+// Key returns the "key" property, if available.
+// The value is always converted into a string.
 func (h HProps) Key() Option[string] {
 	if key := h.Get("key"); key.OK {
 		return Option[string]{V: fmt.Sprint(key.V), OK: true}
@@ -26,6 +67,7 @@ func (h HProps) Key() Option[string] {
 	return Option[string]{}
 }
 
+// Get returns the requested key, if available.
 func (h HProps) Get(key string) Option[interface{}] {
 	if h == nil {
 		return Option[interface{}]{}
@@ -34,6 +76,7 @@ func (h HProps) Get(key string) Option[interface{}] {
 	return Option[interface{}]{V: v, OK: ok}
 }
 
+// Has returns true if the requested key is found.
 func (h HProps) Has(key string) bool {
 	if h == nil {
 		return false
@@ -42,6 +85,8 @@ func (h HProps) Has(key string) bool {
 	return ok
 }
 
+// Set sets the given key value pair.
+// It is safe to call this method on a nil value.
 func (h *HProps) Set(key string, value interface{}) {
 	if *h == nil {
 		*h = HProps{}
@@ -50,6 +95,21 @@ func (h *HProps) Set(key string, value interface{}) {
 	m[key] = value
 }
 
+// H creates a new *VNode specified by tag.
+//
+// See the tag package for functions that create specific tags:
+//	package main
+//
+//	import (
+//		"github.com/macabot/hypp"
+//		"github.com/macabot/hypp/tag/html"
+//	)
+//
+//	func main() {
+//		hypp.H("main", hypp.HProps{"class": "main"})
+//		// Is equivalent to
+//		html.Main(hypp.HProps{"class": "main"})
+//	}
 func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
 }
@@ -58,26 +118,23 @@ func Memo(view func(data interface{}) *VNode, data interface{}) *VNode {
 	return memo(view, data)
 }
 
+// Text creates a text *VNode.
 func Text(value string) *VNode {
 	return text(value, nil)
 }
 
+// Textf creates a text *VNode by interpolating the format with the arguments.
 func Textf(format string, a ...interface{}) *VNode {
 	return Text(fmt.Sprintf(format, a...))
 }
 
+// Payload is the value that is dispatched.
 type Payload interface{}
-
-type ActionLike interface {
-	Dispatchable
-	iAmActionLike()
-}
 
 type Action[S State] func(state S, payload Payload) Dispatchable
 
+// IAmDispatchable makes Action Dispatchable.
 func (_ Action[S]) IAmDispatchable() {}
-
-func (_ Action[S]) iAmActionLike() {}
 
 type Event interface {
 	EscapeToValuer
@@ -239,6 +296,15 @@ type AppProps[S State] struct {
 	state    S
 }
 
+func (a *AppProps[S]) init() {
+	if a.DispatchInitializer == nil {
+		a.DispatchInitializer = dispatchInitializerID
+	}
+	if a.Init == nil {
+		a.Init = EmptyState{}
+	}
+}
+
 type Dispatch func(dispatchable Dispatchable, payload Payload)
 
 type Dispatchable interface {
@@ -258,8 +324,6 @@ type ActionAndPayload[S State] struct {
 }
 
 func (_ ActionAndPayload[S]) IAmDispatchable() {}
-
-func (_ ActionAndPayload[S]) iAmActionLike() {}
 
 type Effect struct {
 	Effecter func(dispatch Dispatch, payload Payload)
@@ -284,7 +348,6 @@ type VNode struct {
 	props    HProps
 	children vKids
 	node     Node                  // Can be nil
-	events   map[string]ActionLike // Action[S] | ActionAndPayload[S]
 	key      Option[string]
 	tag      string
 	memoView func(data interface{}) *VNode

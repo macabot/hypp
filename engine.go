@@ -1,5 +1,5 @@
-// This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.js
 package hypp
+// This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.js
 
 import (
 	"fmt"
@@ -168,14 +168,14 @@ func (s vNodeMap) HasOption(key Option[string]) bool {
 	return s.Has(key.V)
 }
 
-type Set[T comparable] map[T]struct{}
+type setOfStrings map[string]struct{}
 
-func (s Set[T]) Has(v T) bool {
+func (s setOfStrings) Has(v string) bool {
 	_, ok := s[v]
 	return ok
 }
 
-func (s Set[T]) Set(v T) {
+func (s setOfStrings) Set(v string) {
 	s[v] = struct{}{}
 }
 
@@ -225,7 +225,7 @@ func isFalsy(v interface{}) bool {
 	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
 }
 
-func patchProperty(node Node, key string, oldValue, newValue interface{}, listener EventListenerGenerator, isSvg bool) {
+func patchProperty(node Node, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// Do nothing
 	} else if key == "style" {
@@ -276,7 +276,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	}
 }
 
-func createNode(driver Driver, vdom *VNode, listener EventListenerGenerator, isSvg bool) Node {
+func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isSvg bool) Node {
 	props := vdom.props
 	var node Node
 	if vdom.kind == textNode {
@@ -339,7 +339,7 @@ func patch(
 	node Node,
 	oldVNode *VNode,
 	newVNode *VNode,
-	listener EventListenerGenerator,
+	listener eventListenerGenerator,
 	isSvg bool,
 ) Node {
 	if oldVNode == newVNode {
@@ -462,7 +462,7 @@ func patch(
 			}
 		} else {
 			keyed := vNodeMap{}
-			newKeyed := Set[string]{}
+			newKeyed := setOfStrings{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key
 				if oldKey.OK {
@@ -584,19 +584,6 @@ func maybeVNode(newVNode, oldVNode *VNode) *VNode {
 	}
 }
 
-type EmptyState struct{}
-
-func (_ EmptyState) IAmDispatchable() {}
-
-func (a *AppProps[S]) init() {
-	if a.DispatchInitializer == nil {
-		a.DispatchInitializer = dispatchInitializerID
-	}
-	if a.Init == nil {
-		a.Init = EmptyState{}
-	}
-}
-
 func update[S State](appProps *AppProps[S], newState S) {
 	if appProps.state != newState {
 		appProps.state = newState
@@ -614,7 +601,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 	}
 }
 
-type EventListenerGenerator func(this Node) EventListener
+type eventListenerGenerator func(this Node) EventListener
 
 func app[S State](appProps AppProps[S]) Dispatch {
 	appProps.init()
