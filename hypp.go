@@ -180,6 +180,7 @@ type Value interface {
 // See https://pkg.go.dev/syscall/js#Type
 type Type int
 
+// These are the valid Type values.
 const (
 	TypeUndefined Type = iota
 	TypeNull
@@ -191,6 +192,8 @@ const (
 	TypeFunction
 )
 
+// String returns the string value of Type t.
+// It panics if t is not one of the valid Type values.
 func (t Type) String() string {
 	switch t {
 	case TypeUndefined:
