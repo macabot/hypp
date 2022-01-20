@@ -149,6 +149,10 @@ type EventTargetValuer interface {
 	Value() string
 }
 
+// Value represents a JavaScript value.
+// It is based on type syscall/js.Value.
+// It allows you to use the JavaScript environment without the js/wasm build constraint.
+// See https://pkg.go.dev/syscall/js#Value for the method definitions.
 type Value interface {
 	Bool() bool
 	Call(m string, args ...interface{}) Value
@@ -172,6 +176,8 @@ type Value interface {
 	Type() Type
 }
 
+// Type is based on syscall/js.Type.
+// See https://pkg.go.dev/syscall/js#Type
 type Type int
 
 const (
