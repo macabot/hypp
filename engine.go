@@ -1,4 +1,5 @@
 package hypp
+
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.js
 
 import (
@@ -608,11 +609,11 @@ func app[S State](appProps AppProps[S]) Dispatch {
 
 	appProps.vdom = recycleNode(appProps.Node)
 
-    listener := func(this Node) EventListener {
-        return func(event Event) {
-            appProps.dispatch(this.Events().Get(event.Type()), event)
-        }
-    }
+	listener := func(this Node) EventListener {
+		return func(event Event) {
+			appProps.dispatch(this.Events().Get(event.Type()), event)
+		}
+	}
 
 	appProps.render = func() {
 		vdomOld := appProps.vdom

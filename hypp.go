@@ -1,6 +1,8 @@
 //go:build go1.18
+
 // Package hypp creates reactive web applications.
 package hypp
+
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
 
 import (
@@ -138,7 +140,7 @@ func (_ Action[S]) IAmDispatchable() {}
 
 type Event interface {
 	EscapeToValuer
-    Type() string
+	Type() string
 	PreventDefault()
 	Target() EventTargetValuer
 }
@@ -205,7 +207,6 @@ func (t Type) String() string {
 		panic("bad type")
 	}
 }
-
 
 type EventListener func(Event)
 
@@ -281,7 +282,7 @@ type Driver interface {
 }
 
 type AppProps[S State] struct {
-	Driver Driver
+	Driver              Driver
 	Init                Dispatchable
 	Subscriptions       Subscriptions[S]
 	DispatchInitializer func(dispatch Dispatch) Dispatch
@@ -347,7 +348,7 @@ type Option[T any] struct {
 type VNode struct {
 	props    HProps
 	children vKids
-	node     Node                  // Can be nil
+	node     Node // Can be nil
 	key      Option[string]
 	tag      string
 	memoView func(data interface{}) *VNode
