@@ -1,5 +1,8 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/Bpyraw
+// Package app tracks the position of your mouse.
+// Click anywhere to stop/start tracking your mouse.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/Bpyraw
 
 import (
 	"github.com/macabot/hypp"

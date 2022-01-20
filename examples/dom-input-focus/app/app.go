@@ -1,5 +1,9 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/wjvEBj
+// Package app shows how to focus an input element.
+// Click on "Add new" to add a new input element and focus on it.
+// Click one of the "Focus" buttons to focus on the input element next to it.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/wjvEBj
 
 import (
 	"fmt"

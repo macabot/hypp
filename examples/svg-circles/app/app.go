@@ -1,5 +1,7 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/preYMW
+// Package app draws SVG circles.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/preYMW
 
 import (
 	"github.com/macabot/hypp"

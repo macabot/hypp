@@ -1,5 +1,8 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/PmjRov
+// Package app implements a calculator.
+// Use the calculator to add, subtract, multiply and divide numbers.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/PmjRov
 
 import (
 	"strconv"

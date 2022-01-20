@@ -1,5 +1,7 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/qRMEGX
+// Package app synchronizes the h1 title with the value of the input field.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/qRMEGX
 
 import (
 	"strings"

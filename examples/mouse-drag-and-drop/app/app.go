@@ -1,5 +1,7 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/apzYvo
+// Package app creates an application that lets you drag and drop a UFO with your mouse.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/apzYvo
 
 import (
 	"fmt"

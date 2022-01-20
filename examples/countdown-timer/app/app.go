@@ -1,5 +1,10 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/evOZLv
+// Package app implements a countdown timer.
+// Click Start/Pause to start or pause the countdown.
+// Click Reset to reset the countdown.
+// If the timer is running when clicking Reset, then the timer will continue the countdown after the timer is reset.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/evOZLv
 
 import (
 	"fmt"

@@ -1,5 +1,7 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/PWMBLp
+// Package app renders a clock with a single hand that marks the passage of every second.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/PWMBLp
 
 import (
 	"math"

@@ -1,5 +1,8 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/ZeByKv
+// Package app creates an application that lets you search for GIFs.
+// It uses the Giphy API to find a GIF for your search term.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/ZeByKv
 
 import (
 	"encoding/json"

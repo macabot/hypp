@@ -1,5 +1,8 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/MrBgMy
+// Package app implements a counter.
+// Click the buttons to increase or decrease the count.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/MrBgMy
 
 import (
 	"github.com/macabot/hypp"

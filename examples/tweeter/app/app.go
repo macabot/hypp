@@ -1,5 +1,8 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/bgWBdV
+// Package app lets you write 140 characters in a textarea.
+// Click "Tweet" to empty the textarea.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/bgWBdV
 
 import (
 	"github.com/macabot/hypp"

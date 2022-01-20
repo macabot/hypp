@@ -1,5 +1,7 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/Qdwpxy
+// Package app renders a page that says "👋 Hi.".
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/Qdwpxy
 
 import (
 	"github.com/macabot/hypp"
