@@ -1,5 +1,9 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/wjvEBj
+// Package app shows how to focus an input element.
+// Click on "Add new" to add a new input element and focus on it.
+// Click one of the "Focus" buttons to focus on the input element next to it.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/wjvEBj
 
 import (
 	"fmt"
@@ -34,7 +38,7 @@ func separator() *hypp.VNode {
 }
 
 type focusProps struct {
-	id string
+	id            string
 	preventScroll bool
 }
 
@@ -55,7 +59,7 @@ func justFocus(_ hypp.Dispatch, payload hypp.Payload) {
 func focus(id string, preventScroll bool) hypp.Effect {
 	return hypp.Effect{
 		Effecter: justFocus,
-		Payload: focusProps{id: id, preventScroll: preventScroll},
+		Payload:  focusProps{id: id, preventScroll: preventScroll},
 	}
 }
 
@@ -88,17 +92,17 @@ func Run(driver hypp.Driver, node hypp.Node) {
 	window = driver.Window()
 	hypp.App(hypp.AppProps[*MyState]{
 		Driver: driver,
-		Init: &MyState{count: 1},
+		Init:   &MyState{count: 1},
 		View: func(state *MyState) *hypp.VNode {
 			children := make([]*hypp.VNode, state.count)
 			for i := range children {
 				children[i] = container(
 					html.Input(hypp.HProps{
 						"type": "text",
-						"id": domID(i),
+						"id":   domID(i),
 					}),
 					button(hypp.ActionAndPayload[*MyState]{
-						Action: focusStateEffect,
+						Action:  focusStateEffect,
 						Payload: domID(i),
 					}, "Focus"),
 				)

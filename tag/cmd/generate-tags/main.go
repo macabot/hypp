@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-var fileTemplate = `// DO NOT EDIT
+var fileTemplate = `package %s
+
+// DO NOT EDIT
 // This file was generated using cmd/generate-html-tags
-package %s
 
 import "github.com/macabot/hypp"
 
-%s
-`
+%s`
 
 var funcTemplate = `func %s(props hypp.HProps, children ...*hypp.VNode) *hypp.VNode {
-    return hypp.H("%s", props, children...)
+	return hypp.H("%s", props, children...)
 }
 `
 
