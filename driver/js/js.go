@@ -261,8 +261,8 @@ type Events js.Value
 
 type dispatchablesRepo struct {
 	mu sync.Mutex
-	i int
-	v map[int]hypp.Dispatchable
+	i  int
+	v  map[int]hypp.Dispatchable
 }
 
 func (g *dispatchablesRepo) Add(value hypp.Dispatchable) int {
@@ -330,7 +330,7 @@ func (e Events) deleteAll() {
 
 var _ hypp.Value = Value{}
 
-type Value struct{
+type Value struct {
 	js.Value
 }
 

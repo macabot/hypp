@@ -1,5 +1,9 @@
-// This file is based on https://codepen.io/jorgebucaran/pen/zNxRLy
+// Package app renders a todo list application.
+// Add new items to your list.
+// Check them off when done.
 package app
+
+// This file is based on https://codepen.io/jorgebucaran/pen/zNxRLy
 
 import (
 	"github.com/macabot/hypp"

@@ -1,24 +1,67 @@
 //go:build go1.18
-// +build go1.18
+
+// Package hypp creates reactive web applications.
+package hypp
 
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
-package hypp
 
 import (
 	"fmt"
 )
 
+// State constrains the state that is used in the hypp application.
+// It must be comparable and Dispatchable.
+//
+// Most often you will embed the EmptyState:
+//	package example
+//
+//	type MyState struct {
+//		hypp.EmptyState
+//	}
+//
+// Alternatively, you can explicitly make your state Dispatchable:
+//	package example
+//
+//	type MyState string
+//
+//	func(_ MyState) IAmDispatchable() {}
 type State interface {
 	comparable
 	Dispatchable
 }
 
+// EmptyState implements the State constraint.
+// Embed the EmptyState in your state to implement the State constraint:
+//	package example
+//
+//	type MyState struct {
+//		hypp.EmptyState
+//		Foo string
+//		Bar int
+//	}
+type EmptyState struct{}
+
+// IAmDispatchable makes the EmptyState Dispatchable.
+func (_ EmptyState) IAmDispatchable() {}
+
+// App creates a new application.
 func App[S State](props AppProps[S]) Dispatch {
 	return app[S](props)
 }
 
+// HProps are the properties to create a *VNode.
+//
+// The allowed value type depends on the key:
+//	| Key               | Value type                                            |
+//	| ----------------- | ----------------------------------------------------- |
+//	| Starts with "on"  | Dispatchable                                          |
+//	| "class"           | bool, int, float64, string, []string, map[string]bool |
+//	| "style"           | bool, int, float64, string, map[string]string         |
+//	| Other             | bool, int, float64, string                            |
 type HProps map[string]interface{}
 
+// Key returns the "key" property, if available.
+// The value is always converted into a string.
 func (h HProps) Key() Option[string] {
 	if key := h.Get("key"); key.OK {
 		return Option[string]{V: fmt.Sprint(key.V), OK: true}
@@ -26,6 +69,7 @@ func (h HProps) Key() Option[string] {
 	return Option[string]{}
 }
 
+// Get returns the requested key, if available.
 func (h HProps) Get(key string) Option[interface{}] {
 	if h == nil {
 		return Option[interface{}]{}
@@ -34,6 +78,7 @@ func (h HProps) Get(key string) Option[interface{}] {
 	return Option[interface{}]{V: v, OK: ok}
 }
 
+// Has returns true if the requested key is found.
 func (h HProps) Has(key string) bool {
 	if h == nil {
 		return false
@@ -42,6 +87,8 @@ func (h HProps) Has(key string) bool {
 	return ok
 }
 
+// Set sets the given key value pair.
+// It is safe to call this method on a nil value.
 func (h *HProps) Set(key string, value interface{}) {
 	if *h == nil {
 		*h = HProps{}
@@ -50,6 +97,21 @@ func (h *HProps) Set(key string, value interface{}) {
 	m[key] = value
 }
 
+// H creates a new *VNode specified by tag.
+//
+// See the tag package for functions that create specific tags:
+//	package main
+//
+//	import (
+//		"github.com/macabot/hypp"
+//		"github.com/macabot/hypp/tag/html"
+//	)
+//
+//	func main() {
+//		hypp.H("main", hypp.HProps{"class": "main"})
+//		// Is equivalent to
+//		html.Main(hypp.HProps{"class": "main"})
+//	}
 func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
 }
@@ -58,30 +120,33 @@ func Memo(view func(data interface{}) *VNode, data interface{}) *VNode {
 	return memo(view, data)
 }
 
+// Text creates a text *VNode.
 func Text(value string) *VNode {
 	return text(value, nil)
 }
 
+// Textf creates a text *VNode by interpolating the format with the arguments.
 func Textf(format string, a ...interface{}) *VNode {
 	return Text(fmt.Sprintf(format, a...))
 }
 
+// Payload is the value that is dispatched.
 type Payload interface{}
 
-type ActionLike interface {
-	Dispatchable
-	iAmActionLike()
-}
-
+// Action is a function that is Dispatchable.
+// When called it returns a Dispatchable that will change the state.
+// The action is called with the current State and a Payload.
+// The type of the Payload depends on the Payload that was sent when dispatching the Action.
+// If the Action was dispatched by a DOM event, then the Payload is an Event.
+// Otherwise, the type is specified when dispatching the Action.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
+// IAmDispatchable makes Action Dispatchable.
 func (_ Action[S]) IAmDispatchable() {}
-
-func (_ Action[S]) iAmActionLike() {}
 
 type Event interface {
 	EscapeToValuer
-    Type() string
+	Type() string
 	PreventDefault()
 	Target() EventTargetValuer
 }
@@ -90,6 +155,10 @@ type EventTargetValuer interface {
 	Value() string
 }
 
+// Value represents a JavaScript value.
+// It is based on type syscall/js.Value.
+// It allows you to use the JavaScript environment without the js/wasm build constraint.
+// See https://pkg.go.dev/syscall/js#Value for the method definitions.
 type Value interface {
 	Bool() bool
 	Call(m string, args ...interface{}) Value
@@ -113,8 +182,11 @@ type Value interface {
 	Type() Type
 }
 
+// Type is based on syscall/js.Type.
+// See https://pkg.go.dev/syscall/js#Type
 type Type int
 
+// These are the valid Type values.
 const (
 	TypeUndefined Type = iota
 	TypeNull
@@ -126,6 +198,8 @@ const (
 	TypeFunction
 )
 
+// String returns the string value of Type t.
+// It panics if t is not one of the valid Type values.
 func (t Type) String() string {
 	switch t {
 	case TypeUndefined:
@@ -149,7 +223,6 @@ func (t Type) String() string {
 	}
 }
 
-
 type EventListener func(Event)
 
 type EventListenerID interface {
@@ -161,6 +234,8 @@ type EventTarget interface {
 	AddEventListener(kind string, listener EventListener) EventListenerID
 }
 
+// Node represents an HTML element.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Element
 type Node interface {
 	EventTarget
 	ParentNode() Node
@@ -185,10 +260,19 @@ type Node interface {
 	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
 
+// EscapeToValuer allows you to escape from a statically defined type to a dynamic Value.
+// Use the Value to access properties and functions that are not explicitly implemented by hypp.
 type EscapeToValuer interface {
 	EscapeToValue() Value
 }
 
+// Window represents the JavaScript window.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Window
+// It does not fully implement the JavaScript interface.
+// Use EscapeToValue() to access properties and functions that are not explicitly implemented.
+// For example, the following shows how to find an element by ID in the document:
+//	var window Window
+//	var element Value = window.EscapeToValue().Get("document").Call("getElementById", "my-id")
 type Window interface {
 	EscapeToValuer
 	EventTarget
@@ -224,7 +308,7 @@ type Driver interface {
 }
 
 type AppProps[S State] struct {
-	Driver Driver
+	Driver              Driver
 	Init                Dispatchable
 	Subscriptions       Subscriptions[S]
 	DispatchInitializer func(dispatch Dispatch) Dispatch
@@ -239,8 +323,24 @@ type AppProps[S State] struct {
 	state    S
 }
 
+func (a *AppProps[S]) init() {
+	if a.DispatchInitializer == nil {
+		a.DispatchInitializer = dispatchInitializerID
+	}
+	if a.Init == nil {
+		a.Init = EmptyState{}
+	}
+}
+
 type Dispatch func(dispatchable Dispatchable, payload Payload)
 
+// Dispatchable is implemented by types that, when dispatched, change the state.
+// There are four Dispatchable types:
+//	- Types that implement the State constraint.
+//	  For example, types that embed the EmptyState.
+//	- StateAndEffects
+//	- Action
+//	- ActionAndPayload
 type Dispatchable interface {
 	IAmDispatchable()
 }
@@ -258,8 +358,6 @@ type ActionAndPayload[S State] struct {
 }
 
 func (_ ActionAndPayload[S]) IAmDispatchable() {}
-
-func (_ ActionAndPayload[S]) iAmActionLike() {}
 
 type Effect struct {
 	Effecter func(dispatch Dispatch, payload Payload)
@@ -283,8 +381,7 @@ type Option[T any] struct {
 type VNode struct {
 	props    HProps
 	children vKids
-	node     Node                  // Can be nil
-	events   map[string]ActionLike // Action[S] | ActionAndPayload[S]
+	node     Node // Can be nil
 	key      Option[string]
 	tag      string
 	memoView func(data interface{}) *VNode
