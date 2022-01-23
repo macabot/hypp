@@ -52,10 +52,10 @@ func h(tag string, props HProps, children vKids) *VNode {
 	}
 }
 
-func memo(view func(data interface{}) *VNode, data interface{}) *VNode {
+func memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 	return &VNode{
 		memoView: view,
-		memo:     data,
+		memoData: data,
 	}
 }
 
@@ -565,16 +565,16 @@ func patch(
 	return node
 }
 
-func propsChanged(a, b interface{}) bool {
-	return true // TODO implement
+func propsChanged(a, b MemoData) bool {
+	return a.Hash() != b.Hash()
 }
 
 func maybeVNode(newVNode, oldVNode *VNode) *VNode {
 	if newVNode != nil {
 		if newVNode.memoView != nil {
-			if oldVNode == nil || oldVNode.memo == nil || propsChanged(oldVNode.memo, newVNode.memo) {
-				oldVNode = newVNode.memoView(newVNode.memo)
-				oldVNode.memo = newVNode.memo
+			if oldVNode == nil || oldVNode.memoData == nil || propsChanged(oldVNode.memoData, newVNode.memoData) {
+				oldVNode = newVNode.memoView(newVNode.memoData)
+				oldVNode.memoData = newVNode.memoData
 			}
 			return oldVNode
 		} else {
