@@ -116,7 +116,11 @@ func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
 }
 
-func Memo(view func(data interface{}) *VNode, data interface{}) *VNode {
+type MemoData interface {
+	Hash() string
+}
+
+func Memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 	return memo(view, data)
 }
 
@@ -384,8 +388,8 @@ type VNode struct {
 	node     Node // Can be nil
 	key      Option[string]
 	tag      string
-	memoView func(data interface{}) *VNode
-	memo     interface{} // Indexable
+	memoView func(data MemoData) *VNode
+	memoData MemoData
 	kind     int
 }
 
