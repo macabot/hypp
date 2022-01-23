@@ -133,6 +133,12 @@ func Textf(format string, a ...interface{}) *VNode {
 // Payload is the value that is dispatched.
 type Payload interface{}
 
+// Action is a function that is Dispatchable.
+// When called it returns a Dispatchable that will change the state.
+// The action is called with the current State and a Payload.
+// The type of the Payload depends on the Payload that was sent when dispatching the Action.
+// If the Action was dispatched by a DOM event, then the Payload is an Event.
+// Otherwise, the type is specified when dispatching the Action.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
 // IAmDispatchable makes Action Dispatchable.
@@ -328,6 +334,13 @@ func (a *AppProps[S]) init() {
 
 type Dispatch func(dispatchable Dispatchable, payload Payload)
 
+// Dispatchable is implemented by types that, when dispatched, change the state.
+// There are four Dispatchable types:
+//	- Types that implement the State constraint.
+//	  For example, types that embed the EmptyState.
+//	- StateAndEffects
+//	- Action
+//	- ActionAndPayload
 type Dispatchable interface {
 	IAmDispatchable()
 }
