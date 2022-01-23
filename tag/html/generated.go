@@ -1,6 +1,7 @@
+package html
+
 // DO NOT EDIT
 // This file was generated using cmd/generate-html-tags
-package html
 
 import "github.com/macabot/hypp"
 

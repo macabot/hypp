@@ -1,6 +1,7 @@
+package svg
+
 // DO NOT EDIT
 // This file was generated using cmd/generate-html-tags
-package svg
 
 import "github.com/macabot/hypp"
 
