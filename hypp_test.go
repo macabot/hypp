@@ -1,8 +1,9 @@
 package hypp
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // This test is based on https://github.com/jorgebucaran/hyperapp/blob/8e6a4908954186ed8466ae9ef15ec172ddbea2d0/tests/index.test.js#L7

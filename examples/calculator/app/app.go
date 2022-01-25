@@ -53,9 +53,7 @@ func newFn(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 	newState.fn = fn
 	newState.hasCarry = true
 	newState.carry = state.value
-	if state.hasCarry || state.fn == "" {
-		newState.value = state.value
-	} else {
+	if !state.hasCarry && state.fn != "" {
 		newState.value = computer[state.fn](state.carry, state.value)
 	}
 	return newState
