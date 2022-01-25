@@ -9,41 +9,41 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	count int
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
-func subtract(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func subtract(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.count--
 	return newState
 }
 
-func add(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func add(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.count++
 	return newState
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{},
+		View: func(state *State) *hypp.VNode {
 			return html.Main(
 				nil,
 				html.H1(nil, hypp.Textf("%d", state.count)),
 				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*MyState](subtract)},
+					hypp.HProps{"onclick": hypp.Action[*State](subtract)},
 					hypp.Text("ー"),
 				),
 				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*MyState](add)},
+					hypp.HProps{"onclick": hypp.Action[*State](add)},
 					hypp.Text("＋"),
 				),
 			)

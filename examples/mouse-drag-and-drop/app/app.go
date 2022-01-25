@@ -10,7 +10,7 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	dragging bool
 	offsetX  int
@@ -19,7 +19,7 @@ type MyState struct {
 	y        int
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -64,13 +64,13 @@ func title(text string) *hypp.VNode {
 	return html.H1(nil, hypp.Text(text))
 }
 
-func drop(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func drop(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.dragging = false
 	return newState
 }
 
-func drag(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func drag(state *State, payload hypp.Payload) hypp.Dispatchable {
 	props := payload.(hypp.Event).EscapeToValue()
 	newState := state.clone()
 	newState.dragging = true
@@ -81,7 +81,7 @@ func drag(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func move(state *State, payload hypp.Payload) hypp.Dispatchable {
 	if !state.dragging {
 		return state
 	}
@@ -94,10 +94,10 @@ func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 
 func Run(driver hypp.Driver, node hypp.Node) {
 	window = driver.Window()
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{x: 5, y: 20},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{x: 5, y: 20},
+		View: func(state *State) *hypp.VNode {
 			draggableContent := "🛸"
 			titleText := "Drag the UFO!"
 			if state.dragging {
@@ -107,7 +107,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 			return html.Main(
 				nil,
 				draggable(draggableContent, hypp.HProps{
-					"onmousedown": hypp.Action[*MyState](drag),
+					"onmousedown": hypp.Action[*State](drag),
 					"style": map[string]string{
 						"cursor":     "move",
 						"left":       fmt.Sprintf("%dpx", state.x-state.offsetX),
@@ -119,10 +119,10 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				title(titleText),
 			)
 		},
-		Subscriptions: func(_ *MyState) []hypp.Subscription {
+		Subscriptions: func(_ *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				onMouseUp(hypp.Action[*MyState](drop)),
-				onMouseMove(hypp.Action[*MyState](move)),
+				onMouseUp(hypp.Action[*State](drop)),
+				onMouseMove(hypp.Action[*State](move)),
 			}
 		},
 		Node: node,

@@ -9,13 +9,13 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	content string
 	count   int
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -35,7 +35,7 @@ type contentAndLength struct {
 	length  int
 }
 
-func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func setText(state *State, payload hypp.Payload) hypp.Dispatchable {
 	cl := payload.(contentAndLength)
 	newState := state.clone()
 	if cl.length > maxLength {
@@ -48,14 +48,14 @@ func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{count: maxLength},
-		View: func(state *MyState) *hypp.VNode {
-			var oninput hypp.Action[*MyState] = func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+		Init:   &State{count: maxLength},
+		View: func(state *State) *hypp.VNode {
+			var oninput hypp.Action[*State] = func(_ *State, payload hypp.Payload) hypp.Dispatchable {
 				event := payload.(hypp.Event)
 				content := event.Target().Value()
-				return hypp.ActionAndPayload[*MyState]{
+				return hypp.ActionAndPayload[*State]{
 					Action: setText,
 					Payload: contentAndLength{
 						content: content,
@@ -75,7 +75,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				html.Section(
 					nil,
 					hypp.Textf("%d", state.count),
-					button(&MyState{}, "Tweet", hypp.HProps{
+					button(&State{}, "Tweet", hypp.HProps{
 						"disabled": state.count >= maxLength,
 					}),
 				),

@@ -12,12 +12,12 @@ import (
 	"github.com/macabot/hypp/tag/svg"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	time time.Time
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -65,22 +65,22 @@ func now(dispatchable hypp.Dispatchable) hypp.Effect {
 	}
 }
 
-func tick(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func tick(state *State, payload hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.time = payload.(time.Time)
 	return newState
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init: hypp.StateAndEffects[*MyState]{
-			State: &MyState{},
+		Init: hypp.StateAndEffects[*State]{
+			State: &State{},
 			Effects: []hypp.Effect{
-				now(hypp.Action[*MyState](tick)),
+				now(hypp.Action[*State](tick)),
 			},
 		},
-		View: func(state *MyState) *hypp.VNode {
+		View: func(state *State) *hypp.VNode {
 			return html.Svg(
 				hypp.HProps{
 					"viewBox":      "0 0 100 100",
@@ -104,9 +104,9 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				}),
 			)
 		},
-		Subscriptions: func(state *MyState) []hypp.Subscription {
+		Subscriptions: func(state *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				every(time.Second, hypp.Action[*MyState](tick)),
+				every(time.Second, hypp.Action[*State](tick)),
 			}
 		},
 		Node: node,

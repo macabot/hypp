@@ -9,14 +9,14 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	x          int
 	y          int
 	isTracking bool
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -69,7 +69,7 @@ func strong(text string) *hypp.VNode {
 	return html.Strong(nil, hypp.Text(text))
 }
 
-func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func move(state *State, payload hypp.Payload) hypp.Dispatchable {
 	event := payload.(hypp.Event).EscapeToValue()
 	newState := state.clone()
 	newState.x = event.Get("x").Int()
@@ -77,7 +77,7 @@ func move(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func toggle(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.isTracking = !state.isTracking
 	return newState
@@ -85,10 +85,10 @@ func toggle(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 
 func Run(driver hypp.Driver, node hypp.Node) {
 	window = driver.Window()
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{x: -1, y: -1, isTracking: true},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{x: -1, y: -1, isTracking: true},
+		View: func(state *State) *hypp.VNode {
 			var t string
 			if state.isTracking {
 				t = " stop "
@@ -109,12 +109,12 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				v,
 			)
 		},
-		Subscriptions: func(state *MyState) []hypp.Subscription {
-			move := onMouseMove(hypp.Action[*MyState](move))
+		Subscriptions: func(state *State) []hypp.Subscription {
+			move := onMouseMove(hypp.Action[*State](move))
 			move.Disabled = !state.isTracking
 			return []hypp.Subscription{
 				move,
-				onClick(hypp.Action[*MyState](toggle)),
+				onClick(hypp.Action[*State](toggle)),
 			}
 		},
 		Node: node,

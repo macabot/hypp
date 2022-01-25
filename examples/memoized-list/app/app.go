@@ -19,13 +19,13 @@ func (l List) Hash() string {
 	return strings.Join(l, "")
 }
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	list    List
 	counter int
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -54,33 +54,33 @@ func listView(data hypp.MemoData) *hypp.VNode {
 	}, hypp.Text(strings.Join(list, ", ")))
 }
 
-func moreItems(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func moreItems(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.list = append(newState.list, randomHex())
 	return newState
 }
 
-func increment(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func increment(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.counter++
 	return newState
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init: &MyState{
+		Init: &State{
 			list: []string{"a", "b", "c"},
 		},
-		View: func(state *MyState) *hypp.VNode {
+		View: func(state *State) *hypp.VNode {
 			return html.Main(
 				nil,
 				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*MyState](moreItems)},
+					hypp.HProps{"onclick": hypp.Action[*State](moreItems)},
 					hypp.Text("Grow list"),
 				),
 				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*MyState](increment)},
+					hypp.HProps{"onclick": hypp.Action[*State](increment)},
 					hypp.Text("+1 to counter"),
 				),
 				html.P(nil, hypp.Textf("Counter: %d", state.counter)),

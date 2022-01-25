@@ -14,13 +14,13 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	count  time.Duration
 	paused bool
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -60,13 +60,13 @@ func titlef(format string, args ...interface{}) *hypp.VNode {
 	return html.H1(nil, hypp.Textf(format, args...))
 }
 
-func button(onclick hypp.Action[*MyState], text string) *hypp.VNode {
+func button(onclick hypp.Action[*State], text string) *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": onclick}, hypp.Text(text))
 }
 
-var resetState = MyState{count: 10 * time.Second}
+var resetState = State{count: 10 * time.Second}
 
-func tick(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func tick(state *State, _ hypp.Payload) hypp.Dispatchable {
 	if state.count == 0 {
 		newState := state.clone()
 		newState.count = resetState.count
@@ -81,13 +81,13 @@ func tick(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 	}
 }
 
-func reset(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func reset(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.count = resetState.count
 	return newState
 }
 
-func toggle(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
 	newState.paused = !state.paused
 	return newState
@@ -96,10 +96,10 @@ func toggle(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 func Run(driver hypp.Driver, node hypp.Node) {
 	state := resetState.clone()
 	state.paused = true
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
 		Init:   state,
-		View: func(state *MyState) *hypp.VNode {
+		View: func(state *State) *hypp.VNode {
 			var startStop string
 			if state.paused {
 				startStop = "▶️ Start"
@@ -113,9 +113,9 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				button(reset, "Reset"),
 			)
 		},
-		Subscriptions: func(state *MyState) []hypp.Subscription {
+		Subscriptions: func(state *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				every(time.Second, hypp.Action[*MyState](tick)),
+				every(time.Second, hypp.Action[*State](tick)),
 			}
 		},
 		Node: node,

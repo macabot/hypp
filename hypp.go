@@ -15,16 +15,16 @@ import (
 // Most often you will embed the EmptyState:
 //	package example
 //
-//	type MyState struct {
+//	type State struct {
 //		hypp.EmptyState
 //	}
 //
 // Alternatively, you can explicitly make your state Dispatchable:
 //	package example
 //
-//	type MyState string
+//	type State string
 //
-//	func(_ MyState) IAmDispatchable() {}
+//	func(_ State) IAmDispatchable() {}
 type State interface {
 	comparable
 	Dispatchable
@@ -34,7 +34,7 @@ type State interface {
 // Embed the EmptyState in your state to implement the State constraint:
 //	package example
 //
-//	type MyState struct {
+//	type State struct {
 //		hypp.EmptyState
 //		Foo string
 //		Bar int
