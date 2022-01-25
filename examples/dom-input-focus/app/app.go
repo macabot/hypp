@@ -12,12 +12,12 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	count int
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -67,11 +67,11 @@ func domID(n int) string {
 	return fmt.Sprintf("input-%d", n)
 }
 
-func addAndFocus(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func addAndFocus(state *State, _ hypp.Payload) hypp.Dispatchable {
 	id := domID(state.count)
 	newState := state.clone()
 	newState.count++
-	return hypp.StateAndEffects[*MyState]{
+	return hypp.StateAndEffects[*State]{
 		State: newState,
 		Effects: []hypp.Effect{
 			focus(id, false),
@@ -79,8 +79,8 @@ func addAndFocus(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 	}
 }
 
-func focusStateEffect(state *MyState, payload hypp.Payload) hypp.Dispatchable {
-	return hypp.StateAndEffects[*MyState]{
+func focusStateEffect(state *State, payload hypp.Payload) hypp.Dispatchable {
+	return hypp.StateAndEffects[*State]{
 		State: state,
 		Effects: []hypp.Effect{
 			focus(payload.(string), false),
@@ -90,10 +90,10 @@ func focusStateEffect(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 
 func Run(driver hypp.Driver, node hypp.Node) {
 	window = driver.Window()
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{count: 1},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{count: 1},
+		View: func(state *State) *hypp.VNode {
 			children := make([]*hypp.VNode, state.count)
 			for i := range children {
 				children[i] = container(
@@ -101,7 +101,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 						"type": "text",
 						"id":   domID(i),
 					}),
-					button(hypp.ActionAndPayload[*MyState]{
+					button(hypp.ActionAndPayload[*State]{
 						Action:  focusStateEffect,
 						Payload: domID(i),
 					}, "Focus"),
@@ -110,7 +110,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 			children = append(
 				children,
 				separator(),
-				button(hypp.Action[*MyState](addAndFocus), "Add new"),
+				button(hypp.Action[*State](addAndFocus), "Add new"),
 			)
 			return main(children...)
 		},
