@@ -7,16 +7,16 @@ import (
 	"github.com/macabot/hypp"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	message string
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{message: "👋 Hi."},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{message: "👋 Hi."},
+		View: func(state *State) *hypp.VNode {
 			return hypp.H("h1", nil, hypp.Text(state.message))
 		},
 		Node: node,

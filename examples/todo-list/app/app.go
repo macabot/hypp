@@ -10,13 +10,13 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	todos []TodoItem
 	value string
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -102,13 +102,13 @@ func todosView(title string, todos []TodoItem) []*hypp.VNode {
 	}
 }
 
-func newValue(state *MyState, value hypp.Payload) hypp.Dispatchable {
+func newValue(state *State, value hypp.Payload) hypp.Dispatchable {
 	state = state.clone()
 	state.value = value.(string)
 	return state
 }
 
-func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
+func newTodo(state *State, _ hypp.Payload) hypp.Dispatchable {
 	if len(state.todos) == 0 {
 		return state
 	}
@@ -119,13 +119,13 @@ func newTodo(state *MyState, _ hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init: &MyState{ // TODO it is currently possible to pass MyState-value
+		Init: &State{ // TODO it is currently possible to pass State-value
 			todos: []TodoItem{{value: "Learn Hypp"}},
 			value: "",
 		},
-		View: func(state *MyState) *hypp.VNode {
+		View: func(state *State) *hypp.VNode {
 			children := todosView("To-do list ✏️", state.todos)
 			children = append(children, form(
 				newTodo,

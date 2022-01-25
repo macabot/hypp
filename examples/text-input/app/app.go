@@ -10,12 +10,12 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	message string
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -34,7 +34,7 @@ func title(text string) *hypp.VNode {
 	return html.H1(nil, hypp.Text(text))
 }
 
-func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func setText(state *State, payload hypp.Payload) hypp.Dispatchable {
 	message := payload.(string)
 	newState := state.clone()
 	newState.message = message
@@ -42,10 +42,10 @@ func setText(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{},
+		View: func(state *State) *hypp.VNode {
 			t := state.message
 			if strings.TrimSpace(state.message) == "" {
 				t = "🤷"
@@ -54,9 +54,9 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				nil,
 				title(t),
 				input(
-					withPayload[*MyState](func(payload hypp.Payload) hypp.Dispatchable {
+					withPayload[*State](func(payload hypp.Payload) hypp.Dispatchable {
 						event := payload.(hypp.Event)
-						return hypp.ActionAndPayload[*MyState]{
+						return hypp.ActionAndPayload[*State]{
 							Action:  setText,
 							Payload: event.Target().Value(),
 						}

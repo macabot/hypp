@@ -15,7 +15,7 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-type MyState struct {
+type State struct {
 	hypp.EmptyState
 	isFetching bool
 	query      string
@@ -23,7 +23,7 @@ type MyState struct {
 	url        string
 }
 
-func (m MyState) clone() *MyState {
+func (m State) clone() *State {
 	return &m
 }
 
@@ -77,7 +77,7 @@ func getJSON(url string, props requestProps) hypp.Effect {
 }
 
 func input[S hypp.State](oninput func(value string) hypp.ActionAndPayload[S], props hypp.HProps) *hypp.VNode {
-	props.Set("oninput", hypp.Action[*MyState](func(_ *MyState, payload hypp.Payload) hypp.Dispatchable {
+	props.Set("oninput", hypp.Action[*State](func(_ *State, payload hypp.Payload) hypp.Dispatchable {
 		return oninput(payload.(hypp.Event).Target().Value())
 	}))
 	return html.Input(props)
@@ -100,7 +100,7 @@ func downloadGif(query string) hypp.Effect {
 		fmt.Sprintf("%s?q=%s&api_key=%s", giphyURL, query, APIKey),
 		requestProps{
 			onErr: func(err error) hypp.Dispatchable {
-				return hypp.ActionAndPayload[*MyState]{
+				return hypp.ActionAndPayload[*State]{
 					Action:  gotError,
 					Payload: err,
 				}
@@ -110,7 +110,7 @@ func downloadGif(query string) hypp.Effect {
 				if len(body.Data) > 0 {
 					payload = body.Data[0].Images.Original.URL
 				}
-				return hypp.ActionAndPayload[*MyState]{
+				return hypp.ActionAndPayload[*State]{
 					Action:  gotURL,
 					Payload: payload,
 				}
@@ -121,7 +121,7 @@ func downloadGif(query string) hypp.Effect {
 
 var errUnexpected = errors.New("Unexpected error, try again later?")
 
-func gotError(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func gotError(state *State, payload hypp.Payload) hypp.Dispatchable {
 	err := payload.(error)
 	state = state.clone()
 	state.isFetching = false
@@ -134,7 +134,7 @@ func gotError(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 	return state
 }
 
-func gotURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func gotURL(state *State, payload hypp.Payload) hypp.Dispatchable {
 	url := payload.(string)
 	state = state.clone()
 	state.isFetching = false
@@ -146,14 +146,14 @@ func gotURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 	return state
 }
 
-func getURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
+func getURL(state *State, payload hypp.Payload) hypp.Dispatchable {
 	query := payload.(string)
 	state = state.clone()
 	state.isFetching = true
 	state.query = query
 	state.err = nil
 	state.url = ""
-	return hypp.StateAndEffects[*MyState]{
+	return hypp.StateAndEffects[*State]{
 		State: state,
 		Effects: []hypp.Effect{
 			downloadGif(query),
@@ -162,10 +162,10 @@ func getURL(state *MyState, payload hypp.Payload) hypp.Dispatchable {
 }
 
 func Run(driver hypp.Driver, node hypp.Node) {
-	hypp.App(hypp.AppProps[*MyState]{
+	hypp.App(hypp.AppProps[*State]{
 		Driver: driver,
-		Init:   &MyState{},
-		View: func(state *MyState) *hypp.VNode {
+		Init:   &State{},
+		View: func(state *State) *hypp.VNode {
 			var content *hypp.VNode
 			if state.err != nil {
 				content = p(state.err.Error())
@@ -175,8 +175,8 @@ func Run(driver hypp.Driver, node hypp.Node) {
 			return html.Main(
 				nil,
 				title("GIF Search 💬💁‍♂️"),
-				input(func(value string) hypp.ActionAndPayload[*MyState] {
-					return hypp.ActionAndPayload[*MyState]{
+				input(func(value string) hypp.ActionAndPayload[*State] {
+					return hypp.ActionAndPayload[*State]{
 						Action:  getURL,
 						Payload: strings.TrimSpace(value),
 					}
