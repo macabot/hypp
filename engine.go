@@ -597,7 +597,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			appProps.Driver.Enqueue(appProps.render)
+			appProps.Driver.Window().RequestAnimationFrame(appProps.render)
 		}
 	}
 }

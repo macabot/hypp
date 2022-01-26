@@ -239,7 +239,6 @@ type Driver interface {
 	CreateTextNode(data string) Node
 	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
 	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Enqueue(render func())
 	Window() Window
 }
 
