@@ -9,6 +9,8 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
+//go:generate bash -c "go run ./cmd/generate-tags/main.go html tag.json > generated.go"
+
 var ssrNode = 1
 var textNode = 3
 
