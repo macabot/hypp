@@ -3,8 +3,10 @@ package html
 import (
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/macabot/hypp"
+	"github.com/macabot/hypp/tag/html"
 )
 
 var ssrNode = 1
@@ -18,21 +20,24 @@ func (d Driver) CreateTextNode(data string) hypp.Node {
 	return &Node{
 		nodeType:  textNode,
 		nodeValue: data,
+		nodeName:  "#text",
 	}
 }
 
 func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+	nodeName := qualifiedName
+	if html.Tags.Has(qualifiedName) {
+		nodeName = strings.ToUpper(qualifiedName)
+	}
 	return &Node{
-		nodeType: ssrNode,
-		nodeName: qualifiedName,
+		nodeType:     ssrNode,
+		nodeName:     nodeName,
+		namespaceURI: namespaceURI,
 	}
 }
 
 func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
-	return &Node{
-		nodeType: ssrNode,
-		nodeName: tagName,
-	}
+	return d.CreateElementNS("http://www.w3.org/1999/xhtml", tagName, options)
 }
 
 func (d Driver) Window() hypp.Window {
@@ -69,11 +74,13 @@ func (e EventListenerID) IAmAnEventListenerID() {}
 
 type Node struct {
 	EventTarget
-	parentNode *Node
-	nodeType   int
-	nodeValue  string
-	nodeName   string
-	childNodes []hypp.Node
+	parentNode   *Node
+	nodeType     int
+	nodeValue    string
+	nodeName     string
+	namespaceURI string
+	childNodes   []hypp.Node
+	attributes   map[string]string
 }
 
 var _ hypp.Node = &Node{}
