@@ -9,8 +9,6 @@ import (
 	"github.com/macabot/hypp/tag/html"
 )
 
-//go:generate bash -c "go run ./cmd/generate-tags/main.go html tag.json > generated.go"
-
 var ssrNode = 1
 var textNode = 3
 
@@ -27,13 +25,9 @@ func (d Driver) CreateTextNode(data string) hypp.Node {
 }
 
 func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
-	nodeName := qualifiedName
-	if html.Tags.Has(qualifiedName) {
-		nodeName = strings.ToUpper(qualifiedName)
-	}
 	return &Node{
 		nodeType:     ssrNode,
-		nodeName:     nodeName,
+		nodeName:     qualifiedName,
 		namespaceURI: namespaceURI,
 	}
 }
@@ -86,6 +80,37 @@ type Node struct {
 }
 
 var _ hypp.Node = &Node{}
+
+// See https://w3c.github.io/html-reference/syntax.html#void-element
+var voidElements = hypp.NewSet[string](
+    "area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
+)
+
+func (n Node) OuterHTML() string {
+	if n.nodeType == textNode {
+		return n.nodeValue
+	}
+	if len(n.childNodes) > 0 {
+		s := "<" + n.nodeName + ">"
+		for _, child := range n.childNodes {
+			s += n.OuterHTML()
+		}
+		s += "</" + n.nodeName + ">"
+		return s
+	} else if voidElements.Has(n.nodeName) {
+		return "<" + n.nodeName + ">"
+	} else {
+		return "<" + n.nodeName + "></" + n.nodeName + ">"
+	}
+}
+
+func (n Node) InnerHTML() string {
+	s := ""
+	for _, child := range n.childNodes {
+		s += child.OuterHTML()
+	}
+	return s
+}
 
 func (n Node) ParentNode() hypp.Node {
 	return n.parentNode
@@ -142,17 +167,21 @@ func (n *Node) RemoveChild(child hypp.Node) {
 }
 
 func (n Node) Get(name string) hypp.Option[interface{}] {
-	// TODO
-	return hypp.Option[interface{}]{}
+	if n.attributes == nil {
+		return hypp.Option[interface{}]{}
+	}
+	name = camelToKebab(name)
+	v, ok := n.attributes[name]
+	return hypp.Option[interface{}]{V: v, OK: ok}
 }
 
 func (n Node) In(name string) bool {
-	// TODO
 	return false
 }
 
 func (n *Node) Set(name string, value interface{}) {
-	// TODO
+	name = camelToKebab(name)
+	n.attributes.Set(name, fmt.Sprint(value))
 }
 
 func (n *Node) AppendChild(child hypp.Node) hypp.Node {
@@ -161,11 +190,11 @@ func (n *Node) AppendChild(child hypp.Node) hypp.Node {
 }
 
 func (n *Node) RemoveAttribute(name string) {
-	// TODO
+	delete(n.attributes, name)
 }
 
 func (n *Node) SetAttribute(name string, value interface{}) {
-	// TODO
+	n.attributes.Set(name, fmt.Sprint(value))
 }
 
 func (n Node) Events() hypp.Events {
@@ -238,7 +267,7 @@ func (s Style) SetProperty(propertyName, value string) {
 var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
 
 func camelToKebab(s string) string {
-	return matchCamelCase.ReplaceAllString(s, "${1}_${2}")
+	return matchCamelCase.ReplaceAllString(s, "${1}-${2}")
 }
 
 func (s Style) Set(name, value string) {
