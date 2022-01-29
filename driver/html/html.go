@@ -2,11 +2,10 @@ package html
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/macabot/hypp"
-	"github.com/macabot/hypp/tag/html"
 )
 
 var ssrNode = 1
@@ -51,6 +50,7 @@ func (w Window) EscapeToValue() hypp.Value {
 }
 
 func (w Window) RequestAnimationFrame(f func()) int {
+	f()
 	return 1
 }
 
@@ -76,38 +76,43 @@ type Node struct {
 	nodeName     string
 	namespaceURI string
 	childNodes   []hypp.Node
-	attributes   map[string]string
+	attributes   hypp.Map[string, string]
 }
 
 var _ hypp.Node = &Node{}
 
 // See https://w3c.github.io/html-reference/syntax.html#void-element
 var voidElements = hypp.NewSet[string](
-    "area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
+	"area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
 )
 
 func (n Node) OuterHTML() string {
 	if n.nodeType == textNode {
 		return n.nodeValue
 	}
+	open := "<" + n.nodeName
+	for k, v := range n.attributes {
+		open += fmt.Sprintf(" %s=%q", k, v)
+	}
+	open += ">"
 	if len(n.childNodes) > 0 {
-		s := "<" + n.nodeName + ">"
+		s := open
 		for _, child := range n.childNodes {
-			s += n.OuterHTML()
+			s += child.(*Node).OuterHTML()
 		}
 		s += "</" + n.nodeName + ">"
 		return s
 	} else if voidElements.Has(n.nodeName) {
-		return "<" + n.nodeName + ">"
+		return open
 	} else {
-		return "<" + n.nodeName + "></" + n.nodeName + ">"
+		return open + "</" + n.nodeName + ">"
 	}
 }
 
 func (n Node) InnerHTML() string {
 	s := ""
 	for _, child := range n.childNodes {
-		s += child.OuterHTML()
+		s += child.(*Node).OuterHTML()
 	}
 	return s
 }
@@ -137,8 +142,9 @@ func (n Node) ChildNodes() []hypp.Node {
 }
 
 func (n *Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
-	if newNode.ParentNode() != nil {
-		newNode.ParentNode().RemoveChild(newNode)
+	parentNode := newNode.ParentNode().(*Node)
+	if parentNode != nil {
+		parentNode.RemoveChild(newNode)
 	}
 	if referenceNode == nil {
 		newNode.(*Node).parentNode = n
