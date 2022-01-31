@@ -269,7 +269,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 		if newValue != nil && newValue != false && key == "class" {
 			newValue = createClass(newValue)
 		}
-		if newValue == nil || newValue == false {
+		if isFalsy(newValue) {
 			node.RemoveAttribute(key)
 		} else {
 			node.SetAttribute(key, newValue)
