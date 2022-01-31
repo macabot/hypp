@@ -288,12 +288,14 @@ func (e EventTargetValuer) Value() string {
 	return ""
 }
 
-type Style map[string]string
+type Style struct {
+	hypp.Map[string, string]
+}
 
 var _ hypp.Style = Style{}
 
 func (s Style) SetProperty(propertyName, value string) {
-	s[propertyName] = value
+	s.Set(propertyName, value)
 }
 
 var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
@@ -303,9 +305,9 @@ func camelToKebab(s string) string {
 }
 
 func (s Style) Set(name, value string) {
-	s[camelToKebab(name)] = value
+	s.Map.Set(camelToKebab(name), value)
 }
 
 func (s Style) Get(name string) string {
-	return s[camelToKebab(name)]
+	return s.Map.Get(camelToKebab(name))
 }

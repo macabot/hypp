@@ -308,11 +308,6 @@ type Subscription struct {
 
 type Unsubscribe func()
 
-type Option[T any] struct {
-	V  T
-	OK bool
-}
-
 type VNode struct {
 	props    HProps
 	children vKids
