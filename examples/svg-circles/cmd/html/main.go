@@ -5,7 +5,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/driver/html"
-	"github.com/macabot/hypp/examples/calculator/app"
+	"github.com/macabot/hypp/examples/svg-circles/app"
 )
 
 func main() {

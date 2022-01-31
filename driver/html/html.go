@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/macabot/hypp"
 )
@@ -86,19 +87,41 @@ var voidElements = hypp.NewSet[string](
 	"area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
 )
 
-func (n Node) OuterHTML() string {
+type RenderOptions struct {
+	// Deterministic, when true, will ensure the rendered HTML will always be the same.
+	// It will sort the attributes by their keys.
+	Deterministic bool
+}
+
+// OuterHTML renders the Node to an HTML string.
+// The HTML will include the Node's tag.
+// The given options can be nil.
+func (n Node) OuterHTML(options *RenderOptions) string {
 	if n.nodeType == textNode {
 		return n.nodeValue
 	}
 	open := "<" + n.nodeName
-	for k, v := range n.attributes {
-		open += fmt.Sprintf(" %s=%q", k, v)
+	if options != nil && options.Deterministic {
+		keys := make([]string, len(n.attributes))
+		i := 0
+		for k := range n.attributes {
+			keys[i] = k
+			i++
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			open += fmt.Sprintf(" %s=%q", k, n.attributes[k])
+		}
+	} else {
+		for k, v := range n.attributes {
+			open += fmt.Sprintf(" %s=%q", k, v)
+		}
 	}
 	open += ">"
 	if len(n.childNodes) > 0 {
 		s := open
 		for _, child := range n.childNodes {
-			s += child.(*Node).OuterHTML()
+			s += child.(*Node).OuterHTML(options)
 		}
 		s += "</" + n.nodeName + ">"
 		return s
@@ -109,10 +132,13 @@ func (n Node) OuterHTML() string {
 	}
 }
 
-func (n Node) InnerHTML() string {
+// InnerHTML renders the child nodes to an HTML string.
+// The HTML does not include the Node's tag.
+// The given options can be nil.
+func (n Node) InnerHTML(options *RenderOptions) string {
 	s := ""
 	for _, child := range n.childNodes {
-		s += child.(*Node).OuterHTML()
+		s += child.(*Node).OuterHTML(options)
 	}
 	return s
 }
