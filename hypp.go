@@ -191,7 +191,9 @@ type Node interface {
 	RemoveAttribute(name string)
 	SetAttribute(name string, value interface{})
 	Events() Events
-	Style() Style
+	SetStyleProperty(propertyName, value string)
+	SetStyle(name, value string)
+	// GetStyle(name string) string // TODO remove?
 	EventListenerID(kind string) EventListenerID
 	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
@@ -221,11 +223,11 @@ type Events interface {
 	Del(name string)
 }
 
-type Style interface {
-	SetProperty(propertyName, value string)
-	Set(name, value string)
-	Get(name string) string
-}
+// type Style interface {
+// 	SetProperty(propertyName, value string)
+// 	Set(name, value string)
+// 	Get(name string) string
+// }
 
 type Subscriptions[S State] func(state S) []Subscription
 

@@ -42,16 +42,16 @@ func (m Map[K, V]) Has(k K) bool {
 	return ok
 }
 
-// Set sets the value v for the given key k.
-// It does not panic if the Map is nil.
-// Instead it initializes the map and sets the key-value pair.
-func (m *Map[K, V]) Set(k K, v V) {
-	if *m == nil {
-		*m = Map[K, V]{}
-	}
-	n := *m
-	n[k] = v
-}
+// // Set sets the value v for the given key k.
+// // It does not panic if the Map is nil.
+// // Instead it initializes the map and sets the key-value pair.
+// func (m *Map[K, V]) Set(k K, v V) {
+// 	if *m == nil {
+// 		*m = Map[K, V]{}
+// 	}
+// 	n := *m
+// 	n[k] = v
+// }
 
 // Get returns the value for the given key.
 // It does not panic if the Map is nil.
@@ -73,4 +73,15 @@ func (m Map[K, V]) GetOption(k K) Option[V] {
 	}
 	v, ok := m[k]
 	return Option[V]{V: v, OK: ok}
+}
+
+func (m Map[K, V]) Copy() Map[K, V] {
+	if m == nil {
+		return nil
+	}
+	out := Map[K, V]{}
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/macabot/hypp"
 )
@@ -78,6 +79,7 @@ type Node struct {
 	namespaceURI string
 	childNodes   []hypp.Node
 	attributes   hypp.Map[string, string]
+	style hypp.Map[string, string]
 }
 
 var _ hypp.Node = &Node{}
@@ -93,6 +95,10 @@ type RenderOptions struct {
 	Deterministic bool
 }
 
+func (r *RenderOptions) isDeterministic() bool {
+	return r != nil && r.Deterministic
+}
+
 // OuterHTML renders the Node to an HTML string.
 // The HTML will include the Node's tag.
 // The given options can be nil.
@@ -100,20 +106,27 @@ func (n Node) OuterHTML(options *RenderOptions) string {
 	if n.nodeType == textNode {
 		return n.nodeValue
 	}
+	attributes := n.attributes.Copy()
+	if n.style != nil {
+		if attributes == nil {
+			attributes = hypp.Map[string, string]{}
+		}
+		attributes["style"] = renderStyle(n.style, options)
+	}
 	open := "<" + n.nodeName
-	if options != nil && options.Deterministic {
-		keys := make([]string, len(n.attributes))
+	if options.isDeterministic() {
+		keys := make([]string, len(attributes))
 		i := 0
-		for k := range n.attributes {
+		for k := range attributes {
 			keys[i] = k
 			i++
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			open += fmt.Sprintf(" %s=%q", k, n.attributes[k])
+			open += fmt.Sprintf(" %s=%q", k, attributes[k])
 		}
 	} else {
-		for k, v := range n.attributes {
+		for k, v := range attributes {
 			open += fmt.Sprintf(" %s=%q", k, v)
 		}
 	}
@@ -199,12 +212,8 @@ func (n *Node) RemoveChild(child hypp.Node) {
 }
 
 func (n Node) Get(name string) hypp.Option[interface{}] {
-	if n.attributes == nil {
-		return hypp.Option[interface{}]{}
-	}
-	name = camelToKebab(name)
-	v, ok := n.attributes[name]
-	return hypp.Option[interface{}]{V: v, OK: ok}
+	o := n.attributes.GetOption(camelToKebab(name))
+	return hypp.Option[interface{}]{V: o.V, OK: o.OK}
 }
 
 func (n Node) In(name string) bool {
@@ -212,8 +221,7 @@ func (n Node) In(name string) bool {
 }
 
 func (n *Node) Set(name string, value interface{}) {
-	name = camelToKebab(name)
-	n.attributes.Set(name, fmt.Sprint(value))
+	n.SetAttribute(camelToKebab(name), value)
 }
 
 func (n *Node) AppendChild(child hypp.Node) hypp.Node {
@@ -226,16 +234,39 @@ func (n *Node) RemoveAttribute(name string) {
 }
 
 func (n *Node) SetAttribute(name string, value interface{}) {
-	n.attributes.Set(name, fmt.Sprint(value))
+	if name == "style" {
+		if v, ok := value.(map[string]string); ok {
+			n.style = v
+			return
+		}
+	}
+	if n.attributes == nil {
+		n.attributes = hypp.Map[string, string]{}
+	}
+	n.attributes[name] = fmt.Sprint(value)
 }
 
 func (n Node) Events() hypp.Events {
 	return &Events{}
 }
 
-func (n Node) Style() hypp.Style {
-	// TODO
-	return Style{}
+// func (n Node) Style() hypp.Style {
+// 	return n.style
+// }
+
+func (n *Node) SetStyleProperty(propertyName, value string) {
+	if n.style == nil {
+		n.style = hypp.Map[string, string]{}
+	}
+	n.style[propertyName] = value
+}
+
+func (n *Node) SetStyle(name, value string) {
+	n.SetStyleProperty(camelToKebab(name), value)
+}
+
+func (n *Node) GetStyle(name string) string {
+	return n.style.Get(name)
 }
 
 func (n Node) EventListenerID(kind string) hypp.EventListenerID {
@@ -288,15 +319,32 @@ func (e EventTargetValuer) Value() string {
 	return ""
 }
 
-type Style struct {
-	hypp.Map[string, string]
+// type Style struct {
+// 	node *Node
+// 	m hypp.Map[string, string]
+// }
+//
+// var _ hypp.Style = Style{}
+
+func renderStyle(style hypp.Map[string, string], options *RenderOptions) string {
+	parts := make([]string, len(style))
+	i := 0
+	for key, value := range style {
+		parts[i] = key + ":" + value + ";"
+		i++
+	}
+	if options.isDeterministic() {
+		sort.Strings(parts)
+	}
+	return strings.Join(parts, " ")
 }
 
-var _ hypp.Style = Style{}
-
-func (s Style) SetProperty(propertyName, value string) {
-	s.Set(propertyName, value)
-}
+// func (s Style) SetProperty(propertyName, value string) {
+// 	if s.m == nil {
+// 		s.m = hypp.Map[string, string]{}
+// 	}
+// 	s.m[propertyName] = value
+// }
 
 var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
 
@@ -304,10 +352,10 @@ func camelToKebab(s string) string {
 	return matchCamelCase.ReplaceAllString(s, "${1}-${2}")
 }
 
-func (s Style) Set(name, value string) {
-	s.Map.Set(camelToKebab(name), value)
-}
-
-func (s Style) Get(name string) string {
-	return s.Map.Get(camelToKebab(name))
-}
+// func (s Style) Set(name, value string) {
+// 	s.SetProperty(camelToKebab(name), value)
+// }
+//
+// func (s Style) Get(name string) string {
+// 	return s.m.Get(camelToKebab(name))
+// }

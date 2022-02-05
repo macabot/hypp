@@ -237,9 +237,9 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 				oldValue = newStyle[k]
 			}
 			if k[0] == '-' {
-				node.Style().SetProperty(k, oldValue)
+				node.SetStyleProperty(k, oldValue)
 			} else {
-				node.Style().Set(k, oldValue)
+				node.SetStyle(k, oldValue)
 			}
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
