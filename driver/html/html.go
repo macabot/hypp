@@ -114,6 +114,9 @@ func (n Node) OuterHTML(options *RenderOptions) string {
 		}
 		attributes["style"] = renderStyle(n.style, options)
 	}
+	if attributes.Has("class") {
+		attributes["class"] = renderClass(attributes["class"], options)
+	}
 	open := "<" + n.nodeName
 	if options.isDeterministic() {
 		keys := make([]string, len(attributes))
@@ -332,7 +335,18 @@ func renderStyle(style hypp.Map[string, string], options *RenderOptions) string 
 	return strings.Join(parts, " ")
 }
 
-var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
+var matchSpaces = regexp.MustCompile(`\s+`)
+
+func renderClass(class string, options *RenderOptions) string {
+	if options == nil || !options.Deterministic {
+		return class
+	}
+	parts := matchSpaces.Split(class, -1)
+	sort.Strings(parts)
+	return strings.Join(parts, " ")
+}
+
+var matchCamelCase = regexp.MustCompile(`([a-z0-9])([A-Z])`)
 
 func camelToKebab(s string) string {
 	return strings.ToLower(matchCamelCase.ReplaceAllString(s, "${1}-${2}"))
