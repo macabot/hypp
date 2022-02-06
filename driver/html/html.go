@@ -342,7 +342,7 @@ func renderStyle(style hypp.Map[string, string], options *RenderOptions) string 
 var matchSpaces = regexp.MustCompile(`\s+`)
 
 func renderClass(class string, options *RenderOptions) string {
-	if options == nil || !options.Deterministic {
+	if !options.isDeterministic() {
 		return class
 	}
 	parts := matchSpaces.Split(class, -1)
