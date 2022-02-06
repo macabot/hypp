@@ -79,7 +79,7 @@ type Node struct {
 	namespaceURI string
 	childNodes   []hypp.Node
 	attributes   hypp.Map[string, string]
-	style hypp.Map[string, string]
+	style        hypp.Map[string, string]
 }
 
 var _ hypp.Node = &Node{}
@@ -91,7 +91,7 @@ var voidElements = hypp.NewSet[string](
 
 type RenderOptions struct {
 	// Deterministic, when true, will ensure the rendered HTML will always be the same.
-	// It will sort the attributes by their keys.
+	// It will sort map values by their keys, such as attributes and style properties.
 	Deterministic bool
 }
 
@@ -250,10 +250,6 @@ func (n Node) Events() hypp.Events {
 	return &Events{}
 }
 
-// func (n Node) Style() hypp.Style {
-// 	return n.style
-// }
-
 func (n *Node) SetStyleProperty(propertyName, value string) {
 	if n.style == nil {
 		n.style = hypp.Map[string, string]{}
@@ -319,13 +315,6 @@ func (e EventTargetValuer) Value() string {
 	return ""
 }
 
-// type Style struct {
-// 	node *Node
-// 	m hypp.Map[string, string]
-// }
-//
-// var _ hypp.Style = Style{}
-
 func renderStyle(style hypp.Map[string, string], options *RenderOptions) string {
 	parts := make([]string, len(style))
 	i := 0
@@ -339,23 +328,8 @@ func renderStyle(style hypp.Map[string, string], options *RenderOptions) string 
 	return strings.Join(parts, " ")
 }
 
-// func (s Style) SetProperty(propertyName, value string) {
-// 	if s.m == nil {
-// 		s.m = hypp.Map[string, string]{}
-// 	}
-// 	s.m[propertyName] = value
-// }
-
 var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
 
 func camelToKebab(s string) string {
 	return matchCamelCase.ReplaceAllString(s, "${1}-${2}")
 }
-
-// func (s Style) Set(name, value string) {
-// 	s.SetProperty(camelToKebab(name), value)
-// }
-//
-// func (s Style) Get(name string) string {
-// 	return s.m.Get(camelToKebab(name))
-// }

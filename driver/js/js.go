@@ -221,10 +221,6 @@ func (n Node) Events() hypp.Events {
 	return Events(v.Get("events"))
 }
 
-// func (n Node) Style() hypp.Style {
-// 	return Style(js.Value(n).Get("style"))
-// }
-
 func (n Node) SetStyleProperty(propertyName, value string) {
 	js.Value(n).Get("style").Call("setProperty", propertyName, value)
 }
@@ -232,8 +228,6 @@ func (n Node) SetStyleProperty(propertyName, value string) {
 func (n Node) SetStyle(name, value string) {
 	js.Value(n).Get("style").Set(name, value)
 }
-
-// func (n Node) GetStyle(name string) string
 
 func (n Node) EventListenerID(kind string) hypp.EventListenerID {
 	listeners := js.Value(n).Get("eventListeners")
@@ -366,19 +360,3 @@ var _ hypp.EventTargetValuer = EventTargetValuer{}
 func (e EventTargetValuer) Value() string {
 	return js.Value(e).Get("value").String()
 }
-
-// type Style js.Value
-//
-// var _ hypp.Style = Style{}
-//
-// func (s Style) SetProperty(propertyName, value string) {
-// 	js.Value(s).Call("setProperty", propertyName, value)
-// }
-//
-// func (s Style) Set(name, value string) {
-// 	js.Value(s).Set(name, value)
-// }
-//
-// func (s Style) Get(name string) string {
-// 	return js.Value(s).Get(name).String()
-// }
