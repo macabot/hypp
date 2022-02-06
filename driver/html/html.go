@@ -237,6 +237,8 @@ func (n *Node) RemoveAttribute(name string) {
 	delete(n.attributes, name)
 }
 
+var matchUnescapedDoubleQuote = regexp.MustCompile(`\\([\s\S])|(")`)
+
 func (n *Node) SetAttribute(name string, value interface{}) {
 	if name == "style" {
 		if m, ok := value.(map[string]string); ok {
@@ -250,7 +252,9 @@ func (n *Node) SetAttribute(name string, value interface{}) {
 	if n.attributes == nil {
 		n.attributes = hypp.Map[string, string]{}
 	}
-	n.attributes[name] = fmt.Sprint(value)
+	s := fmt.Sprint(value)
+	s = matchUnescapedDoubleQuote.ReplaceAllString(s, `$1$2`)
+	n.attributes[name] = s
 }
 
 func (n Node) Events() hypp.Events {

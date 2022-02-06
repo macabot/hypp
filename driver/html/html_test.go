@@ -20,7 +20,7 @@ func TestInnerHTML(t *testing.T) {
 
 	b := driver.CreateElement("b", eco)
 	b.Set("attrB1", "hello")
-	b.Set("attrB2", "world")
+	b.Set("attrB2", `"world"`)
 
 	c := driver.CreateTextNode("This is a test")
 
@@ -33,7 +33,7 @@ func TestInnerHTML(t *testing.T) {
 
 	assert.Equal(
 		t,
-		`<a attr-a1="33" attr-a2="a2"><b attr-b1="hello" attr-b2="world">This is a test<br></b></a>`,
+		`<a attr-a1="33" attr-a2="a2"><b attr-b1="hello" attr-b2="\"world\"">This is a test<br></b></a>`,
 		wrapper.InnerHTML(&RenderOptions{Deterministic: true}),
 	)
 }
