@@ -3,6 +3,7 @@ package html
 import (
 	"errors"
 	"fmt"
+	"html"
 	"regexp"
 	"sort"
 	"strings"
@@ -235,8 +236,11 @@ func (n *Node) RemoveAttribute(name string) {
 
 func (n *Node) SetAttribute(name string, value interface{}) {
 	if name == "style" {
-		if v, ok := value.(map[string]string); ok {
-			n.style = v
+		if m, ok := value.(map[string]string); ok {
+			n.style = hypp.Map[string, string]{}
+			for k, v := range m {
+				n.SetStyle(k, v)
+			}
 			return
 		}
 	}
@@ -254,7 +258,7 @@ func (n *Node) SetStyleProperty(propertyName, value string) {
 	if n.style == nil {
 		n.style = hypp.Map[string, string]{}
 	}
-	n.style[propertyName] = value
+	n.style[propertyName] = html.EscapeString(value)
 }
 
 func (n *Node) SetStyle(name, value string) {
@@ -319,7 +323,7 @@ func renderStyle(style hypp.Map[string, string], options *RenderOptions) string 
 	parts := make([]string, len(style))
 	i := 0
 	for key, value := range style {
-		parts[i] = key + ":" + value + ";"
+		parts[i] = key + ": " + value + ";"
 		i++
 	}
 	if options.isDeterministic() {
@@ -331,5 +335,5 @@ func renderStyle(style hypp.Map[string, string], options *RenderOptions) string 
 var matchCamelCase = regexp.MustCompile("([a-z0-9])([A-Z])")
 
 func camelToKebab(s string) string {
-	return matchCamelCase.ReplaceAllString(s, "${1}-${2}")
+	return strings.ToLower(matchCamelCase.ReplaceAllString(s, "${1}-${2}"))
 }
