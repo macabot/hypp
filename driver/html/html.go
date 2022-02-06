@@ -210,6 +210,7 @@ func (n *Node) RemoveChild(child hypp.Node) {
 		if c == child {
 			child.(*Node).parentNode = nil
 			n.childNodes = append(n.childNodes[:i], n.childNodes[i+1:]...)
+			return
 		}
 	}
 	panic(errors.New("html: cannot remove Node that is not a child of this Node"))
@@ -229,7 +230,9 @@ func (n *Node) Set(name string, value interface{}) {
 }
 
 func (n *Node) AppendChild(child hypp.Node) hypp.Node {
-	n.childNodes = append(n.childNodes, child)
+	c := child.(*Node)
+	c.parentNode = n
+	n.childNodes = append(n.childNodes, c)
 	return child
 }
 

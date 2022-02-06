@@ -5,6 +5,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var eco = hypp.Option[hypp.ElementCreationOptions]{}
@@ -63,4 +64,47 @@ func TestRenderClassSlice(t *testing.T) {
 		`<div class="a b c"></div>`,
 		div.OuterHTML(&RenderOptions{Deterministic: true}),
 	)
+}
+
+func TestAppendChild(t *testing.T) {
+	driver := Driver{}
+	a := driver.CreateElement("a", eco)
+	b := driver.CreateElement("b", eco)
+	out := a.AppendChild(b)
+	assert.Equal(t, b, out)
+	assert.Equal(t, a, b.ParentNode())
+	require.Len(t, a.ChildNodes(), 1)
+	assert.Equal(t, b, a.ChildNodes()[0])
+}
+
+func TestInsertBeforeChangesParent(t *testing.T) {
+	driver := Driver{}
+	a := driver.CreateElement("a", eco)
+	b := driver.CreateElement("b", eco)
+	a.AppendChild(b)
+	assert.Equal(t, a, b.ParentNode())
+	assert.Len(t, a.ChildNodes(), 1)
+
+	c := driver.CreateElement("c", eco)
+	out := c.InsertBefore(b, nil)
+	assert.Equal(t, b, out)
+	assert.Equal(t, c, b.ParentNode())
+	assert.Len(t, c.ChildNodes(), 1)
+	assert.Len(t, a.ChildNodes(), 0)
+}
+
+func TestInsertBeforeNode(t *testing.T) {
+	driver := Driver{}
+	a := driver.CreateElement("a", eco)
+	b := driver.CreateElement("b", eco)
+	c := driver.CreateElement("c", eco)
+
+	a.AppendChild(b)
+	require.Len(t, a.ChildNodes(), 1)
+	assert.Equal(t, b, a.ChildNodes()[0])
+
+	a.InsertBefore(c, b)
+	require.Len(t, a.ChildNodes(), 2)
+	assert.Equal(t, c, a.ChildNodes()[0])
+	assert.Equal(t, b, a.ChildNodes()[1])
 }
