@@ -52,3 +52,15 @@ func TestRenderStyle(t *testing.T) {
         div.OuterHTML(&RenderOptions{Deterministic: true}),
     )
 }
+
+func TestRenderClassSlice(t *testing.T) {
+    driver := Driver{}
+    div := driver.CreateElement("div", eco).(*Node)
+    div.SetAttribute("class", []string{"b", "c", "a"})
+
+    assert.Equal(
+        t,
+        `<div class="a b c"></div>`,
+        div.OuterHTML(&RenderOptions{Deterministic: true}),
+    )
+}
