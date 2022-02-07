@@ -270,7 +270,11 @@ func (n *Node) SetStyleProperty(propertyName, value string) {
 	if n.style == nil {
 		n.style = hypp.Map[string, string]{}
 	}
-	n.style[propertyName] = html.EscapeString(value)
+	if value == "" {
+		delete(n.style, propertyName)
+	} else {
+		n.style[propertyName] = html.EscapeString(value)
+	}
 }
 
 func (n *Node) SetStyle(name, value string) {

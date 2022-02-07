@@ -54,6 +54,25 @@ func TestRenderStyle(t *testing.T) {
 	)
 }
 
+func TestUnsetStyle(t *testing.T) {
+	driver := Driver{}
+	div := driver.CreateElement("div", eco).(*Node)
+	div.SetStyle("backgroundColor", "red")
+	div.SetStyle("color", "green")
+	assert.Equal(
+		t,
+		`<div style="background-color: red; color: green;"></div>`,
+		div.OuterHTML(&RenderOptions{Deterministic: true}),
+	)
+
+	div.SetStyle("color", "")
+	assert.Equal(
+		t,
+		`<div style="background-color: red;"></div>`,
+		div.OuterHTML(&RenderOptions{Deterministic: true}),
+	)
+}
+
 func TestRenderClassSlice(t *testing.T) {
 	driver := Driver{}
 	div := driver.CreateElement("div", eco).(*Node)
