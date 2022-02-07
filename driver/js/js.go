@@ -12,9 +12,9 @@ func document() js.Value {
 	return js.Global().Get("document")
 }
 
-var _ hypp.Driver = Driver{}
-
 type Driver struct{}
+
+var _ hypp.Driver = Driver{}
 
 func (d Driver) CreateTextNode(data string) hypp.Node {
 	return Node(document().Call("createTextNode", data))
@@ -38,20 +38,13 @@ func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCr
 	return Node(document().Call("createElement", tagName, elementCreationOptionsToValue(options)))
 }
 
-func (d Driver) Enqueue(render func()) {
-	js.Global().Call("requestAnimationFrame", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		render()
-		return nil
-	}))
-}
-
 func (d Driver) Window() hypp.Window {
 	return Window(js.Global())
 }
 
-var _ hypp.Window = Window{}
-
 type Window js.Value
+
+var _ hypp.Window = Window{}
 
 func (w Window) EscapeToValue() hypp.Value {
 	return EscapeToValuer(w).EscapeToValue()
@@ -82,9 +75,9 @@ func hyppNodeToValue(node hypp.Node) js.Value {
 	return js.Value(node.(Node))
 }
 
-var _ hypp.EventTarget = EventTarget{}
-
 type EventTarget js.Value
+
+var _ hypp.EventTarget = EventTarget{}
 
 func (e EventTarget) RemoveEventListener(kind string, listenerID hypp.EventListenerID) {
 	js.Value(e).Call("removeEventListener", kind, js.Value(listenerID.(EventListenerID)))
@@ -99,15 +92,15 @@ func (e EventTarget) AddEventListener(kind string, listener hypp.EventListener) 
 	return EventListenerID(js.ValueOf(f))
 }
 
-var _ hypp.EventListenerID = EventListenerID{}
-
 type EventListenerID js.Value
+
+var _ hypp.EventListenerID = EventListenerID{}
 
 func (e EventListenerID) IAmAnEventListenerID() {}
 
-var _ hypp.Node = Node{}
-
 type Node js.Value
+
+var _ hypp.Node = Node{}
 
 func (n Node) ParentNode() hypp.Node {
 	return Node(js.Value(n).Get("parentNode"))
@@ -228,8 +221,12 @@ func (n Node) Events() hypp.Events {
 	return Events(v.Get("events"))
 }
 
-func (n Node) Style() hypp.Style {
-	return Style(js.Value(n).Get("style"))
+func (n Node) SetStyleProperty(propertyName, value string) {
+	js.Value(n).Get("style").Call("setProperty", propertyName, value)
+}
+
+func (n Node) SetStyle(name, value string) {
+	js.Value(n).Get("style").Set(name, value)
 }
 
 func (n Node) EventListenerID(kind string) hypp.EventListenerID {
@@ -255,9 +252,9 @@ func (n Node) SetEventListenerID(kind string, eventListenerID hypp.EventListener
 	}
 }
 
-var _ hypp.Events = Events{}
-
 type Events js.Value
+
+var _ hypp.Events = Events{}
 
 type dispatchablesRepo struct {
 	mu sync.Mutex
@@ -328,17 +325,17 @@ func (e Events) deleteAll() {
 	}
 }
 
-var _ hypp.EscapeToValuer = EscapeToValuer{}
-
 type EscapeToValuer js.Value
+
+var _ hypp.EscapeToValuer = EscapeToValuer{}
 
 func (e EscapeToValuer) EscapeToValue() hypp.Value {
 	return Value{js.Value(e)}
 }
 
-var _ hypp.Event = Event{}
-
 type Event js.Value
+
+var _ hypp.Event = Event{}
 
 func (e Event) EscapeToValue() hypp.Value {
 	return EscapeToValuer(e).EscapeToValue()
@@ -356,26 +353,10 @@ func (e Event) Target() hypp.EventTargetValuer {
 	return EventTargetValuer(js.Value(e).Get("target"))
 }
 
-var _ hypp.EventTargetValuer = EventTargetValuer{}
-
 type EventTargetValuer js.Value
+
+var _ hypp.EventTargetValuer = EventTargetValuer{}
 
 func (e EventTargetValuer) Value() string {
 	return js.Value(e).Get("value").String()
-}
-
-var _ hypp.Style = Style{}
-
-type Style js.Value
-
-func (s Style) SetProperty(propertyName, value string) {
-	js.Value(s).Call("setProperty", propertyName, value)
-}
-
-func (s Style) Set(name, value string) {
-	js.Value(s).Set(name, value)
-}
-
-func (s Style) Get(name string) string {
-	return js.Value(s).Get(name).String()
 }
