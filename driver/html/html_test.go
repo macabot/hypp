@@ -70,11 +70,27 @@ func TestAppendChild(t *testing.T) {
 	driver := Driver{}
 	a := driver.CreateElement("a", eco)
 	b := driver.CreateElement("b", eco)
+	c := driver.CreateElement("c", eco)
+	d := driver.CreateElement("d", eco)
 	out := a.AppendChild(b)
 	assert.Equal(t, b, out)
+
+	d.AppendChild(c)
+	assert.Equal(t, d, c.ParentNode())
+
+	a.AppendChild(c)
+
 	assert.Equal(t, a, b.ParentNode())
-	require.Len(t, a.ChildNodes(), 1)
+	assert.Equal(t, a, c.ParentNode())
+	require.Len(t, a.ChildNodes(), 2)
 	assert.Equal(t, b, a.ChildNodes()[0])
+	assert.Equal(t, c, a.ChildNodes()[1])
+
+	a.AppendChild(b)
+
+	require.Len(t, a.ChildNodes(), 2)
+	assert.Equal(t, c, a.ChildNodes()[0])
+	assert.Equal(t, b, a.ChildNodes()[1])
 }
 
 func TestInsertBeforeChangesParent(t *testing.T) {

@@ -185,24 +185,22 @@ func (n Node) ChildNodes() []hypp.Node {
 }
 
 func (n *Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
+	if referenceNode == nil {
+		return n.AppendChild(newNode)
+	}
 	parentNode := newNode.ParentNode().(*Node)
 	if parentNode != nil {
 		parentNode.RemoveChild(newNode)
 	}
-	if referenceNode == nil {
-		newNode.(*Node).parentNode = n
-		return n.AppendChild(newNode)
-	} else {
-		for i, child := range n.ChildNodes() {
-			if child == referenceNode {
-				newNode.(*Node).parentNode = n
-				n.childNodes = append(n.childNodes[:i+1], n.childNodes[i:]...)
-				n.childNodes[i] = newNode
-				return newNode
-			}
+	for i, child := range n.ChildNodes() {
+		if child == referenceNode {
+			newNode.(*Node).parentNode = n
+			n.childNodes = append(n.childNodes[:i+1], n.childNodes[i:]...)
+			n.childNodes[i] = newNode
+			return newNode
 		}
-		panic(errors.New("html: referenceNode is not a child of this Node"))
 	}
+	panic(errors.New("html: referenceNode is not a child of this Node"))
 }
 
 func (n *Node) RemoveChild(child hypp.Node) {
@@ -230,6 +228,10 @@ func (n *Node) Set(name string, value interface{}) {
 }
 
 func (n *Node) AppendChild(child hypp.Node) hypp.Node {
+	parentNode := child.ParentNode().(*Node)
+	if parentNode != nil {
+		parentNode.RemoveChild(child)
+	}
 	c := child.(*Node)
 	c.parentNode = n
 	n.childNodes = append(n.childNodes, c)
