@@ -9,7 +9,7 @@ import (
 var fileTemplate = `package %s
 
 // DO NOT EDIT
-// This file was generated using cmd/generate-html-tags
+// This file was generated using github.com/macabot/hypp/tag/cmd/generate-tags
 
 import "github.com/macabot/hypp"
 
@@ -33,5 +33,9 @@ func main() {
 		funcs[i] = fmt.Sprintf(funcTemplate, strings.Title(arg), arg)
 	}
 
-	fmt.Printf(fileTemplate, packageName, strings.Join(funcs, "\n"))
+	fmt.Printf(
+		fileTemplate,
+		packageName,
+		strings.Join(funcs, "\n"),
+	)
 }

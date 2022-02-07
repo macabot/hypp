@@ -237,9 +237,9 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 				oldValue = newStyle[k]
 			}
 			if k[0] == '-' {
-				node.Style().SetProperty(k, oldValue)
+				node.SetStyleProperty(k, oldValue)
 			} else {
-				node.Style().Set(k, oldValue)
+				node.SetStyle(k, oldValue)
 			}
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
@@ -269,7 +269,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 		if newValue != nil && newValue != false && key == "class" {
 			newValue = createClass(newValue)
 		}
-		if newValue == nil || newValue == false {
+		if isFalsy(newValue) {
 			node.RemoveAttribute(key)
 		} else {
 			node.SetAttribute(key, newValue)
@@ -597,7 +597,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			appProps.Driver.Enqueue(appProps.render)
+			appProps.Driver.Window().RequestAnimationFrame(appProps.render)
 		}
 	}
 }

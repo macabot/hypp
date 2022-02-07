@@ -191,7 +191,8 @@ type Node interface {
 	RemoveAttribute(name string)
 	SetAttribute(name string, value interface{})
 	Events() Events
-	Style() Style
+	SetStyleProperty(propertyName, value string)
+	SetStyle(name, value string)
 	EventListenerID(kind string) EventListenerID
 	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
@@ -221,12 +222,6 @@ type Events interface {
 	Del(name string)
 }
 
-type Style interface {
-	SetProperty(propertyName, value string)
-	Set(name, value string)
-	Get(name string) string
-}
-
 type Subscriptions[S State] func(state S) []Subscription
 
 type Render func()
@@ -239,7 +234,6 @@ type Driver interface {
 	CreateTextNode(data string) Node
 	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
 	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Enqueue(render func())
 	Window() Window
 }
 
@@ -308,11 +302,6 @@ type Subscription struct {
 }
 
 type Unsubscribe func()
-
-type Option[T any] struct {
-	V  T
-	OK bool
-}
 
 type VNode struct {
 	props    HProps
