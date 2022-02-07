@@ -42,17 +42,6 @@ func (m Map[K, V]) Has(k K) bool {
 	return ok
 }
 
-// // Set sets the value v for the given key k.
-// // It does not panic if the Map is nil.
-// // Instead it initializes the map and sets the key-value pair.
-// func (m *Map[K, V]) Set(k K, v V) {
-// 	if *m == nil {
-// 		*m = Map[K, V]{}
-// 	}
-// 	n := *m
-// 	n[k] = v
-// }
-
 // Get returns the value for the given key.
 // It does not panic if the Map is nil.
 // Instead it returns the empty value of type V.

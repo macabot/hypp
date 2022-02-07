@@ -193,7 +193,6 @@ type Node interface {
 	Events() Events
 	SetStyleProperty(propertyName, value string)
 	SetStyle(name, value string)
-	// GetStyle(name string) string // TODO remove?
 	EventListenerID(kind string) EventListenerID
 	SetEventListenerID(kind string, eventListenerID EventListenerID)
 }
@@ -222,12 +221,6 @@ type Events interface {
 	Get(name string) Dispatchable
 	Del(name string)
 }
-
-// type Style interface {
-// 	SetProperty(propertyName, value string)
-// 	Set(name, value string)
-// 	Get(name string) string
-// }
 
 type Subscriptions[S State] func(state S) []Subscription
 

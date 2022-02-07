@@ -281,10 +281,6 @@ func (n *Node) SetStyle(name, value string) {
 	n.SetStyleProperty(camelToKebab(name), value)
 }
 
-func (n *Node) GetStyle(name string) string {
-	return n.style.Get(name)
-}
-
 func (n Node) EventListenerID(kind string) hypp.EventListenerID {
 	return EventListenerID{}
 }
