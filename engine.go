@@ -169,17 +169,6 @@ func (s vNodeMap) HasOption(key Option[string]) bool {
 	return s.Has(key.V)
 }
 
-type setOfStrings map[string]struct{}
-
-func (s setOfStrings) Has(v string) bool {
-	_, ok := s[v]
-	return ok
-}
-
-func (s setOfStrings) Set(v string) {
-	s[v] = struct{}{}
-}
-
 func stylePairKeys(x, y interface{}) []string {
 	seen := map[string]struct{}{}
 	var keys []string
@@ -463,7 +452,7 @@ func patch(
 			}
 		} else {
 			keyed := vNodeMap{}
-			newKeyed := setOfStrings{}
+			newKeyed := Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key
 				if oldKey.OK {
@@ -514,7 +503,7 @@ func patch(
 							listener,
 							isSvg,
 						)
-						newKeyed.Set(newKey.V)
+						newKeyed.Add(newKey.V)
 						oldHead++
 					} else {
 						tmpVKid = keyed[newKey.V]
@@ -528,7 +517,7 @@ func patch(
 								listener,
 								isSvg,
 							)
-							newKeyed.Set(newKey.V)
+							newKeyed.Add(newKey.V)
 						} else {
 							patch(
 								driver,
