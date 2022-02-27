@@ -149,23 +149,6 @@ func hPropsKeys(oldProps, newProps HProps) []string {
 	return keys
 }
 
-type vNodeMap map[string]*VNode
-
-func (s vNodeMap) Has(key string) bool {
-	if s == nil {
-		return false
-	}
-	_, ok := s[key]
-	return ok
-}
-
-func (s vNodeMap) HasOption(key Option[string]) bool {
-	if !key.OK {
-		return false
-	}
-	return s.Has(key.V)
-}
-
 func stylePairKeys(x, y interface{}) []string {
 	seen := map[string]struct{}{}
 	var keys []string
@@ -448,7 +431,7 @@ func patch(
 				oldHead++
 			}
 		} else {
-			keyed := vNodeMap{}
+			keyed := map[string]*VNode{}
 			newKeyed := Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key
