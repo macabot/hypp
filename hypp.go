@@ -56,7 +56,7 @@ func App[S State](props AppProps[S]) Dispatch {
 //	| ----------------- | ----------------------------------------------------- |
 //	| Starts with "on"  | Dispatchable                                          |
 //	| "class"           | bool, int, float64, string, []string, map[string]bool |
-//	| "style"           | bool, int, float64, string, map[string]string         |
+//	| "style"           | map[string]string                                     |
 //	| Other             | bool, int, float64, string                            |
 type HProps map[string]interface{}
 

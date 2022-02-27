@@ -17,6 +17,10 @@ func validateHProps(props HProps, tag string) {
 			if _, ok := value.(Dispatchable); !ok {
 				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
 			}
+		} else if key == "style" {
+			if _, ok := value.(map[string]string); !ok {
+				fmt.Printf("WARNING: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value)
+			}
 		} else {
 			switch value.(type) {
 			case bool, int, float64, string:
@@ -28,13 +32,6 @@ func validateHProps(props HProps, tag string) {
 					// Do nothing
 				default:
 					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
-				}
-			} else if key == "style" {
-				switch v := value.(type) {
-				case map[string]string:
-					// Do nothing
-				default:
-					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string or map[string]string. Got %+v of type %T\n", tag, key, v, v)
 				}
 			}
 		}
