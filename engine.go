@@ -17,6 +17,10 @@ func validateHProps(props HProps, tag string) {
 			if _, ok := value.(Dispatchable); !ok {
 				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
 			}
+		} else if key == "style" {
+			if _, ok := value.(map[string]string); !ok {
+				fmt.Printf("WARNING: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value)
+			}
 		} else {
 			switch value.(type) {
 			case bool, int, float64, string:
@@ -28,13 +32,6 @@ func validateHProps(props HProps, tag string) {
 					// Do nothing
 				default:
 					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
-				}
-			} else if key == "style" {
-				switch v := value.(type) {
-				case map[string]string:
-					// Do nothing
-				default:
-					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string or map[string]string. Got %+v of type %T\n", tag, key, v, v)
 				}
 			}
 		}
@@ -150,34 +147,6 @@ func hPropsKeys(oldProps, newProps HProps) []string {
 		}
 	}
 	return keys
-}
-
-type vNodeMap map[string]*VNode
-
-func (s vNodeMap) Has(key string) bool {
-	if s == nil {
-		return false
-	}
-	_, ok := s[key]
-	return ok
-}
-
-func (s vNodeMap) HasOption(key Option[string]) bool {
-	if !key.OK {
-		return false
-	}
-	return s.Has(key.V)
-}
-
-type setOfStrings map[string]struct{}
-
-func (s setOfStrings) Has(v string) bool {
-	_, ok := s[v]
-	return ok
-}
-
-func (s setOfStrings) Set(v string) {
-	s[v] = struct{}{}
 }
 
 func stylePairKeys(x, y interface{}) []string {
@@ -462,8 +431,8 @@ func patch(
 				oldHead++
 			}
 		} else {
-			keyed := vNodeMap{}
-			newKeyed := setOfStrings{}
+			keyed := map[string]*VNode{}
+			newKeyed := Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key
 				if oldKey.OK {
@@ -514,7 +483,7 @@ func patch(
 							listener,
 							isSvg,
 						)
-						newKeyed.Set(newKey.V)
+						newKeyed.Add(newKey.V)
 						oldHead++
 					} else {
 						tmpVKid = keyed[newKey.V]
@@ -528,7 +497,7 @@ func patch(
 								listener,
 								isSvg,
 							)
-							newKeyed.Set(newKey.V)
+							newKeyed.Add(newKey.V)
 						} else {
 							patch(
 								driver,

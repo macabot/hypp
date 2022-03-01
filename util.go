@@ -15,7 +15,7 @@ type Set[T comparable] map[T]struct{}
 func NewSet[T comparable](values ...T) Set[T] {
 	s := Set[T]{}
 	for _, v := range values {
-		s[v] = struct{}{}
+		s.Add(v)
 	}
 	return s
 }
@@ -27,6 +27,11 @@ func (s Set[T]) Has(v T) bool {
 	}
 	_, ok := s[v]
 	return ok
+}
+
+// Add adds the given value in to the Set if not present already.
+func (s Set[T]) Add(v T) {
+	s[v] = struct{}{}
 }
 
 // Map is a wrapper around the build-in map type.
