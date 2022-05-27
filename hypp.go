@@ -6,6 +6,7 @@ package hypp
 // This file is based on https://github.com/jorgebucaran/hyperapp/blob/main/index.d.ts
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -46,7 +47,7 @@ func (_ EmptyState) IAmDispatchable() {}
 
 // App creates a new application.
 func App[S State](props AppProps[S]) Dispatch {
-	return app[S](props)
+	return app(props)
 }
 
 // HProps are the properties to create a *VNode.
@@ -235,6 +236,7 @@ type Driver interface {
 	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
 	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
 	Window() Window
+	ValidateAppPropsNode(Node) error
 }
 
 type AppProps[S State] struct {
@@ -253,12 +255,28 @@ type AppProps[S State] struct {
 	state    S
 }
 
+func (a AppProps[S]) Validate() error {
+	if a.Driver == nil {
+		return errors.New("hypp: AppProps.Driver cannot be nil")
+	} else if a.View == nil {
+		return errors.New("hypp: AppProps.View cannot be nil")
+	} else if a.Node == nil {
+		return errors.New("hypp: AppProps.Node cannot be nil")
+	} else if err := a.Driver.ValidateAppPropsNode(a.Node); err != nil {
+		return fmt.Errorf("hypp: AppProps.Node is invalid: %w", err)
+	}
+	return nil
+}
+
 func (a *AppProps[S]) init() {
 	if a.DispatchInitializer == nil {
 		a.DispatchInitializer = dispatchInitializerID
 	}
 	if a.Init == nil {
 		a.Init = EmptyState{}
+	}
+	if err := a.Validate(); err != nil {
+		panic(err)
 	}
 }
 

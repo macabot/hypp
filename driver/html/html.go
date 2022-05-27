@@ -42,6 +42,10 @@ func (d Driver) Window() hypp.Window {
 	return Window{}
 }
 
+func (d Driver) ValidateAppPropsNode(node hypp.Node) error {
+	return nil
+}
+
 type Window struct {
 	EventTarget
 }
@@ -86,7 +90,7 @@ type Node struct {
 var _ hypp.Node = &Node{}
 
 // See https://w3c.github.io/html-reference/syntax.html#void-element
-var voidElements = hypp.NewSet[string](
+var voidElements = hypp.NewSet(
 	"area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
 )
 
