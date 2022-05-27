@@ -1,7 +1,6 @@
 # Gif search JS
 
 ## Setup
-Replace `go` with `gotip` if necessary.
 ```shell
 $ cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" public
 $ GOOS=js GOARCH=wasm go build -ldflags="-X 'main.APIKey=<api_key>'" -o public/main.wasm main.go
