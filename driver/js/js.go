@@ -1,6 +1,7 @@
 package js
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"syscall/js"
@@ -40,6 +41,15 @@ func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCr
 
 func (d Driver) Window() hypp.Window {
 	return Window(js.Global())
+}
+
+func (d Driver) ValidateAppPropsNode(node hypp.Node) error {
+	if node == nil {
+		return errors.New("hypp/driver/js: AppProps.Node cannot be nil")
+	} else if js.Value(node.ParentNode().(Node)).IsNull() {
+		return errors.New("hypp/driver/js: AppProps.Node must have a parent")
+	}
+	return nil
 }
 
 type Window js.Value
@@ -283,7 +293,7 @@ func (g *dispatchablesRepo) Del(i int) {
 	g.mu.Unlock()
 }
 
-func (g dispatchablesRepo) Get(i int) hypp.Dispatchable {
+func (g *dispatchablesRepo) Get(i int) hypp.Dispatchable {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	return g.v[i]

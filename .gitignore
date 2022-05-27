@@ -17,3 +17,8 @@
 
 # This file depends on your go version
 wasm_exec.js
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+.history

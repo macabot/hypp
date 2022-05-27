@@ -602,7 +602,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 	appProps.dispatch = func(dispatchable Dispatchable, props Payload) {
 		switch v := dispatchable.(type) {
 		case StateAndEffects[S]:
-			update[S](&appProps, v.State)
+			update(&appProps, v.State)
 			for _, effect := range v.Effects {
 				effect.Effecter(appProps.dispatch, effect.Payload)
 			}
@@ -611,7 +611,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 		case ActionAndPayload[S]:
 			appProps.dispatch(v.Action, v.Payload)
 		case S: // State
-			update[S](&appProps, v)
+			update(&appProps, v)
 		default:
 			panic(fmt.Errorf("hypp: dispatchable has unexpected type '%[1]T'. Expected type 'StateAndEffects[%[2]T]', 'Action[%[2]T]', 'ActionAndPayload[%[2]T]' or '%[2]T'", dispatchable, appProps.state))
 		}
