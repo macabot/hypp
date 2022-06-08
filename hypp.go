@@ -240,12 +240,12 @@ type Driver interface {
 }
 
 type AppProps[S State] struct {
-	Driver              Driver
-	Init                Dispatchable
-	Subscriptions       Subscriptions[S]
-	DispatchInitializer func(dispatch Dispatch) Dispatch
-	View                func(state S) *VNode
-	Node                Node
+	Driver          Driver
+	Init            Dispatchable
+	Subscriptions   Subscriptions[S]
+	DispatchWrapper func(dispatch Dispatch) Dispatch
+	View            func(state S) *VNode
+	Node            Node
 
 	vdom     *VNode
 	dispatch Dispatch
@@ -269,8 +269,8 @@ func (a AppProps[S]) Validate() error {
 }
 
 func (a *AppProps[S]) init() {
-	if a.DispatchInitializer == nil {
-		a.DispatchInitializer = dispatchInitializerID
+	if a.DispatchWrapper == nil {
+		a.DispatchWrapper = dispatchWrapperID
 	}
 	if a.Init == nil {
 		a.Init = EmptyState{}

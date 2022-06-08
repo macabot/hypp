@@ -64,7 +64,7 @@ func text(value string, node Node) *VNode {
 	}
 }
 
-func dispatchInitializerID(dispatch Dispatch) Dispatch {
+func dispatchWrapperID(dispatch Dispatch) Dispatch {
 	return dispatch
 }
 
@@ -616,7 +616,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 			panic(fmt.Errorf("hypp: dispatchable has unexpected type '%[1]T'. Expected type 'StateAndEffects[%[2]T]', 'Action[%[2]T]', 'ActionAndPayload[%[2]T]' or '%[2]T'", dispatchable, appProps.state))
 		}
 	}
-	appProps.dispatch = appProps.DispatchInitializer(appProps.dispatch)
+	appProps.dispatch = appProps.DispatchWrapper(appProps.dispatch)
 	appProps.dispatch(appProps.Init, nil)
 
 	return appProps.dispatch
