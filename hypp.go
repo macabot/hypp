@@ -321,6 +321,12 @@ type Subscription struct {
 
 type Unsubscribe func()
 
+// VNode kinds.
+const (
+	SSRNode  = 1
+	TextNode = 3
+)
+
 type VNode struct {
 	props    HProps
 	children vKids
@@ -330,6 +336,27 @@ type VNode struct {
 	memoView func(data MemoData) *VNode
 	memoData MemoData
 	kind     int
+}
+
+// Props returns the VNode's properties.
+func (n VNode) Props() HProps {
+	return n.props
+}
+
+// Children returns the VNode's children.
+func (n VNode) Children() []*VNode {
+	return n.children
+}
+
+// Tag returns the VNode's tag.
+func (n VNode) Tag() string {
+	return n.tag
+}
+
+// Kind retursn the VNode's kind.
+// It is either SSRNode or TextNode.
+func (n VNode) Kind() int {
+	return n.kind
 }
 
 type vKids []*VNode

@@ -7,9 +7,7 @@ import (
 	"strings"
 )
 
-var ssrNode = 1
-var textNode = 3
-var svgNS = "http://www.w3.org/2000/svg"
+const svgNS = "http://www.w3.org/2000/svg"
 
 func validateHProps(props HProps, tag string) {
 	for key, value := range props {
@@ -45,7 +43,7 @@ func h(tag string, props HProps, children vKids) *VNode {
 		props:    props,
 		key:      props.Key(),
 		children: children,
-		kind:     ssrNode,
+		kind:     SSRNode,
 	}
 }
 
@@ -59,7 +57,7 @@ func memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 func text(value string, node Node) *VNode {
 	return &VNode{
 		tag:  value,
-		kind: textNode,
+		kind: TextNode,
 		node: node,
 	}
 }
@@ -69,7 +67,7 @@ func dispatchWrapperID(dispatch Dispatch) Dispatch {
 }
 
 func recycleNode(node Node) *VNode {
-	if node.NodeType() == textNode {
+	if node.NodeType() == TextNode {
 		return text(node.NodeValue(), node)
 	} else {
 		childNodes := node.ChildNodes()
@@ -80,7 +78,7 @@ func recycleNode(node Node) *VNode {
 		return &VNode{
 			tag:      strings.ToLower(node.NodeName()),
 			children: children,
-			kind:     ssrNode,
+			kind:     SSRNode,
 			node:     node,
 		}
 	}
@@ -249,7 +247,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isSvg bool) Node {
 	props := vdom.props
 	var node Node
-	if vdom.kind == textNode {
+	if vdom.kind == TextNode {
 		node = driver.CreateTextNode(vdom.tag)
 	} else {
 		isSvg = isSvg || vdom.tag == "svg"
@@ -314,7 +312,7 @@ func patch(
 ) Node {
 	if oldVNode == newVNode {
 		// Do nothing
-	} else if oldVNode != nil && oldVNode.kind == textNode && newVNode.kind == textNode {
+	} else if oldVNode != nil && oldVNode.kind == TextNode && newVNode.kind == TextNode {
 		if oldVNode.tag != newVNode.tag {
 			node.SetNodeValue(newVNode.tag)
 		}
@@ -454,7 +452,7 @@ func patch(
 					continue
 				}
 
-				if !newKey.OK || oldVNode.kind == ssrNode {
+				if !newKey.OK || oldVNode.kind == SSRNode {
 					if !oldKey.OK {
 						var oldVKidNode Node
 						if oldVKid != nil {
