@@ -151,7 +151,7 @@ func (n Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
 }
 
 func (n Node) RemoveChild(child hypp.Node) {
-	n.Events().(Events).deleteAll()
+	child.Events().(Events).deleteAll()
 	js.Value(n).Call("removeChild", hyppNodeToValue(child))
 }
 
@@ -323,6 +323,7 @@ func (e Events) Del(name string) {
 	v := js.Value(e)
 	if p := v.Get(name); p.Type() == js.TypeNumber {
 		globalNodeEvents.Del(p.Int())
+		v.Delete(name)
 	}
 }
 
