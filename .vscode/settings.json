@@ -4,5 +4,24 @@
             "GOOS": "js",
             "GOARCH": "wasm"
         }
-    }
+    },
+    "cSpell.languageSettings": [
+        // GoLang
+        // Set what strings to check (see https://github.com/streetsidesoftware/vscode-spell-checker/issues/107)
+        {
+            "languageId": "go",
+            "allowCompoundWords": false,
+            // Only check comments
+            "includeRegExpList": [
+                "CStyleComment",
+            ],
+        }
+    ],
+    "cSpell.words": [
+        "Dispatchable",
+        "Hyperapp",
+        "hypp",
+        "macabot",
+        "Textf"
+    ]
 }

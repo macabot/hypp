@@ -353,7 +353,7 @@ func (n VNode) Tag() string {
 	return n.tag
 }
 
-// Kind retursn the VNode's kind.
+// Kind returns the VNode's kind.
 // It is either SSRNode or TextNode.
 func (n VNode) Kind() int {
 	return n.kind
