@@ -194,7 +194,7 @@ func validateValue(value interface{}) {
 	case nil, bool, int, float64, string:
 		// Do nothing
 	default:
-		fmt.Printf("WARNING: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value)
+		panic(fmt.Errorf("hypp: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value))
 	}
 }
 
