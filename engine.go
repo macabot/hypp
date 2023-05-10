@@ -13,11 +13,11 @@ func validateHProps(props HProps, tag string) {
 	for key, value := range props {
 		if key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
-				fmt.Printf("WARNING: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
+				panic(fmt.Errorf("hypp: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value))
 			}
 		} else if key == "style" {
 			if _, ok := value.(map[string]string); !ok {
-				fmt.Printf("WARNING: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value)
+				panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value))
 			}
 		} else {
 			switch value.(type) {
@@ -29,7 +29,7 @@ func validateHProps(props HProps, tag string) {
 				case []string, map[string]bool:
 					// Do nothing
 				default:
-					fmt.Printf("WARNING: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
+					panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v))
 				}
 			}
 		}
@@ -218,7 +218,7 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 			}
 		} else {
 			if _, ok := newValue.(Dispatchable); !ok {
-				fmt.Printf("WARNING: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue)
+				panic(fmt.Errorf("hypp: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue))
 			}
 			node.Events().Set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
