@@ -70,7 +70,7 @@ func (h HProps) Key() Option[string] {
 	return Option[string]{}
 }
 
-// clone returns a clone of the HProps
+// clone returns a shallow clone of the HProps.
 func (h HProps) clone() HProps {
 	clone := make(HProps, len(h))
 	for k, v := range h {
