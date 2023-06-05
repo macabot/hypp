@@ -4,6 +4,7 @@ package hypp
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -38,10 +39,16 @@ func validateHProps(props HProps, tag string) {
 
 func h(tag string, props HProps, children vKids) *VNode {
 	validateHProps(props, tag)
+	key := props.Key()
+	props = props.clone()
+	delete(props, "key")
+	if classOption := props.Get("class"); classOption.OK {
+		props.Set("class", createClass(classOption.V))
+	}
 	return &VNode{
 		tag:      tag,
 		props:    props,
-		key:      props.Key(),
+		key:      key,
 		children: children,
 		kind:     SSRNode,
 	}
@@ -183,6 +190,7 @@ func createClass(obj interface{}) string {
 				parts = append(parts, k)
 			}
 		}
+		sort.Strings(parts)
 	default:
 		return fmt.Sprint(obj)
 	}
@@ -194,9 +202,7 @@ func isFalsy(v interface{}) bool {
 }
 
 func patchProperty(node Node, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
-	if key == "key" {
-		// Do nothing
-	} else if key == "style" {
+	if key == "style" {
 		newStyle, isNewStyle := newValue.(map[string]string)
 		for _, k := range stylePairKeys(oldValue, newValue) {
 			oldValue := ""
@@ -233,9 +239,6 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 			node.Set(key, newValue)
 		}
 	} else {
-		if newValue != nil && newValue != false && key == "class" {
-			newValue = createClass(newValue)
-		}
 		if isFalsy(newValue) {
 			node.RemoveAttribute(key)
 		} else {

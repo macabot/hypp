@@ -70,6 +70,15 @@ func (h HProps) Key() Option[string] {
 	return Option[string]{}
 }
 
+// clone returns a clone of the HProps
+func (h HProps) clone() HProps {
+	clone := make(HProps, len(h))
+	for k, v := range h {
+		clone[k] = v
+	}
+	return clone
+}
+
 // Get returns the requested key, if available.
 func (h HProps) Get(key string) Option[interface{}] {
 	if h == nil {
