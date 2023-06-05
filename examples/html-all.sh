@@ -2,7 +2,8 @@
 
 set -e
 
-for example in */cmd/html; do
+cwd=$(dirname "$0")
+for example in "$cwd"/*/cmd/html; do
     echo "$example"
     go run "${example}/main.go"
 done
