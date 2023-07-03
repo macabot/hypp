@@ -3,12 +3,13 @@ package html
 import (
 	"errors"
 	"fmt"
-	"html"
+	"io"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/macabot/hypp"
+	"golang.org/x/net/html"
 )
 
 var ssrNode = 1
@@ -363,4 +364,49 @@ var matchCamelCase = regexp.MustCompile(`([a-z0-9])([A-Z])`)
 
 func camelToKebab(s string) string {
 	return strings.ToLower(matchCamelCase.ReplaceAllString(s, "${1}-${2}"))
+}
+
+// nodeToVNode converts a *html.Node to a *hypp.VNode.
+func nodeToVNode(node *html.Node) *hypp.VNode {
+	switch node.Type {
+	case html.TextNode:
+		return hypp.Text(node.Data)
+	case html.ElementNode:
+		hProps := hypp.HProps{}
+		for _, attribute := range node.Attr {
+			hProps[attribute.Key] = attribute.Val
+		}
+		var children []*hypp.VNode
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			children = append(children, nodeToVNode(child))
+		}
+		return hypp.H(node.Data, hProps, children...)
+	default:
+		return nil
+	}
+}
+
+// Parse returns the VNode tree for the HTML from the given Reader.
+// It is based on https://pkg.go.dev/golang.org/x/net/html#Parse
+func Parse(r io.Reader) (*hypp.VNode, error) {
+	node, err := html.Parse(r)
+	if err != nil {
+		return nil, err
+	}
+	return nodeToVNode(node), nil
+}
+
+// ParseFragment parses a fragment of HTML and returns the VNodes that were found.
+// If the fragment is the InnerHTML for an existing element, pass that element as context.
+// It is based on https://pkg.go.dev/golang.org/x/net/html#ParseFragment
+func ParseFragment(r io.Reader, context *html.Node) ([]*hypp.VNode, error) {
+	nodes, err := html.ParseFragment(r, context)
+	if err != nil {
+		return nil, err
+	}
+	vNodes := make([]*hypp.VNode, len(nodes))
+	for i, node := range nodes {
+		vNodes[i] = nodeToVNode(node)
+	}
+	return vNodes, nil
 }
