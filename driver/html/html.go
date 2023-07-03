@@ -366,6 +366,7 @@ func camelToKebab(s string) string {
 	return strings.ToLower(matchCamelCase.ReplaceAllString(s, "${1}-${2}"))
 }
 
+// nodeToVNode converts a *html.Node to a *hypp.VNode.
 func nodeToVNode(node *html.Node) *hypp.VNode {
 	switch node.Type {
 	case html.TextNode:
@@ -385,6 +386,8 @@ func nodeToVNode(node *html.Node) *hypp.VNode {
 	}
 }
 
+// Parse returns the VNode tree for the HTML from the given Reader.
+// It is based on https://pkg.go.dev/golang.org/x/net/html#Parse
 func Parse(r io.Reader) (*hypp.VNode, error) {
 	node, err := html.Parse(r)
 	if err != nil {
@@ -393,6 +396,9 @@ func Parse(r io.Reader) (*hypp.VNode, error) {
 	return nodeToVNode(node), nil
 }
 
+// ParseFragment parses a fragment of HTML and returns the VNodes that were found.
+// If the fragment is the InnerHTML for an existing element, pass that element as context.
+// It is based on https://pkg.go.dev/golang.org/x/net/html#ParseFragment
 func ParseFragment(r io.Reader, context *html.Node) ([]*hypp.VNode, error) {
 	nodes, err := html.ParseFragment(r, context)
 	if err != nil {
