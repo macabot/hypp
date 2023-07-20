@@ -34,7 +34,7 @@ func TestSetValueOnNilHProps(t *testing.T) {
 // The following hyperapp pull request contains "a small improvement regarding how keys are handled": https://github.com/jorgebucaran/hyperapp/pull/1090
 // This change removes "key" from the HProps when creating a VNode.
 // Similar changes were made to hypp: https://github.com/macabot/hypp/pull/26
-// The problem, however, is that a shallow clone of a VNode no longer contains the key.
+// The problem, however, was that a shallow clone of a VNode no longer contained the key.
 func TestKeepKeyOnVNodeShallowClone(t *testing.T) {
 	span := H("span", HProps{"key": "foo"}, Text("test"))
 
