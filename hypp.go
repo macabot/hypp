@@ -340,7 +340,6 @@ type VNode struct {
 	props    HProps
 	children vKids
 	node     Node // Can be nil
-	key      Option[string]
 	tag      string
 	memoView func(data MemoData) *VNode
 	memoData MemoData
@@ -368,11 +367,15 @@ func (n VNode) Kind() int {
 	return n.kind
 }
 
+func (n VNode) key() Option[string] {
+	return n.props.Key()
+}
+
 type vKids []*VNode
 
 func (v vKids) getKey(i int) Option[string] {
 	if i < len(v) {
-		return v[i].key
+		return v[i].key()
 	}
 	return Option[string]{}
 }

@@ -46,7 +46,6 @@ func h(tag string, props HProps, children vKids) *VNode {
 	return &VNode{
 		tag:      tag,
 		props:    props,
-		key:      props.Key(),
 		children: children,
 		kind:     SSRNode,
 	}
@@ -433,7 +432,7 @@ func patch(
 			keyed := map[string]*VNode{}
 			newKeyed := Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
-				oldKey = oldVKids[i].key
+				oldKey = oldVKids[i].key()
 				if oldKey.OK {
 					keyed[oldKey.V] = oldVKids[i]
 				}
