@@ -39,16 +39,14 @@ func validateHProps(props HProps, tag string) {
 
 func h(tag string, props HProps, children vKids) *VNode {
 	validateHProps(props, tag)
-	key := props.Key()
 	props = props.clone()
-	delete(props, "key")
 	if classOption := props.Get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))
 	}
 	return &VNode{
 		tag:      tag,
 		props:    props,
-		key:      key,
+		key:      props.Key(),
 		children: children,
 		kind:     SSRNode,
 	}
@@ -136,21 +134,18 @@ func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription
 	return subs
 }
 
-func hPropsKeys(oldProps, newProps HProps) []string {
+func hPropsKeys(propsSlice ...HProps) []string {
 	seen := map[string]struct{}{}
-	keys := make([]string, len(oldProps))
-	i := 0
-	for key := range oldProps {
-		seen[key] = struct{}{}
-		keys[i] = key
-		i++
-	}
-	for key := range newProps {
-		if _, ok := seen[key]; !ok {
-			seen[key] = struct{}{}
-			keys = append(keys, key)
+	var keys []string
+	for _, props := range propsSlice {
+		for key := range props {
+			if _, ok := seen[key]; !ok {
+				seen[key] = struct{}{}
+				keys = append(keys, key)
+			}
 		}
 	}
+	sort.Strings(keys)
 	return keys
 }
 
@@ -202,7 +197,9 @@ func isFalsy(v interface{}) bool {
 }
 
 func patchProperty(node Node, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
-	if key == "style" {
+	if key == "key" {
+		// no-op
+	} else if key == "style" {
 		newStyle, isNewStyle := newValue.(map[string]string)
 		for _, k := range stylePairKeys(oldValue, newValue) {
 			oldValue := ""
@@ -266,7 +263,8 @@ func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isS
 		}
 	}
 
-	for k := range props {
+	keys := hPropsKeys(props)
+	for _, k := range keys {
 		patchProperty(node, k, nil, props[k], listener, isSvg)
 	}
 
