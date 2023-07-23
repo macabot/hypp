@@ -360,6 +360,14 @@ func (e Event) PreventDefault() {
 	js.Value(e).Call("preventDefault")
 }
 
+func (e Event) StopImmediatePropagation() {
+	js.Value(e).Call("stopImmediatePropagation")
+}
+
+func (e Event) StopPropagation() {
+	js.Value(e).Call("stopPropagation")
+}
+
 func (e Event) Target() hypp.EventTargetValuer {
 	return EventTargetValuer(js.Value(e).Get("target"))
 }

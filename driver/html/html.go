@@ -322,7 +322,9 @@ func (e Event) Type() string {
 	return ""
 }
 
-func (e Event) PreventDefault() {}
+func (e Event) PreventDefault()           {}
+func (e Event) StopImmediatePropagation() {}
+func (e Event) StopPropagation()          {}
 
 func (e Event) Target() hypp.EventTargetValuer {
 	return EventTargetValuer{}
