@@ -162,6 +162,8 @@ type Event interface {
 	EscapeToValuer
 	Type() string
 	PreventDefault()
+	StopImmediatePropagation()
+	StopPropagation()
 	Target() EventTargetValuer
 }
 
