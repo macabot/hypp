@@ -117,10 +117,9 @@ func eqView() *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": hypp.Action[*State](equal), "class": "equal"}, hypp.Text("="))
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{},
+		Init: &State{},
 		View: func(state *State) *hypp.VNode {
 			keys := fnView(computerKeys)
 			keys = append(keys, digitsView([]float64{7, 8, 9, 4, 5, 6, 1, 2, 3, 0})...)

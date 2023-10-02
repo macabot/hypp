@@ -30,10 +30,9 @@ func add(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{},
+		Init: &State{},
 		View: func(state *State) *hypp.VNode {
 			return html.Main(
 				nil,

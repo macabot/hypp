@@ -93,12 +93,11 @@ func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	state := resetState.clone()
 	state.paused = true
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   state,
+		Init: state,
 		View: func(state *State) *hypp.VNode {
 			var startStop string
 			if state.paused {

@@ -66,9 +66,8 @@ func increment(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
 		Init: &State{
 			list: []string{"a", "b", "c"},
 		},

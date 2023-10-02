@@ -71,9 +71,8 @@ func tick(state *State, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
 		Init: hypp.StateAndEffects[*State]{
 			State: &State{},
 			Effects: []hypp.Effect{

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Random order</title>
+        <link rel="stylesheet" href="/style.css">
+        <script type="module">
+import { h, text, app } from "https://unpkg.com/hyperapp"
+
+function incrementIndex(state) {
+    return {
+        ...state,
+        index: (state.index + 1) % state.lists.length,
+    }
+}
+
+function button() {
+    return h("button", {"onclick": incrementIndex}, text("Next"))
+}
+
+function list(list) {
+    return h(
+        "div",
+        {class: "container"},
+        list.map((item, i) => h("div", {class: ["item", `position-${i}`], key: item, id: `item-${item}`}, text(`${item}`))),
+    )
+}
+
+app({
+    init: { lists: [[1, 2, 3], [2, 3, 1]], index: 0 },
+    view: ({ lists, index }) =>
+        h("main", {}, [
+            button(),
+            list(lists[index])
+        ]),
+    node: document.getElementById("app"),
+})
+        </script>
+    </head>
+    <body>
+        <main id="app"></main>
+    </body>
+</html>

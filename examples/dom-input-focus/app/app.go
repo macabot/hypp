@@ -42,14 +42,11 @@ type focusProps struct {
 	preventScroll bool
 }
 
-var window hypp.Window
-
 func justFocus(_ hypp.Dispatch, payload hypp.Payload) {
 	props := payload.(focusProps)
-	window.RequestAnimationFrame(func() {
-		window.EscapeToValue().
-			Get("document").
-			Call("getElementById", props.id).
+	hypp.Window().RequestAnimationFrame(func() {
+		hypp.Document().
+			GetElementById(props.id).
 			Call("focus", map[string]interface{}{
 				"preventScroll": props.preventScroll,
 			})
@@ -88,11 +85,9 @@ func focusStateEffect(state *State, payload hypp.Payload) hypp.Dispatchable {
 	}
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
-	window = driver.Window()
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{count: 1},
+		Init: &State{count: 1},
 		View: func(state *State) *hypp.VNode {
 			children := make([]*hypp.VNode, state.count)
 			for i := range children {

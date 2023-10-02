@@ -17,7 +17,7 @@ type Driver struct{}
 
 var _ hypp.Driver = Driver{}
 
-func (d Driver) CreateTextNode(data string) hypp.Node {
+func (d Driver) CreateTextNode(data string) hypp.Element {
 	return Node(document().Call("createTextNode", data))
 }
 
@@ -31,19 +31,19 @@ func elementCreationOptionsToValue(options hypp.Option[hypp.ElementCreationOptio
 	return out
 }
 
-func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Element {
 	return Node(document().Call("createElementNS", namespaceURI, qualifiedName, elementCreationOptionsToValue(options)))
 }
 
-func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Element {
 	return Node(document().Call("createElement", tagName, elementCreationOptionsToValue(options)))
 }
 
-func (d Driver) Window() hypp.Window {
+func (d Driver) Window() hypp.Win {
 	return Window(js.Global())
 }
 
-func (d Driver) ValidateAppPropsNode(node hypp.Node) error {
+func (d Driver) ValidateAppPropsNode(node hypp.Element) error {
 	if node == nil {
 		return errors.New("hypp/driver/js: AppProps.Node cannot be nil")
 	} else if js.Value(node.ParentNode().(Node)).IsNull() {
@@ -54,7 +54,7 @@ func (d Driver) ValidateAppPropsNode(node hypp.Node) error {
 
 type Window js.Value
 
-var _ hypp.Window = Window{}
+var _ hypp.Win = Window{}
 
 func (w Window) EscapeToValue() hypp.Value {
 	return EscapeToValuer(w).EscapeToValue()
@@ -78,7 +78,7 @@ func (w Window) RequestAnimationFrame(f func()) int {
 	).Int()
 }
 
-func hyppNodeToValue(node hypp.Node) js.Value {
+func hyppNodeToValue(node hypp.Element) js.Value {
 	if node == nil {
 		return js.Null()
 	}
@@ -110,9 +110,9 @@ func (e EventListenerID) IAmAnEventListenerID() {}
 
 type Node js.Value
 
-var _ hypp.Node = Node{}
+var _ hypp.Element = Node{}
 
-func (n Node) ParentNode() hypp.Node {
+func (n Node) ParentNode() hypp.Element {
 	return Node(js.Value(n).Get("parentNode"))
 }
 
@@ -132,17 +132,17 @@ func (n Node) NodeName() string {
 	return js.Value(n).Get("nodeName").String()
 }
 
-func (n Node) ChildNodes() []hypp.Node {
+func (n Node) ChildNodes() []hypp.Element {
 	children := js.Value(n).Get("childNodes")
 	l := children.Length()
-	out := make([]hypp.Node, l)
+	out := make([]hypp.Element, l)
 	for i := 0; i < l; i++ {
 		out[i] = Node(children.Index(i))
 	}
 	return out
 }
 
-func (n Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
+func (n Node) InsertBefore(newNode, referenceNode hypp.Element) hypp.Element {
 	return Node(js.Value(n).Call(
 		"insertBefore",
 		hyppNodeToValue(newNode),
@@ -150,7 +150,7 @@ func (n Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
 	))
 }
 
-func (n Node) RemoveChild(child hypp.Node) {
+func (n Node) RemoveChild(child hypp.Element) {
 	child.Events().(Events).deleteAll()
 	js.Value(n).Call("removeChild", hyppNodeToValue(child))
 }
@@ -203,7 +203,7 @@ func (n Node) Set(name string, value interface{}) {
 	js.Value(n).Set(name, value)
 }
 
-func (n Node) AppendChild(child hypp.Node) hypp.Node {
+func (n Node) AppendChild(child hypp.Element) hypp.Element {
 	return Node(js.Value(n).Call("appendChild", hyppNodeToValue(child)))
 }
 

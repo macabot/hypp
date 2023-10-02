@@ -19,7 +19,7 @@ type Driver struct{}
 
 var _ hypp.Driver = Driver{}
 
-func (d Driver) CreateTextNode(data string) hypp.Node {
+func (d Driver) CreateTextNode(data string) hypp.Element {
 	return &Node{
 		nodeType:  textNode,
 		nodeValue: data,
@@ -27,7 +27,7 @@ func (d Driver) CreateTextNode(data string) hypp.Node {
 	}
 }
 
-func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Element {
 	return &Node{
 		nodeType:     ssrNode,
 		nodeName:     qualifiedName,
@@ -35,15 +35,15 @@ func (d Driver) CreateElementNS(namespaceURI, qualifiedName string, options hypp
 	}
 }
 
-func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Node {
+func (d Driver) CreateElement(tagName string, options hypp.Option[hypp.ElementCreationOptions]) hypp.Element {
 	return d.CreateElementNS("http://www.w3.org/1999/xhtml", tagName, options)
 }
 
-func (d Driver) Window() hypp.Window {
+func (d Driver) Window() hypp.Win {
 	return Window{}
 }
 
-func (d Driver) ValidateAppPropsNode(node hypp.Node) error {
+func (d Driver) ValidateAppPropsNode(node hypp.Element) error {
 	return nil
 }
 
@@ -51,7 +51,7 @@ type Window struct {
 	EventTarget
 }
 
-var _ hypp.Window = Window{}
+var _ hypp.Win = Window{}
 
 func (w Window) EscapeToValue() hypp.Value {
 	return nil
@@ -83,12 +83,12 @@ type Node struct {
 	nodeValue    string
 	nodeName     string
 	namespaceURI string
-	childNodes   []hypp.Node
+	childNodes   []hypp.Element
 	attributes   hypp.Map[string, string]
 	style        hypp.Map[string, string]
 }
 
-var _ hypp.Node = &Node{}
+var _ hypp.Element = &Node{}
 
 // See https://w3c.github.io/html-reference/syntax.html#void-element
 var voidElements = hypp.NewSet(
@@ -165,7 +165,7 @@ func (n Node) InnerHTML(options *RenderOptions) string {
 	return s
 }
 
-func (n Node) ParentNode() hypp.Node {
+func (n Node) ParentNode() hypp.Element {
 	return n.parentNode
 }
 
@@ -185,11 +185,11 @@ func (n Node) NodeName() string {
 	return n.nodeName
 }
 
-func (n Node) ChildNodes() []hypp.Node {
+func (n Node) ChildNodes() []hypp.Element {
 	return n.childNodes
 }
 
-func (n *Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
+func (n *Node) InsertBefore(newNode, referenceNode hypp.Element) hypp.Element {
 	if referenceNode == nil {
 		return n.AppendChild(newNode)
 	}
@@ -208,7 +208,7 @@ func (n *Node) InsertBefore(newNode, referenceNode hypp.Node) hypp.Node {
 	panic(errors.New("html: referenceNode is not a child of this Node"))
 }
 
-func (n *Node) RemoveChild(child hypp.Node) {
+func (n *Node) RemoveChild(child hypp.Element) {
 	for i, c := range n.childNodes {
 		if c == child {
 			child.(*Node).parentNode = nil
@@ -232,7 +232,7 @@ func (n *Node) Set(name string, value interface{}) {
 	n.SetAttribute(camelToKebab(name), value)
 }
 
-func (n *Node) AppendChild(child hypp.Node) hypp.Node {
+func (n *Node) AppendChild(child hypp.Element) hypp.Element {
 	parentNode := child.ParentNode().(*Node)
 	if parentNode != nil {
 		parentNode.RemoveChild(child)

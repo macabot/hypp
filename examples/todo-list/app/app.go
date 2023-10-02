@@ -118,9 +118,8 @@ func newTodo(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return state
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
 		Init: &State{ // TODO it is currently possible to pass State-value
 			todos: []TodoItem{{value: "Learn Hypp"}},
 			value: "",

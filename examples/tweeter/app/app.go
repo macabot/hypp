@@ -47,10 +47,9 @@ func setText(state *State, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{count: maxLength},
+		Init: &State{count: maxLength},
 		View: func(state *State) *hypp.VNode {
 			var oninput hypp.Action[*State] = func(_ *State, payload hypp.Payload) hypp.Dispatchable {
 				event := payload.(hypp.Event)

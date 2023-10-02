@@ -1,10 +1,10 @@
 package main
 
 import (
-	"syscall/js"
-
-	jsd "github.com/macabot/hypp/driver/js"
-	"github.com/macabot/hypp/examples/text-input/app"
+	"github.com/macabot/hypp"
+	"github.com/macabot/hypp/examples/todo-list/app"
+	"github.com/macabot/hypp/js"
+	_ "github.com/macabot/hypp/jsd"
 )
 
 func main() {
@@ -13,8 +13,7 @@ func main() {
 		panic("Could not find element with id 'app'")
 	}
 	app.Run(
-		jsd.Driver{},
-		jsd.Node(el),
+		hypp.Element{Value: el},
 	)
 
 	select {} // run Go forever

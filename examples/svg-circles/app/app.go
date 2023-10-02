@@ -23,10 +23,9 @@ func use(href string, props hypp.HProps) *hypp.VNode {
 	return svg.Use(props)
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*hypp.EmptyState]{
-		Driver: driver,
-		Init:   &hypp.EmptyState{},
+		Init: &hypp.EmptyState{},
 		View: func(_ *hypp.EmptyState) *hypp.VNode {
 			return main(
 				html.Svg(

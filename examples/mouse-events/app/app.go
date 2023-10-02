@@ -20,8 +20,6 @@ func (m State) clone() *State {
 	return &m
 }
 
-var window hypp.Window
-
 type mouseProps struct {
 	name         string
 	dispatchable hypp.Dispatchable
@@ -32,9 +30,9 @@ func on(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
 	listener := func(event hypp.Event) {
 		dispatch(props.dispatchable, event)
 	}
-	id := window.AddEventListener(props.name, listener)
+	id := hypp.Window().AddEventListener(props.name, listener)
 	return func() {
-		window.RemoveEventListener(props.name, id)
+		hypp.Window().RemoveEventListener(props.name, id)
 	}
 }
 
@@ -70,7 +68,7 @@ func strong(text string) *hypp.VNode {
 }
 
 func move(state *State, payload hypp.Payload) hypp.Dispatchable {
-	event := payload.(hypp.Event).EscapeToValue()
+	event := payload.(hypp.Event).Value
 	newState := state.clone()
 	newState.x = event.Get("x").Int()
 	newState.y = event.Get("y").Int()
@@ -83,11 +81,9 @@ func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
-	window = driver.Window()
+func Run(node hypp.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{x: -1, y: -1, isTracking: true},
+		Init: &State{x: -1, y: -1, isTracking: true},
 		View: func(state *State) *hypp.VNode {
 			var t string
 			if state.isTracking {

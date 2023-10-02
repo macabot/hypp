@@ -1,0 +1,32 @@
+@import "https://unpkg.com/water.css@2/out/water.min.css";
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  height: 50%;
+}
+
+.item {
+  width: 100px;
+  height: 100px;
+  background-color: gray;
+  color: aquamarine;
+  transition: left 1s;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+}
+
+.position-0 {
+  left: 0;
+}
+
+.position-1 {
+  left: calc(50% - 50px);
+}
+
+.position-2 {
+  left: calc(100% - 100px);
+}
