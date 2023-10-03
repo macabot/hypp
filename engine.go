@@ -216,8 +216,12 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
+		if v := node.Value.Get("events"); v.IsUndefined() {
+			node.Value.Set("events", map[string]any{})
+		}
+		e := events{node.Value.Get("events")}
 		if isFalsy(newValue) {
-			node.Events().Del(key)
+			e.Del(key)
 			if id := node.EventListenerID(key); id.Value != nil {
 				node.RemoveEventListener(key, id)
 			}
@@ -225,7 +229,7 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 			if _, ok := newValue.(Dispatchable); !ok {
 				panic(fmt.Errorf("hypp: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue))
 			}
-			node.Events().Set(key, newValue.(Dispatchable))
+			e.Set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
 				node.SetEventListenerID(key, id)
@@ -559,7 +563,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			window.Window().RequestAnimationFrame(appProps.render)
+			window.RequestAnimationFrame(appProps.render)
 		}
 	}
 }
@@ -573,7 +577,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 
 	listener := func(this window.Element) window.EventListener {
 		return func(event window.Event) {
-			appProps.dispatch(this.Events().Get(event.Type()), event)
+			appProps.dispatch(events{this.Value.Get("events")}.Get(event.Type()), event)
 		}
 	}
 

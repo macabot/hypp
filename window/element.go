@@ -72,6 +72,7 @@ func (e Element) InsertBefore(newNode, referenceNode Element) Element {
 	)}
 }
 
+// FIXME Should package 'window' be moved back into 'hypp'?
 func (e Element) RemoveChild(child Element) {
 	child.Events().deleteAll()
 	e.Value.Call("removeChild", child.Value)
@@ -138,13 +139,13 @@ func (e Element) SetAttribute(name string, value any) {
 }
 
 // TODO move from package 'window' to 'hypp'
-func (e Element) Events() Events {
-	v := e.Value
-	if v.Get("events").IsUndefined() {
-		e.Value.Set("events", map[string]any{})
-	}
-	return Events{v.Get("events")}
-}
+// func (e Element) Eventsx() Events {
+// 	v := e.Value
+// 	if v.Get("events").IsUndefined() {
+// 		e.Value.Set("events", map[string]any{})
+// 	}
+// 	return Events{v.Get("events")}
+// }
 
 func (e Element) SetStyleProperty(propertyName, value string) {
 	e.Value.Get("style").Call("setProperty", propertyName, value)
