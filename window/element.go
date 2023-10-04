@@ -96,7 +96,7 @@ func (e Element) Get(name string) util.Option[any] {
 	case js.TypeString:
 		return util.Option[any]{V: v.String(), OK: true}
 	default:
-		panic(fmt.Errorf("hypp: cannot get node property of type '%s'", kind))
+		panic(fmt.Errorf("hypp/window: cannot get node property of type '%s'", kind))
 	}
 }
 
@@ -115,7 +115,7 @@ func validateValue(value any) {
 	case nil, bool, int, float64, string:
 		// Do nothing
 	default:
-		panic(fmt.Errorf("hypp: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value))
+		panic(fmt.Errorf("hypp/window: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value))
 	}
 }
 
