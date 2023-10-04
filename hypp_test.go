@@ -50,3 +50,13 @@ func TestKeepKeyOnVNodeShallowClone(t *testing.T) {
 		spanClone.Props().Key(),
 	)
 }
+
+func TestDontPanicOnShortPropertyKey(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ValidateHProps(HProps{"": "y"}, "")
+	})
+
+	assert.NotPanics(t, func() {
+		ValidateHProps(HProps{"o": "y"}, "")
+	})
+}
