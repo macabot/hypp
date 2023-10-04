@@ -3,7 +3,7 @@
 ## Tests
 
 ```shell
-$ go test . ./driver/html/... ./examples/.../app ./examples/.../html ./tag/...
+$ go test . ./examples/.../app ./examples/.../html ./tag/...
 ```
 
 ## License
@@ -35,8 +35,8 @@ subgraph hypp-dir["hypp"]
         subgraph helloWorld-dir["hello-world"]
             examples-helloWorld-app["app"]
             subgraph helloWorld-cmd["cmd"]
-                examples-calculater-cmd-html["html"]
-                examples-calculater-cmd-js["js"]
+                examples-calculator-cmd-html["html"]
+                examples-calculator-cmd-js["js"]
             end
         end
     end
@@ -50,12 +50,12 @@ subgraph hypp-dir["hypp"]
     end
 end
 
-examples-calculater-cmd-html --> hypp
-examples-calculater-cmd-html --> driver-html
-examples-calculater-cmd-html --> examples-helloWorld-app
+examples-calculator-cmd-html --> hypp
+examples-calculator-cmd-html --> driver-html
+examples-calculator-cmd-html --> examples-helloWorld-app
 
-examples-calculater-cmd-js --> driver-js
-examples-calculater-cmd-js --> examples-helloWorld-app
+examples-calculator-cmd-js --> driver-js
+examples-calculator-cmd-js --> examples-helloWorld-app
 
 tag-html --> hypp
 tag-html <-.-> tag-cmd-generateTags
@@ -63,7 +63,7 @@ tag-svg --> hypp
 tag-svg <-.-> tag-cmd-generateTags
 
 classDef syscallJS fill:#f00;
-class examples-calculater-cmd-js,driver-js syscallJS;
+class examples-calculator-cmd-js,driver-js syscallJS;
 ```
 
 Possible new package dependency graph:
