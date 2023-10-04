@@ -13,15 +13,17 @@ import (
 
 const svgNS = "http://www.w3.org/2000/svg"
 
-func validateHProps(props HProps, tag string) {
+func ValidateHProps(props HProps, tag string) error {
+	// TODO should 'tag' be an argument? Remove 'tag' or refactor function to ValidateVNode(node *VNode) error?
+	// TODO should %+v be replaced with %#v?
 	for key, value := range props {
-		if key[0] == 'o' && key[1] == 'n' {
+		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
-				panic(fmt.Errorf("hypp: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value))
+				return fmt.Errorf("hypp: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
 			}
 		} else if key == "style" {
 			if _, ok := value.(map[string]string); !ok {
-				panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value))
+				return fmt.Errorf("hypp: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value)
 			}
 		} else {
 			switch value.(type) {
@@ -33,15 +35,23 @@ func validateHProps(props HProps, tag string) {
 				case []string, map[string]bool:
 					// Do nothing
 				default:
-					panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v))
+					return fmt.Errorf("hypp: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
 				}
 			}
+			// TODO what is non-class property has type other than bool, int, float64 or string?
 		}
+	}
+	return nil
+}
+
+func MustValidateHProps(props HProps, tag string) {
+	if err := ValidateHProps(props, tag); err != nil {
+		panic(err)
 	}
 }
 
 func h(tag string, props HProps, children vKids) *VNode {
-	validateHProps(props, tag)
+	MustValidateHProps(props, tag)
 	props = props.clone()
 	if classOption := props.Get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))
