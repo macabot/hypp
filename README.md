@@ -93,9 +93,10 @@ subgraph examples-dir["examples"]
     end
 end
 
+examples-hello-world-app --> hypp
 examples-hello-world-app --> window
-examples-hello-world-cmd-js --> hypp
 examples-hello-world-cmd-js --> examples-hello-world-app
+examples-hello-world-cmd-js --> window
 examples-hello-world-cmd-js --> jsd
 examples-hello-world-cmd-html --> hypp
 examples-hello-world-cmd-html --> examples-hello-world-app
@@ -106,6 +107,7 @@ html --> hypp
 svg --> hypp
 jsd --> js
 hypp --> util
+hypp --> js
 hypp --> window
 window --> util
 window --> js
