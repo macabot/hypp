@@ -146,7 +146,7 @@ func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription
 	return subs
 }
 
-func hPropsKeys(propsSlice ...HProps) []string {
+func mergeAndSortHPropsKeys(propsSlice ...HProps) []string {
 	seen := map[string]struct{}{}
 	var keys []string
 	for _, props := range propsSlice {
@@ -280,7 +280,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 		}
 	}
 
-	keys := hPropsKeys(props)
+	keys := mergeAndSortHPropsKeys(props)
 	for _, k := range keys {
 		patchProperty(node, k, nil, props[k], listener, isSvg)
 	}
@@ -361,7 +361,7 @@ func patch(
 
 		isSvg := isSvg || newVNode.tag == "svg"
 
-		allKeys := hPropsKeys(oldProps, newProps)
+		allKeys := mergeAndSortHPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
 			var cmpVal util.Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
