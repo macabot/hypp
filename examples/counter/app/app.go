@@ -31,23 +31,25 @@ func add(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
+func View(state *State) *hypp.VNode {
+	return html.Main(
+		nil,
+		html.H1(nil, hypp.Textf("%d", state.count)),
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](subtract)},
+			hypp.Text("ー"),
+		),
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](add)},
+			hypp.Text("＋"),
+		),
+	)
+}
+
 func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{},
-		View: func(state *State) *hypp.VNode {
-			return html.Main(
-				nil,
-				html.H1(nil, hypp.Textf("%d", state.count)),
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](subtract)},
-					hypp.Text("ー"),
-				),
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](add)},
-					hypp.Text("＋"),
-				),
-			)
-		},
+		View: View,
 		Node: node,
 	})
 }

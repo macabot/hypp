@@ -22,8 +22,8 @@ func (l List) Hash() string {
 
 type State struct {
 	hypp.EmptyState
-	list    List
-	counter int
+	List    List
+	Counter int
 }
 
 func (m State) clone() *State {
@@ -57,39 +57,41 @@ func listView(data hypp.MemoData) *hypp.VNode {
 
 func moreItems(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
-	newState.list = append(newState.list, randomHex())
+	newState.List = append(newState.List, randomHex())
 	return newState
 }
 
 func increment(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
-	newState.counter++
+	newState.Counter++
 	return newState
+}
+
+func View(state *State) *hypp.VNode {
+	return html.Main(
+		nil,
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](moreItems)},
+			hypp.Text("Grow list"),
+		),
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](increment)},
+			hypp.Text("+1 to counter"),
+		),
+		html.P(nil, hypp.Textf("Counter: %d", state.Counter)),
+		html.P(nil, hypp.Textf("Regular view showing list:")),
+		listView(state.List),
+		html.P(nil, hypp.Text("Memoized view showing list:")),
+		hypp.Memo(listView, state.List),
+	)
 }
 
 func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{
-			list: []string{"a", "b", "c"},
+			List: []string{"a", "b", "c"},
 		},
-		View: func(state *State) *hypp.VNode {
-			return html.Main(
-				nil,
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](moreItems)},
-					hypp.Text("Grow list"),
-				),
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](increment)},
-					hypp.Text("+1 to counter"),
-				),
-				html.P(nil, hypp.Textf("Counter: %d", state.counter)),
-				html.P(nil, hypp.Textf("Regular view showing list:")),
-				listView(state.list),
-				html.P(nil, hypp.Text("Memoized view showing list:")),
-				hypp.Memo(listView, state.list),
-			)
-		},
+		View: View,
 		Node: node,
 	})
 }

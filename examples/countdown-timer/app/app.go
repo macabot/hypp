@@ -17,8 +17,8 @@ import (
 
 type State struct {
 	hypp.EmptyState
-	count  time.Duration
-	paused bool
+	Count  time.Duration
+	Paused bool
 }
 
 func (m State) clone() *State {
@@ -65,17 +65,17 @@ func button(onclick hypp.Action[*State], text string) *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": onclick}, hypp.Text(text))
 }
 
-var resetState = State{count: 10 * time.Second}
+var resetState = State{Count: 10 * time.Second}
 
 func tick(state *State, _ hypp.Payload) hypp.Dispatchable {
-	if state.count == 0 {
+	if state.Count == 0 {
 		newState := state.clone()
-		newState.count = resetState.count
-		newState.paused = !state.paused
+		newState.Count = resetState.Count
+		newState.Paused = !state.Paused
 		return newState
-	} else if !state.paused {
+	} else if !state.Paused {
 		newState := state.clone()
-		newState.count -= time.Second
+		newState.Count -= time.Second
 		return newState
 	} else {
 		return state
@@ -84,35 +84,37 @@ func tick(state *State, _ hypp.Payload) hypp.Dispatchable {
 
 func reset(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
-	newState.count = resetState.count
+	newState.Count = resetState.Count
 	return newState
 }
 
 func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	newState := state.clone()
-	newState.paused = !state.paused
+	newState.Paused = !state.Paused
 	return newState
+}
+
+func View(state *State) *hypp.VNode {
+	var startStop string
+	if state.Paused {
+		startStop = "▶️ Start"
+	} else {
+		startStop = "Pause ✋"
+	}
+	return html.Main(
+		nil,
+		titlef("⏱ %s", humanizeTime(state.Count)),
+		button(toggle, startStop),
+		button(reset, "Reset"),
+	)
 }
 
 func Run(node window.Element) {
 	state := resetState.clone()
-	state.paused = true
+	state.Paused = true
 	hypp.App(hypp.AppProps[*State]{
 		Init: state,
-		View: func(state *State) *hypp.VNode {
-			var startStop string
-			if state.paused {
-				startStop = "▶️ Start"
-			} else {
-				startStop = "Pause ✋"
-			}
-			return html.Main(
-				nil,
-				titlef("⏱ %s", humanizeTime(state.count)),
-				button(toggle, startStop),
-				button(reset, "Reset"),
-			)
-		},
+		View: View,
 		Subscriptions: func(state *State) []hypp.Subscription {
 			return []hypp.Subscription{
 				every(time.Second, hypp.Action[*State](tick)),

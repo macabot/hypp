@@ -24,30 +24,32 @@ func use(href string, props hypp.HProps) *hypp.VNode {
 	return svg.Use(props)
 }
 
+func View(_ *hypp.EmptyState) *hypp.VNode {
+	return main(
+		html.Svg(
+			hypp.HProps{"viewBox": "0 0 30 10"},
+			circle("symbol", hypp.HProps{
+				"cx":     5,
+				"cy":     5,
+				"r":      4,
+				"stroke": "#0366d6",
+			}),
+			use("#symbol", hypp.HProps{
+				"x":    10,
+				"fill": "#0366d6",
+			}),
+			use("#symbol", hypp.HProps{
+				"x":    20,
+				"fill": "white",
+			}),
+		),
+	)
+}
+
 func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*hypp.EmptyState]{
 		Init: &hypp.EmptyState{},
-		View: func(_ *hypp.EmptyState) *hypp.VNode {
-			return main(
-				html.Svg(
-					hypp.HProps{"viewBox": "0 0 30 10"},
-					circle("symbol", hypp.HProps{
-						"cx":     5,
-						"cy":     5,
-						"r":      4,
-						"stroke": "#0366d6",
-					}),
-					use("#symbol", hypp.HProps{
-						"x":    10,
-						"fill": "#0366d6",
-					}),
-					use("#symbol", hypp.HProps{
-						"x":    20,
-						"fill": "white",
-					}),
-				),
-			)
-		},
+		View: View,
 		Node: node,
 	})
 }
