@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/macabot/hypp/js"
+	"github.com/macabot/hypp/window"
 )
 
 type dispatchablesRepo struct {
@@ -78,4 +79,9 @@ func (e events) deleteAll() {
 		name := names.Index(i).String()
 		e.Del(name)
 	}
+}
+
+func removeChild(parent, child window.Element) {
+	events{child.Value.Get("events")}.deleteAll()
+	parent.RemoveChild(child)
 }

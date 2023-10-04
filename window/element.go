@@ -72,9 +72,7 @@ func (e Element) InsertBefore(newNode, referenceNode Element) Element {
 	)}
 }
 
-// FIXME Should package 'window' be moved back into 'hypp'?
 func (e Element) RemoveChild(child Element) {
-	child.Events().deleteAll()
 	e.Value.Call("removeChild", child.Value)
 }
 

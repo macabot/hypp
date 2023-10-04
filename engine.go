@@ -329,7 +329,7 @@ func patch(
 			node,
 		)
 		if oldVNode != nil {
-			parent.RemoveChild(oldVNode.node)
+			removeChild(parent, oldVNode.node)
 		}
 	} else {
 		var tmpVKid *VNode
@@ -428,7 +428,7 @@ func patch(
 			}
 		} else if newHead > newTail {
 			for oldHead <= oldTail {
-				node.RemoveChild(oldVKids[oldHead].node)
+				removeChild(node, oldVKids[oldHead].node)
 				oldHead++
 			}
 		} else {
@@ -449,7 +449,7 @@ func patch(
 
 				if (newKeyed.Has(oldKey.V)) || (newKey.OK && newKey == oldVKids.getKey(oldHead+1)) {
 					if !oldKey.OK {
-						node.RemoveChild(oldVKid.node)
+						removeChild(node, oldVKid.node)
 					}
 					oldHead++
 					continue
@@ -514,14 +514,14 @@ func patch(
 			for oldHead <= oldTail {
 				oldVKid = oldVKids.get(oldHead)
 				if !oldVKids.getKey(oldHead).OK {
-					node.RemoveChild(oldVKid.node)
+					removeChild(node, oldVKid.node)
 				}
 				oldHead++
 			}
 
 			for i := range keyed {
 				if !newKeyed.Has(i) {
-					node.RemoveChild(keyed[i].node)
+					removeChild(node, keyed[i].node)
 				}
 			}
 		}
