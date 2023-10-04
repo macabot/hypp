@@ -188,8 +188,6 @@ func (_ Action[S]) IAmDispatchable() {}
 
 type Subscriptions[S State] func(state S) []Subscription
 
-type Render func()
-
 type AppProps[S State] struct {
 	Init            Dispatchable
 	Subscriptions   Subscriptions[S]
@@ -200,7 +198,7 @@ type AppProps[S State] struct {
 	vdom     *VNode
 	dispatch Dispatch
 	subs     []Subscription
-	render   Render
+	render   func()
 	busy     bool
 	state    S
 }
