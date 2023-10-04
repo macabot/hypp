@@ -9,6 +9,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -117,7 +118,7 @@ func eqView() *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": hypp.Action[*State](equal), "class": "equal"}, hypp.Text("="))
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{},
 		View: func(state *State) *hypp.VNode {

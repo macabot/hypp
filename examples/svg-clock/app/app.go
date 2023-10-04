@@ -10,6 +10,7 @@ import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
 	"github.com/macabot/hypp/tag/svg"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -71,7 +72,7 @@ func tick(state *State, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: hypp.StateAndEffects[*State]{
 			State: &State{},

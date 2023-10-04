@@ -12,6 +12,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -93,7 +94,7 @@ func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	state := resetState.clone()
 	state.paused = true
 	hypp.App(hypp.AppProps[*State]{

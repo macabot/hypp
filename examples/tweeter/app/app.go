@@ -7,6 +7,7 @@ package app
 import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -47,12 +48,12 @@ func setText(state *State, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{count: maxLength},
 		View: func(state *State) *hypp.VNode {
 			var oninput hypp.Action[*State] = func(_ *State, payload hypp.Payload) hypp.Dispatchable {
-				event := payload.(hypp.Event)
+				event := payload.(window.Event)
 				content := event.Target().Value()
 				return hypp.ActionAndPayload[*State]{
 					Action: setText,

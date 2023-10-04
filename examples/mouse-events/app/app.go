@@ -7,6 +7,7 @@ package app
 import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -27,12 +28,12 @@ type mouseProps struct {
 
 func on(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
 	props := payload.(mouseProps)
-	listener := func(event hypp.Event) {
+	listener := func(event window.Event) {
 		dispatch(props.dispatchable, event)
 	}
-	id := hypp.Window().AddEventListener(props.name, listener)
+	id := window.AddEventListener(props.name, listener)
 	return func() {
-		hypp.Window().RemoveEventListener(props.name, id)
+		window.RemoveEventListener(props.name, id)
 	}
 }
 
@@ -68,7 +69,7 @@ func strong(text string) *hypp.VNode {
 }
 
 func move(state *State, payload hypp.Payload) hypp.Dispatchable {
-	event := payload.(hypp.Event).Value
+	event := payload.(window.Event).Value
 	newState := state.clone()
 	newState.x = event.Get("x").Int()
 	newState.y = event.Get("y").Int()
@@ -81,7 +82,7 @@ func toggle(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{x: -1, y: -1, isTracking: true},
 		View: func(state *State) *hypp.VNode {

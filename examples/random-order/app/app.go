@@ -5,6 +5,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -51,7 +52,7 @@ func list(list [3]int) *hypp.VNode {
 	)
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{
 			lists: [][3]int{

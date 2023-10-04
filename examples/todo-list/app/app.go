@@ -8,6 +8,7 @@ package app
 import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -28,20 +29,20 @@ type TodoItem struct {
 
 func preventDefault[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
 	return func(state S, payload hypp.Payload) hypp.Dispatchable {
-		event := payload.(hypp.Event)
+		event := payload.(window.Event)
 		event.PreventDefault()
 		return action(state, payload)
 	}
 }
 
-func withPayload[S hypp.State](filter func(e hypp.Event) hypp.ActionAndPayload[S]) hypp.Action[S] {
+func withPayload[S hypp.State](filter func(e window.Event) hypp.ActionAndPayload[S]) hypp.Action[S] {
 	return func(_ S, payload hypp.Payload) hypp.Dispatchable {
-		return filter(payload.(hypp.Event))
+		return filter(payload.(window.Event))
 	}
 }
 
 func targetValue[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
-	return withPayload(func(e hypp.Event) hypp.ActionAndPayload[S] {
+	return withPayload(func(e window.Event) hypp.ActionAndPayload[S] {
 		return hypp.ActionAndPayload[S]{
 			Action:  action,
 			Payload: e.Target().Value(),
@@ -118,7 +119,7 @@ func newTodo(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return state
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{ // TODO it is currently possible to pass State-value
 			todos: []TodoItem{{value: "Learn Hypp"}},

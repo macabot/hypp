@@ -5,6 +5,7 @@ package app
 
 import (
 	"github.com/macabot/hypp"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -12,7 +13,7 @@ type State struct {
 	message string
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{message: "👋 Hi."},
 		View: func(state *State) *hypp.VNode {

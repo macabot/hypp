@@ -11,6 +11,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type List []string
@@ -66,7 +67,7 @@ func increment(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{
 			list: []string{"a", "b", "c"},

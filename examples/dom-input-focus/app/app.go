@@ -10,6 +10,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -44,8 +45,8 @@ type focusProps struct {
 
 func justFocus(_ hypp.Dispatch, payload hypp.Payload) {
 	props := payload.(focusProps)
-	hypp.Window().RequestAnimationFrame(func() {
-		hypp.Document().
+	window.RequestAnimationFrame(func() {
+		window.Document().
 			GetElementById(props.id).
 			Call("focus", map[string]interface{}{
 				"preventScroll": props.preventScroll,
@@ -85,7 +86,7 @@ func focusStateEffect(state *State, payload hypp.Payload) hypp.Dispatchable {
 	}
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{count: 1},
 		View: func(state *State) *hypp.VNode {

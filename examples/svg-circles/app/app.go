@@ -7,6 +7,7 @@ import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
 	"github.com/macabot/hypp/tag/svg"
+	"github.com/macabot/hypp/window"
 )
 
 func main(children ...*hypp.VNode) *hypp.VNode {
@@ -23,7 +24,7 @@ func use(href string, props hypp.HProps) *hypp.VNode {
 	return svg.Use(props)
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*hypp.EmptyState]{
 		Init: &hypp.EmptyState{},
 		View: func(_ *hypp.EmptyState) *hypp.VNode {

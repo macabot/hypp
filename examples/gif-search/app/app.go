@@ -13,6 +13,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -78,7 +79,7 @@ func getJSON(url string, props requestProps) hypp.Effect {
 
 func input[S hypp.State](oninput func(value string) hypp.ActionAndPayload[S], props hypp.HProps) *hypp.VNode {
 	props.Set("oninput", hypp.Action[*State](func(_ *State, payload hypp.Payload) hypp.Dispatchable {
-		return oninput(payload.(hypp.Event).Target().Value())
+		return oninput(payload.(window.Event).Target().Value())
 	}))
 	return html.Input(props)
 }
@@ -161,7 +162,7 @@ func getURL(state *State, payload hypp.Payload) hypp.Dispatchable {
 	}
 }
 
-func Run(node hypp.Element) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{},
 		View: func(state *State) *hypp.VNode {
