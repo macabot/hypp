@@ -42,18 +42,26 @@ func (e Element) NodeType() int {
 	return e.Value.Get("nodeType").Int()
 }
 
+// NodeValue returns the value of the node.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeValue
 func (e Element) NodeValue() string {
 	return e.Value.Get("nodeValue").String()
 }
 
+// SetNodeValue sets the value of the node.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeValue
 func (e Element) SetNodeValue(nodeValue string) {
 	e.Value.Set("nodeValue", nodeValue)
 }
 
+// NodeName returns the name of the node.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeName
 func (e Element) NodeName() string {
 	return e.Value.Get("nodeName").String()
 }
 
+// ChildNodes returns the child nodes.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/childNodes
 func (e Element) ChildNodes() []Element {
 	children := e.Value.Get("childNodes")
 	l := children.Length()
@@ -64,6 +72,8 @@ func (e Element) ChildNodes() []Element {
 	return out
 }
 
+// InsertBefore inserts the newNode before the referenceNode as a child.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/insertBefore
 func (e Element) InsertBefore(newNode, referenceNode Element) Element {
 	return Element{e.Value.Call(
 		"insertBefore",
@@ -72,6 +82,8 @@ func (e Element) InsertBefore(newNode, referenceNode Element) Element {
 	)}
 }
 
+// RemoveChild removes the child node.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild
 func (e Element) RemoveChild(child Element) {
 	e.Value.Call("removeChild", child.Value)
 }
@@ -124,14 +136,20 @@ func (e Element) Set(name string, value any) {
 	e.Value.Set(name, value)
 }
 
+// AppendChild adds a node to the end of the list of children.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
 func (e Element) AppendChild(child Element) Element {
 	return Element{e.Value.Call("appendChild", child.Value)}
 }
 
+// RemoveAttribute removes the attribute with the specified name from the element.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute
 func (e Element) RemoveAttribute(name string) {
 	e.Value.Call("removeAttribute", name)
 }
 
+// SetAttribute sets the value of an attribute on the specified element. If the attribute already exists, the value is updated; otherwise a new attribute is added with the specified name and value.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute
 func (e Element) SetAttribute(name string, value any) {
 	e.Value.Call("setAttribute", name, value)
 }

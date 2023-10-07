@@ -2,6 +2,8 @@ package window
 
 import "github.com/macabot/hypp/js"
 
+// RequestAnimationFrame tells the browser that you wish to perform an animation and requests that the browser calls a specified function to update an animation right before the next repaint.
+// See https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
 func RequestAnimationFrame(f func()) int {
 	return js.Global().Call(
 		"requestAnimationFrame",
