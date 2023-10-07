@@ -19,21 +19,21 @@ func TestRender(t *testing.T) {
 			"attr-a2": "a2",
 		},
 		hypp.H(
-			"b",
+			"p",
 			hypp.HProps{
 				"attr-b1": "hello",
 				"attr-b2": `"world"`,
 			},
+			hypp.Text("This is a test"),
+			hypp.H("br", nil),
 		),
-		hypp.Text("This is a test"),
-		hypp.H("br", nil),
 	)
 	output, err := tag.RenderToString(node)
 	require.NoError(t, err)
 
 	assert.Equal(
 		t,
-		`<a attr-a1="33" attr-a2="a2"><b attr-b1="hello" attr-b2="\"world\"">This is a test<br></b></a>`,
+		`<a attr-a1="33" attr-a2="a2"><p attr-b1="hello" attr-b2="&#34;world&#34;">This is a test<br/></p></a>`,
 		output,
 	)
 }

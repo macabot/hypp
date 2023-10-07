@@ -8,79 +8,16 @@ import (
 	"strings"
 
 	"github.com/macabot/hypp"
-	"github.com/macabot/hypp/util"
 	"golang.org/x/exp/maps"
 	"golang.org/x/net/html"
 )
 
-// See https://w3c.github.io/html-reference/syntax.html#void-element
-var voidElements = util.NewSet(
-	"area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr",
-)
-
-// TODO what about SVG void elements?
-
-func renderStyle(style map[string]string) string {
-	keys := maps.Keys(style)
-	sort.Strings(keys)
-	parts := make([]string, len(style))
-	for i, key := range keys {
-		// TODO should html.EscapeString be called here or be called for all property values?
-		parts[i] = key + ": " + html.EscapeString(style[key]) + ";"
-	}
-	return strings.Join(parts, " ")
-}
-
-// TODO should the Render function use https://pkg.go.dev/golang.org/x/net/html#Render ?
-
 func Render(w io.Writer, node *hypp.VNode) error {
-	if node.Kind() == hypp.TextNode {
-		// TODO should the value be passed through html.EscapeString?
-		_, err := w.Write([]byte(node.Tag()))
+	element, err := vNodeToNode(node, nil)
+	if err != nil {
 		return err
 	}
-
-	if err := hypp.ValidateHProps(node.Props(), node.Tag()); err != nil {
-		return err
-	}
-
-	if _, err := w.Write([]byte("<" + node.Tag())); err != nil {
-		return err
-	}
-
-	props := node.Props()
-	keys := maps.Keys(props)
-	sort.Strings(keys)
-	for _, key := range keys {
-		if key == "key" {
-			continue
-		}
-		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
-			continue
-		}
-		value := props[key]
-		if key == "style" {
-			value = renderStyle(value.(map[string]string))
-		}
-		if _, err := fmt.Fprintf(w, " %s=%q", key, props[key]); err != nil {
-			return err
-		}
-	}
-
-	if _, err := w.Write([]byte(">")); err != nil {
-		return err
-	}
-
-	if len(node.Children()) == 0 && voidElements.Has(node.Tag()) {
-		return nil
-	}
-
-	for _, child := range node.Children() {
-		Render(w, child)
-	}
-
-	_, err := w.Write([]byte("</" + node.Tag() + ">"))
-	return err
+	return html.Render(w, element)
 }
 
 func RenderToString(node *hypp.VNode) (string, error) {
@@ -169,6 +106,91 @@ func nodeToVNode(node *html.Node) (*hypp.VNode, error) {
 		}
 		return hypp.H(node.Data, hProps, children...), nil
 	default:
-		return nil, fmt.Errorf("hypp/tag: could not parse NodeType %v", node.Type)
+		return nil, fmt.Errorf("hypp/tag: cannot parse NodeType %v", node.Type)
+	}
+}
+
+func renderStyle(style map[string]string) string {
+	keys := maps.Keys(style)
+	sort.Strings(keys)
+	parts := make([]string, len(style))
+	for i, key := range keys {
+		parts[i] = key + ": " + style[key] + ";"
+	}
+	return strings.Join(parts, " ")
+}
+
+func propsToAttributes(props hypp.HProps) []html.Attribute {
+	keys := maps.Keys(props)
+	sort.Strings(keys)
+	var attributes []html.Attribute
+	for _, key := range keys {
+		if key == "key" {
+			continue
+		}
+		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
+			continue
+		}
+		value := props[key]
+		if key == "style" {
+			value = renderStyle(value.(map[string]string))
+		}
+		attributes = append(attributes, html.Attribute{
+			Key: key,
+			Val: fmt.Sprint(value),
+		})
+	}
+	return attributes
+}
+
+func vNodeToNode(node *hypp.VNode, parent *html.Node) (*html.Node, error) {
+	switch node.Kind() {
+	case hypp.TextNode:
+		return &html.Node{
+			Type: html.TextNode,
+			Data: node.Tag(),
+		}, nil
+	case hypp.SSRNode:
+
+		element := &html.Node{
+			Parent: parent,
+			Type:   html.ElementNode,
+			Data:   node.Tag(),
+			Attr:   propsToAttributes(node.Props()),
+		}
+		var firstChild *html.Node
+		var lastChild *html.Node
+		children := node.Children()
+		childElements := make([]*html.Node, len(children))
+		for i, child := range children {
+			childElement, err := vNodeToNode(child, parent)
+			if err != nil {
+				return nil, err
+			}
+			childElements[i] = childElement
+			if i == 0 {
+				firstChild = childElement
+			}
+			if i == len(children)-1 {
+				lastChild = childElement
+			}
+		}
+		for i := range childElements {
+			var prevSibling *html.Node
+			if i > 0 {
+				prevSibling = childElements[i-1]
+			}
+			var nextSibling *html.Node
+			if i < len(childElements)-1 {
+				nextSibling = childElements[i+1]
+			}
+			childElements[i].PrevSibling = prevSibling
+			childElements[i].NextSibling = nextSibling
+		}
+		element.FirstChild = firstChild
+		element.LastChild = lastChild
+		return element, nil
+	default:
+		return nil, fmt.Errorf("hypp/tag: cannot render node kind %v", node.Kind())
 	}
 }
