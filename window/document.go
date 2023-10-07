@@ -51,3 +51,9 @@ func (d Doc) CreateElement(tagName string, options *ElementCreationOptions) Elem
 func (d Doc) GetElementById(id string) Element {
 	return Element{d.Call("getElementById", id)}
 }
+
+// QuerySelector returns the first [Element] within the document that matches the specified selector, or group of selectors.
+// See https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector
+func (d Doc) QuerySelector(selectors string) Element {
+	return Element{d.Call("querySelector", selectors)}
+}
