@@ -12,6 +12,8 @@ import (
 	"golang.org/x/net/html"
 )
 
+// Render renders the node to the given writer.
+// It is based on https://pkg.go.dev/golang.org/x/net/html#Render
 func Render(w io.Writer, node *hypp.VNode) error {
 	element, err := vNodeToNode(node, nil)
 	if err != nil {
@@ -20,6 +22,7 @@ func Render(w io.Writer, node *hypp.VNode) error {
 	return html.Render(w, element)
 }
 
+// RenderToString renders the node to a string.
 func RenderToString(node *hypp.VNode) (string, error) {
 	w := &bytes.Buffer{}
 	if err := Render(w, node); err != nil {
@@ -28,6 +31,7 @@ func RenderToString(node *hypp.VNode) (string, error) {
 	return w.String(), nil
 }
 
+// RenderFragment renders a fragment of nodes to the given writer.
 func RenderFragment(w io.Writer, fragment []*hypp.VNode) error {
 	for _, node := range fragment {
 		if err := Render(w, node); err != nil {
@@ -37,6 +41,7 @@ func RenderFragment(w io.Writer, fragment []*hypp.VNode) error {
 	return nil
 }
 
+// RenderFragmentToString renders a fragment of nodes to a string.
 func RenderFragmentToString(fragment []*hypp.VNode) (string, error) {
 	w := &bytes.Buffer{}
 	if err := RenderFragment(w, fragment); err != nil {
