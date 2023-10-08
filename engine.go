@@ -224,7 +224,7 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 				node.SetStyle(k, oldValue)
 			}
 		}
-	} else if key[0] == 'o' && key[1] == 'n' {
+	} else if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
 		if isFalsy(newValue) {
 			getEvents(node).Del(key)
