@@ -226,12 +226,8 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 		}
 	} else if key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
-		if v := node.Value.Get("events"); v.IsUndefined() {
-			node.Value.Set("events", map[string]any{})
-		}
-		e := events{node.Value.Get("events")}
 		if isFalsy(newValue) {
-			e.Del(key)
+			getEvents(node).Del(key)
 			if id := node.EventListenerID(key); id.Value != nil {
 				node.RemoveEventListener(key, id)
 			}
@@ -239,7 +235,7 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 			if _, ok := newValue.(Dispatchable); !ok {
 				panic(fmt.Errorf("hypp: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue))
 			}
-			e.Set(key, newValue.(Dispatchable))
+			getEvents(node).Set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
 				node.SetEventListenerID(key, id)
@@ -587,7 +583,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 
 	listener := func(this window.Element) window.EventListener {
 		return func(event window.Event) {
-			appProps.dispatch(events{this.Value.Get("events")}.Get(event.Type()), event)
+			appProps.dispatch(getEvents(this).Get(event.Type()), event)
 		}
 	}
 

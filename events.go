@@ -85,3 +85,10 @@ func removeChild(parent, child window.Element) {
 	events{child.Value.Get("events")}.deleteAll()
 	parent.RemoveChild(child)
 }
+
+func getEvents(node window.Element) events {
+	if node.Value.Get("events").IsUndefined() {
+		node.Value.Set("events", map[string]any{})
+	}
+	return events{node.Value.Get("events")}
+}
