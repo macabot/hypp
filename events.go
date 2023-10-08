@@ -73,8 +73,6 @@ func (e events) Del(name string) {
 }
 
 func (e events) deleteAll() {
-	// FIXME why is e.Value undefined?
-	window.Console().Log("e.Value", e.Value)
 	names := js.Global().Get("Object").Call("keys", e.Value)
 	l := names.Length()
 	for i := 0; i < l; i++ {
@@ -84,7 +82,7 @@ func (e events) deleteAll() {
 }
 
 func removeChild(parent, child window.Element) {
-	events{child.Value.Get("events")}.deleteAll()
+	getEvents(child).deleteAll()
 	parent.RemoveChild(child)
 }
 
