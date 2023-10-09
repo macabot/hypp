@@ -232,9 +232,6 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 				node.RemoveEventListener(key, id)
 			}
 		} else {
-			if _, ok := newValue.(Dispatchable); !ok {
-				panic(fmt.Errorf("hypp: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue))
-			}
 			getEvents(node).Set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
