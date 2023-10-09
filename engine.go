@@ -13,45 +13,45 @@ import (
 
 const svgNS = "http://www.w3.org/2000/svg"
 
-func ValidateHProps(props HProps, tag string) error {
+func ValidateHProps(props HProps) error {
 	// TODO should 'tag' be an argument? Remove 'tag' or refactor function to ValidateVNode(node *VNode) error?
 	// TODO should %+v be replaced with %#v?
 	for key, value := range props {
 		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
-				return fmt.Errorf("hypp: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value)
+				return fmt.Errorf("hypp: expected HProps key '%s' to have Dispatchable value. Got %#v", key, value)
+			}
+		} else if key == "class" {
+			switch value.(type) {
+			case bool, int, float64, string, []string, map[string]bool:
+				// Do nothing
+			default:
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %#v", key, value)
 			}
 		} else if key == "style" {
 			if _, ok := value.(map[string]string); !ok {
-				return fmt.Errorf("hypp: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value)
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type map[string]string. Got %#v", key, value)
 			}
 		} else {
 			switch value.(type) {
 			case bool, int, float64, string:
-				continue
+				// Do nothing
+			default:
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type bool, int, float64 or string. Got %#v", key, value)
 			}
-			if key == "class" {
-				switch v := value.(type) {
-				case []string, map[string]bool:
-					// Do nothing
-				default:
-					return fmt.Errorf("hypp: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v)
-				}
-			}
-			// TODO what is non-class property has type other than bool, int, float64 or string?
 		}
 	}
 	return nil
 }
 
-func MustValidateHProps(props HProps, tag string) {
-	if err := ValidateHProps(props, tag); err != nil {
+func MustValidateHProps(props HProps) {
+	if err := ValidateHProps(props); err != nil {
 		panic(err)
 	}
 }
 
 func h(tag string, props HProps, children vKids) *VNode {
-	MustValidateHProps(props, tag)
+	MustValidateHProps(props)
 	props = props.clone()
 	if classOption := props.Get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))

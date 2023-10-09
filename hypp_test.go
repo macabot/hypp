@@ -53,10 +53,14 @@ func TestKeepKeyOnVNodeShallowClone(t *testing.T) {
 
 func TestDontPanicOnShortPropertyKey(t *testing.T) {
 	assert.NotPanics(t, func() {
-		ValidateHProps(HProps{"": "y"}, "")
+		ValidateHProps(HProps{"": "y"})
 	})
 
 	assert.NotPanics(t, func() {
-		ValidateHProps(HProps{"o": "y"}, "")
+		ValidateHProps(HProps{"o": "y"})
 	})
+}
+
+func TestValidateHPropsReturnsErrorIfOtherHasInvalidType(t *testing.T) {
+	assert.Error(t, ValidateHProps(HProps{"x": []string{"foo"}}))
 }
