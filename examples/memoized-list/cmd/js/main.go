@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/macabot/hypp/examples/todo-list/app"
+	"github.com/macabot/hypp/examples/memoized-list/app"
 	_ "github.com/macabot/hypp/jsd"
 	"github.com/macabot/hypp/window"
 )

@@ -1,19 +1,18 @@
 package main
 
 import (
-	"github.com/macabot/hypp/examples/todo-list/app"
-	"github.com/macabot/hypp/js"
+	"github.com/macabot/hypp/examples/text-input/app"
 	_ "github.com/macabot/hypp/jsd"
 	"github.com/macabot/hypp/window"
 )
 
 func main() {
-	el := js.Global().Get("document").Call("getElementById", "app")
+	el := window.Document().GetElementById("app")
 	if el.IsNull() {
 		panic("Could not find element with id 'app'")
 	}
 	app.Run(
-		window.Element{Value: el},
+		el,
 	)
 
 	select {} // run Go forever

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/macabot/hypp/examples/todo-list/app"
+	"github.com/macabot/hypp/examples/svg-clock/app"
 	_ "github.com/macabot/hypp/jsd"
 	"github.com/macabot/hypp/window"
 )
