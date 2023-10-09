@@ -14,8 +14,6 @@ import (
 const svgNS = "http://www.w3.org/2000/svg"
 
 func ValidateHProps(props HProps) error {
-	// TODO should 'tag' be an argument? Remove 'tag' or refactor function to ValidateVNode(node *VNode) error?
-	// TODO should %+v be replaced with %#v?
 	for key, value := range props {
 		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
