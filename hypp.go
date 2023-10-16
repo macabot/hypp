@@ -162,30 +162,6 @@ type Action[S State] func(state S, payload Payload) Dispatchable
 // IAmDispatchable makes Action Dispatchable.
 func (_ Action[S]) IAmDispatchable() {}
 
-// type EventTarget interface {
-// 	RemoveEventListener(kind string, listenerID EventListenerID)
-// 	AddEventListener(kind string, listener EventListener) EventListenerID
-// }
-
-// EscapeToValuer allows you to escape from a statically defined type to a dynamic Value.
-// Use the Value to access properties and functions that are not explicitly implemented by hypp.
-// type EscapeToValuer interface {
-// 	EscapeToValue() Value
-// }
-
-// Window represents the JavaScript window.
-// See https://developer.mozilla.org/en-US/docs/Web/API/Window
-// It does not fully implement the JavaScript interface.
-// Use EscapeToValue() to access properties and functions that are not explicitly implemented.
-// For example, the following shows how to find an element by ID in the document:
-//	var window Window
-//	var element Value = window.EscapeToValue().Get("document").Call("getElementById", "my-id")
-// type Window interface {
-// 	EscapeToValuer
-// 	EventTarget
-// 	RequestAnimationFrame(f func()) int
-// }
-
 type Subscriptions[S State] func(state S) []Subscription
 
 type AppProps[S State] struct {
