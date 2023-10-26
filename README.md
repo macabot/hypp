@@ -17,9 +17,8 @@ Note that Hypp is NOT published under the MIT License.
 
 ## Development
 
+Below you'll find the package dependency graph.
 Red nodes directly or indirectly import `syscall/js`.
-
-Current package dependency graph:
 
 ```mermaid
 flowchart TD
@@ -64,54 +63,4 @@ tag-svg <-.-> tag-cmd-generateTags
 
 classDef syscallJS fill:#f00;
 class examples-calculator-cmd-js,driver-js syscallJS;
-```
-
-Possible new package dependency graph:
-
-```mermaid
-flowchart TD
-
-hypp
-window
-util
-html
-svg
-js
-jsd
-
-subgraph cmd-dir["cmd"]
-    cmd-generateTags["generate-tags"]
-end
-
-subgraph examples-dir["examples"]
-    subgraph examples-hello-world-dir["hello-world"]
-        examples-hello-world-app["app"]
-        subgraph examples-hello-world-cmd-dir["cmd"]
-            examples-hello-world-cmd-js["js"]
-            examples-hello-world-cmd-html["html"]
-        end
-    end
-end
-
-examples-hello-world-app --> hypp
-examples-hello-world-app --> window
-examples-hello-world-cmd-js --> examples-hello-world-app
-examples-hello-world-cmd-js --> window
-examples-hello-world-cmd-js --> jsd
-examples-hello-world-cmd-html --> hypp
-examples-hello-world-cmd-html --> examples-hello-world-app
-
-html <-.-> cmd-generateTags
-svg <-.-> cmd-generateTags
-html --> hypp
-svg --> hypp
-jsd --> js
-hypp --> util
-hypp --> js
-hypp --> window
-window --> util
-window --> js
-
-classDef syscallJS fill:#f00;
-class jsd,examples-hello-world-cmd-js syscallJS;
 ```
