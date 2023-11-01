@@ -225,12 +225,12 @@ func patchProperty(node window.Element, key string, oldValue, newValue interface
 	} else if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
 		if isFalsy(newValue) {
-			getEvents(node).Del(key)
+			getEvents(node).del(key)
 			if id := node.EventListenerID(key); id.Value != nil {
 				node.RemoveEventListener(key, id)
 			}
 		} else {
-			getEvents(node).Set(key, newValue.(Dispatchable))
+			getEvents(node).set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
 				node.SetEventListenerID(key, id)
@@ -578,7 +578,7 @@ func app[S State](appProps AppProps[S]) Dispatch {
 
 	listener := func(this window.Element) window.EventListener {
 		return func(event window.Event) {
-			appProps.dispatch(getEvents(this).Get(event.Type()), event)
+			appProps.dispatch(getEvents(this).get(event.Type()), event)
 		}
 	}
 

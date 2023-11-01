@@ -13,7 +13,7 @@ type dispatchablesRepo struct {
 	v  map[int]Dispatchable
 }
 
-func (g *dispatchablesRepo) Add(value Dispatchable) int {
+func (g *dispatchablesRepo) add(value Dispatchable) int {
 	g.mu.Lock()
 	i := g.i
 	g.v[i] = value
@@ -22,19 +22,19 @@ func (g *dispatchablesRepo) Add(value Dispatchable) int {
 	return i
 }
 
-func (g *dispatchablesRepo) Set(i int, value Dispatchable) {
+func (g *dispatchablesRepo) set(i int, value Dispatchable) {
 	g.mu.Lock()
 	g.v[i] = value
 	g.mu.Unlock()
 }
 
-func (g *dispatchablesRepo) Del(i int) {
+func (g *dispatchablesRepo) del(i int) {
 	g.mu.Lock()
 	delete(g.v, i)
 	g.mu.Unlock()
 }
 
-func (g *dispatchablesRepo) Get(i int) Dispatchable {
+func (g *dispatchablesRepo) get(i int) Dispatchable {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	return g.v[i]
@@ -46,28 +46,28 @@ type events struct {
 	js.Value
 }
 
-func (e events) Set(name string, value Dispatchable) {
+func (e events) set(name string, value Dispatchable) {
 	v := e.Value
 	if p := v.Get(name); p.Type() == js.TypeNumber {
-		globalNodeEvents.Set(p.Int(), value)
+		globalNodeEvents.set(p.Int(), value)
 	} else {
-		i := globalNodeEvents.Add(value)
+		i := globalNodeEvents.add(value)
 		v.Set(name, i)
 	}
 }
 
-func (e events) Get(name string) Dispatchable {
+func (e events) get(name string) Dispatchable {
 	v := e.Value
 	if p := v.Get(name); p.Type() == js.TypeNumber {
-		return globalNodeEvents.Get(p.Int())
+		return globalNodeEvents.get(p.Int())
 	}
 	return nil
 }
 
-func (e events) Del(name string) {
+func (e events) del(name string) {
 	v := e.Value
 	if p := v.Get(name); p.Type() == js.TypeNumber {
-		globalNodeEvents.Del(p.Int())
+		globalNodeEvents.del(p.Int())
 		v.Delete(name)
 	}
 }
@@ -77,7 +77,7 @@ func (e events) deleteAll() {
 	l := names.Length()
 	for i := 0; i < l; i++ {
 		name := names.Index(i).String()
-		e.Del(name)
+		e.del(name)
 	}
 }
 
