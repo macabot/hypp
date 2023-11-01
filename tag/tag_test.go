@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// FIXME tests are not passing
-
 func TestRender(t *testing.T) {
 	node := hypp.H(
 		"a",
