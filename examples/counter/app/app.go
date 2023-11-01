@@ -7,6 +7,7 @@ package app
 import (
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -30,24 +31,25 @@ func add(state *State, _ hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func View(state *State) *hypp.VNode {
+	return html.Main(
+		nil,
+		html.H1(nil, hypp.Textf("%d", state.count)),
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](subtract)},
+			hypp.Text("ー"),
+		),
+		html.Button(
+			hypp.HProps{"onclick": hypp.Action[*State](add)},
+			hypp.Text("＋"),
+		),
+	)
+}
+
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{},
-		View: func(state *State) *hypp.VNode {
-			return html.Main(
-				nil,
-				html.H1(nil, hypp.Textf("%d", state.count)),
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](subtract)},
-					hypp.Text("ー"),
-				),
-				html.Button(
-					hypp.HProps{"onclick": hypp.Action[*State](add)},
-					hypp.Text("＋"),
-				),
-			)
-		},
+		Init: &State{},
+		View: View,
 		Node: node,
 	})
 }

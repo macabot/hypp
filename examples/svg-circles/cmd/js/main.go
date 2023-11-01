@@ -1,20 +1,18 @@
 package main
 
 import (
-	"syscall/js"
-
-	jsd "github.com/macabot/hypp/driver/js"
 	"github.com/macabot/hypp/examples/svg-circles/app"
+	_ "github.com/macabot/hypp/jsd"
+	"github.com/macabot/hypp/window"
 )
 
 func main() {
-	el := js.Global().Get("document").Call("getElementById", "app")
+	el := window.Document().GetElementById("app")
 	if el.IsNull() {
 		panic("Could not find element with id 'app'")
 	}
 	app.Run(
-		jsd.Driver{},
-		jsd.Node(el),
+		el,
 	)
 
 	select {} // run Go forever

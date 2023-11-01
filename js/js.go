@@ -1,6 +1,8 @@
-package hypp
+package js
 
-type JavaScript interface {
+import "errors"
+
+type Driver interface {
 	CopyBytesToGo(dst []byte, src Value) int
 	CopyBytesToJS(dst Value, src []byte) int
 	FuncOf(fn func(this Value, args []Value) any) Func
@@ -8,6 +10,56 @@ type JavaScript interface {
 	Null() Value
 	Undefined() Value
 	ValueOf(x any) Value
+}
+
+var driver Driver
+
+func d() Driver {
+	if driver == nil {
+		panic(errors.New("hypp/js: driver is not set"))
+	}
+	return driver
+}
+
+// Register registers the driver that will be used by this package.
+// A common use case is to register the jsd driver
+//   import _ "github.com/macabot/hypp/jsd"
+// Make sure to import it from your main package.
+func Register(d Driver) {
+	driver = d
+}
+
+// GetDriver returns the registered Driver or nil if no Driver has been registered.
+func GetDriver() Driver {
+	return driver
+}
+
+func CopyBytesToGo(dst []byte, src Value) int {
+	return d().CopyBytesToGo(dst, src)
+}
+
+func CopyBytesToJS(dst Value, src []byte) int {
+	return d().CopyBytesToJS(dst, src)
+}
+
+func FuncOf(fn func(this Value, args []Value) any) Func {
+	return d().FuncOf(fn)
+}
+
+func Global() Value {
+	return d().Global()
+}
+
+func Null() Value {
+	return d().Null()
+}
+
+func Undefined() Value {
+	return d().Undefined()
+}
+
+func ValueOf(x any) Value {
+	return d().ValueOf(x)
 }
 
 type Error interface {
@@ -94,5 +146,5 @@ type ValueError struct {
 }
 
 func (e *ValueError) Error() string {
-	return "hypp: call of " + e.Method + " on " + e.Type.String()
+	return "hypp/js: call of " + e.Method + " on " + e.Type.String()
 }

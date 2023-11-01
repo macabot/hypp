@@ -9,6 +9,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -117,20 +118,21 @@ func eqView() *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": hypp.Action[*State](equal), "class": "equal"}, hypp.Text("="))
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func View(state *State) *hypp.VNode {
+	keys := fnView(computerKeys)
+	keys = append(keys, digitsView([]float64{7, 8, 9, 4, 5, 6, 1, 2, 3, 0})...)
+	keys = append(keys, acView(), eqView())
+	return html.Main(
+		nil,
+		displayView(state.value),
+		keysView(keys...),
+	)
+}
+
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{},
-		View: func(state *State) *hypp.VNode {
-			keys := fnView(computerKeys)
-			keys = append(keys, digitsView([]float64{7, 8, 9, 4, 5, 6, 1, 2, 3, 0})...)
-			keys = append(keys, acView(), eqView())
-			return html.Main(
-				nil,
-				displayView(state.value),
-				keysView(keys...),
-			)
-		},
+		Init: &State{},
+		View: View,
 		Node: node,
 	})
 }

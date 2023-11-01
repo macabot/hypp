@@ -3,16 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/macabot/hypp"
-	"github.com/macabot/hypp/driver/html"
 	"github.com/macabot/hypp/examples/memoized-list/app"
+	"github.com/macabot/hypp/tag"
 )
 
 func main() {
-	driver := html.Driver{}
-	node := driver.CreateElement("main", hypp.Option[hypp.ElementCreationOptions]{})
-	app.Run(driver, node)
-	fmt.Println(node.(*html.Node).InnerHTML(
-		&html.RenderOptions{Deterministic: true},
-	))
+	state := &app.State{
+		List: []string{"a", "b", "c"},
+	}
+	fmt.Println(tag.RenderToString(app.View(state)))
 }

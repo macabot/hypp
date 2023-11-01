@@ -8,12 +8,16 @@ package hypp
 import (
 	"errors"
 	"fmt"
+
+	"github.com/macabot/hypp/js"
+	"github.com/macabot/hypp/util"
+	"github.com/macabot/hypp/window"
 )
 
 // State constrains the state that is used in the hypp application.
-// It must be comparable and Dispatchable.
+// It must be comparable and [Dispatchable].
 //
-// Most often you will embed the EmptyState:
+// Most often you will embed the [EmptyState]:
 //	package example
 //
 //	type State struct {
@@ -31,7 +35,7 @@ type State interface {
 	Dispatchable
 }
 
-// EmptyState implements the State constraint.
+// EmptyState implements the [State] constraint.
 // Embed the EmptyState in your state to implement the State constraint:
 //	package example
 //
@@ -63,11 +67,11 @@ type HProps map[string]interface{}
 
 // Key returns the "key" property, if available.
 // The value is always converted into a string.
-func (h HProps) Key() Option[string] {
+func (h HProps) Key() util.Option[string] {
 	if key := h.Get("key"); key.OK {
-		return Option[string]{V: fmt.Sprint(key.V), OK: true}
+		return util.Option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
-	return Option[string]{}
+	return util.Option[string]{}
 }
 
 // clone returns a shallow clone of the HProps.
@@ -80,12 +84,12 @@ func (h HProps) clone() HProps {
 }
 
 // Get returns the requested key, if available.
-func (h HProps) Get(key string) Option[interface{}] {
+func (h HProps) Get(key string) util.Option[interface{}] {
 	if h == nil {
-		return Option[interface{}]{}
+		return util.Option[interface{}]{}
 	}
 	v, ok := h[key]
-	return Option[interface{}]{V: v, OK: ok}
+	return util.Option[interface{}]{V: v, OK: ok}
 }
 
 // Has returns true if the requested key is found.
@@ -136,7 +140,7 @@ func Memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 
 // Text creates a text *VNode.
 func Text(value string) *VNode {
-	return text(value, nil)
+	return text(value, window.Element{})
 }
 
 // Textf creates a text *VNode by interpolating the format with the arguments.
@@ -158,123 +162,32 @@ type Action[S State] func(state S, payload Payload) Dispatchable
 // IAmDispatchable makes Action Dispatchable.
 func (_ Action[S]) IAmDispatchable() {}
 
-type Event interface {
-	EscapeToValuer
-	Type() string
-	PreventDefault()
-	StopImmediatePropagation()
-	StopPropagation()
-	Target() EventTargetValuer
-}
-
-type EventTargetValuer interface {
-	Value() string
-}
-
-type EventListener func(Event)
-
-type EventListenerID interface {
-	IAmAnEventListenerID()
-}
-
-type EventTarget interface {
-	RemoveEventListener(kind string, listenerID EventListenerID)
-	AddEventListener(kind string, listener EventListener) EventListenerID
-}
-
-// Node represents an HTML element.
-// See https://developer.mozilla.org/en-US/docs/Web/API/Element
-type Node interface {
-	EventTarget
-	ParentNode() Node
-	NodeType() int
-	NodeValue() string
-	SetNodeValue(nodeValue string)
-	NodeName() string
-	ChildNodes() []Node
-	InsertBefore(newNode, referenceNode Node) Node
-	RemoveChild(child Node)
-	Get(name string) Option[interface{}]
-	// In implements the in-operator
-	// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
-	In(name string) bool
-	Set(name string, value interface{})
-	AppendChild(child Node) Node
-	RemoveAttribute(name string)
-	SetAttribute(name string, value interface{})
-	Events() Events
-	SetStyleProperty(propertyName, value string)
-	SetStyle(name, value string)
-	EventListenerID(kind string) EventListenerID
-	SetEventListenerID(kind string, eventListenerID EventListenerID)
-}
-
-// EscapeToValuer allows you to escape from a statically defined type to a dynamic Value.
-// Use the Value to access properties and functions that are not explicitly implemented by hypp.
-type EscapeToValuer interface {
-	EscapeToValue() Value
-}
-
-// Window represents the JavaScript window.
-// See https://developer.mozilla.org/en-US/docs/Web/API/Window
-// It does not fully implement the JavaScript interface.
-// Use EscapeToValue() to access properties and functions that are not explicitly implemented.
-// For example, the following shows how to find an element by ID in the document:
-//	var window Window
-//	var element Value = window.EscapeToValue().Get("document").Call("getElementById", "my-id")
-type Window interface {
-	EscapeToValuer
-	EventTarget
-	RequestAnimationFrame(f func()) int
-}
-
-type Events interface {
-	Set(name string, event Dispatchable)
-	Get(name string) Dispatchable
-	Del(name string)
-}
-
 type Subscriptions[S State] func(state S) []Subscription
 
-type Render func()
-
-type ElementCreationOptions struct {
-	Is string
-}
-
-type Driver interface {
-	CreateTextNode(data string) Node
-	CreateElementNS(namespaceURI, qualifiedName string, options Option[ElementCreationOptions]) Node
-	CreateElement(tagName string, options Option[ElementCreationOptions]) Node
-	Window() Window
-	ValidateAppPropsNode(Node) error
-}
-
 type AppProps[S State] struct {
-	Driver          Driver
 	Init            Dispatchable
 	Subscriptions   Subscriptions[S]
 	DispatchWrapper func(dispatch Dispatch) Dispatch
 	View            func(state S) *VNode
-	Node            Node
+	Node            window.Element
 
 	vdom     *VNode
 	dispatch Dispatch
 	subs     []Subscription
-	render   Render
+	render   func()
 	busy     bool
 	state    S
 }
 
 func (a AppProps[S]) Validate() error {
-	if a.Driver == nil {
-		return errors.New("hypp: AppProps.Driver cannot be nil")
+	if js.GetDriver() == nil {
+		return errors.New("hypp: Driver in hypp/js cannot be nil")
 	} else if a.View == nil {
 		return errors.New("hypp: AppProps.View cannot be nil")
-	} else if a.Node == nil {
-		return errors.New("hypp: AppProps.Node cannot be nil")
-	} else if err := a.Driver.ValidateAppPropsNode(a.Node); err != nil {
-		return fmt.Errorf("hypp: AppProps.Node is invalid: %w", err)
+	} else if a.Node.Value == nil {
+		return errors.New("hypp: AppProps.Node.Value cannot be nil")
+	} else if a.Node.ParentNode().IsNull() {
+		return errors.New("hypp: AppProps.Node must have a parent node")
 	}
 	return nil
 }
@@ -341,7 +254,7 @@ const (
 type VNode struct {
 	props    HProps
 	children vKids
-	node     Node // Can be nil
+	node     window.Element // Can be empty
 	tag      string
 	memoView func(data MemoData) *VNode
 	memoData MemoData
@@ -369,17 +282,17 @@ func (n VNode) Kind() int {
 	return n.kind
 }
 
-func (n VNode) key() Option[string] {
+func (n VNode) key() util.Option[string] {
 	return n.props.Key()
 }
 
 type vKids []*VNode
 
-func (v vKids) getKey(i int) Option[string] {
+func (v vKids) getKey(i int) util.Option[string] {
 	if i < len(v) {
 		return v[i].key()
 	}
-	return Option[string]{}
+	return util.Option[string]{}
 }
 
 func (v vKids) get(i int) *VNode {

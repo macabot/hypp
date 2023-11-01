@@ -3,6 +3,7 @@ package hypp
 import (
 	"testing"
 
+	"github.com/macabot/hypp/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,21 @@ func TestKeepKeyOnVNodeShallowClone(t *testing.T) {
 	spanClone := shallowClone(span)
 	assert.Equal(
 		t,
-		Option[string]{V: "foo", OK: true},
+		util.Option[string]{V: "foo", OK: true},
 		spanClone.Props().Key(),
 	)
+}
+
+func TestDontPanicOnShortPropertyKey(t *testing.T) {
+	assert.NotPanics(t, func() {
+		ValidateHProps(HProps{"": "y"})
+	})
+
+	assert.NotPanics(t, func() {
+		ValidateHProps(HProps{"o": "y"})
+	})
+}
+
+func TestValidateHPropsReturnsErrorIfOtherHasInvalidType(t *testing.T) {
+	assert.Error(t, ValidateHProps(HProps{"x": []string{"foo"}}))
 }

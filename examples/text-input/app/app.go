@@ -8,6 +8,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -41,10 +42,9 @@ func setText(state *State, payload hypp.Payload) hypp.Dispatchable {
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{},
+		Init: &State{},
 		View: func(state *State) *hypp.VNode {
 			t := state.message
 			if strings.TrimSpace(state.message) == "" {
@@ -55,7 +55,7 @@ func Run(driver hypp.Driver, node hypp.Node) {
 				title(t),
 				input(
 					withPayload[*State](func(payload hypp.Payload) hypp.Dispatchable {
-						event := payload.(hypp.Event)
+						event := payload.(window.Event)
 						return hypp.ActionAndPayload[*State]{
 							Action:  setText,
 							Payload: event.Target().Value(),

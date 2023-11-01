@@ -5,6 +5,7 @@ package app
 
 import (
 	"github.com/macabot/hypp"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -12,10 +13,9 @@ type State struct {
 	message string
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{message: "👋 Hi."},
+		Init: &State{message: "👋 Hi."},
 		View: func(state *State) *hypp.VNode {
 			return hypp.H("h1", nil, hypp.Text(state.message))
 		},

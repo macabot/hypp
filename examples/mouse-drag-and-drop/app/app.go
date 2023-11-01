@@ -8,6 +8,7 @@ import (
 
 	"github.com/macabot/hypp"
 	"github.com/macabot/hypp/tag/html"
+	"github.com/macabot/hypp/window"
 )
 
 type State struct {
@@ -23,8 +24,6 @@ func (m State) clone() *State {
 	return &m
 }
 
-var window hypp.Window
-
 type mouseProps struct {
 	name         string
 	dispatchable hypp.Dispatchable
@@ -32,7 +31,7 @@ type mouseProps struct {
 
 func on(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
 	props := payload.(mouseProps)
-	listener := func(event hypp.Event) {
+	listener := func(event window.Event) {
 		dispatch(props.dispatchable, event)
 	}
 	id := window.AddEventListener(props.name, listener)
@@ -71,7 +70,7 @@ func drop(state *State, _ hypp.Payload) hypp.Dispatchable {
 }
 
 func drag(state *State, payload hypp.Payload) hypp.Dispatchable {
-	props := payload.(hypp.Event).EscapeToValue()
+	props := payload.(window.Event).Value
 	newState := state.clone()
 	newState.dragging = true
 	newState.offsetX = props.Get("offsetX").Int()
@@ -85,18 +84,16 @@ func move(state *State, payload hypp.Payload) hypp.Dispatchable {
 	if !state.dragging {
 		return state
 	}
-	event := payload.(hypp.Event).EscapeToValue()
+	event := payload.(window.Event).Value
 	newState := state.clone()
 	newState.x = event.Get("pageX").Int()
 	newState.y = event.Get("pageY").Int()
 	return newState
 }
 
-func Run(driver hypp.Driver, node hypp.Node) {
-	window = driver.Window()
+func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
-		Driver: driver,
-		Init:   &State{x: 5, y: 20},
+		Init: &State{x: 5, y: 20},
 		View: func(state *State) *hypp.VNode {
 			draggableContent := "🛸"
 			titleText := "Drag the UFO!"

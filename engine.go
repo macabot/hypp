@@ -6,39 +6,50 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/macabot/hypp/util"
+	"github.com/macabot/hypp/window"
 )
 
 const svgNS = "http://www.w3.org/2000/svg"
 
-func validateHProps(props HProps, tag string) {
+func ValidateHProps(props HProps) error {
 	for key, value := range props {
-		if key[0] == 'o' && key[1] == 'n' {
+		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 			if _, ok := value.(Dispatchable); !ok {
-				panic(fmt.Errorf("hypp: expected '%s.%s' to have Dispatchable value. Got %+v of type %T\n", tag, key, value, value))
+				return fmt.Errorf("hypp: expected HProps key '%s' to have Dispatchable value. Got %#v", key, value)
+			}
+		} else if key == "class" {
+			switch value.(type) {
+			case bool, int, float64, string, []string, map[string]bool:
+				// Do nothing
+			default:
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %#v", key, value)
 			}
 		} else if key == "style" {
 			if _, ok := value.(map[string]string); !ok {
-				panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type map[string]string. Got %+v of type %T\n", tag, key, value, value))
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type map[string]string. Got %#v", key, value)
 			}
 		} else {
 			switch value.(type) {
 			case bool, int, float64, string:
-				continue
-			}
-			if key == "class" {
-				switch v := value.(type) {
-				case []string, map[string]bool:
-					// Do nothing
-				default:
-					panic(fmt.Errorf("hypp: expected '%s.%s' to have value of type bool, int, float64, string, []string or map[string]bool. Got %+v of type %T\n", tag, key, v, v))
-				}
+				// Do nothing
+			default:
+				return fmt.Errorf("hypp: expected HProps key '%s' to have value of type bool, int, float64 or string. Got %#v", key, value)
 			}
 		}
+	}
+	return nil
+}
+
+func MustValidateHProps(props HProps) {
+	if err := ValidateHProps(props); err != nil {
+		panic(err)
 	}
 }
 
 func h(tag string, props HProps, children vKids) *VNode {
-	validateHProps(props, tag)
+	MustValidateHProps(props)
 	props = props.clone()
 	if classOption := props.Get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))
@@ -58,7 +69,7 @@ func memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 	}
 }
 
-func text(value string, node Node) *VNode {
+func text(value string, node window.Element) *VNode {
 	return &VNode{
 		tag:  value,
 		kind: TextNode,
@@ -70,7 +81,7 @@ func dispatchWrapperID(dispatch Dispatch) Dispatch {
 	return dispatch
 }
 
-func recycleNode(node Node) *VNode {
+func recycleNode(node window.Element) *VNode {
 	if node.NodeType() == TextNode {
 		return text(node.NodeValue(), node)
 	} else {
@@ -133,7 +144,7 @@ func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription
 	return subs
 }
 
-func hPropsKeys(propsSlice ...HProps) []string {
+func mergeAndSortHPropsKeys(propsSlice ...HProps) []string {
 	seen := map[string]struct{}{}
 	var keys []string
 	for _, props := range propsSlice {
@@ -195,7 +206,7 @@ func isFalsy(v interface{}) bool {
 	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
 }
 
-func patchProperty(node Node, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
+func patchProperty(node window.Element, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// no-op
 	} else if key == "style" {
@@ -211,18 +222,15 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 				node.SetStyle(k, oldValue)
 			}
 		}
-	} else if key[0] == 'o' && key[1] == 'n' {
+	} else if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
 		key := key[2:]
 		if isFalsy(newValue) {
-			node.Events().Del(key)
-			if id := node.EventListenerID(key); id != nil {
+			getEvents(node).del(key)
+			if id := node.EventListenerID(key); id.Value != nil {
 				node.RemoveEventListener(key, id)
 			}
 		} else {
-			if _, ok := newValue.(Dispatchable); !ok {
-				panic(fmt.Errorf("hypp: expected Dispatchable for key starting with 'on'. Key: %s, value: %+v of type %T, %s\n", key, newValue, newValue, newValue))
-			}
-			node.Events().Set(key, newValue.(Dispatchable))
+			getEvents(node).set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
 				node.SetEventListenerID(key, id)
@@ -243,26 +251,27 @@ func patchProperty(node Node, key string, oldValue, newValue interface{}, listen
 	}
 }
 
-func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isSvg bool) Node {
+func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window.Element {
 	props := vdom.props
-	var node Node
+	var node window.Element
 	if vdom.kind == TextNode {
-		node = driver.CreateTextNode(vdom.tag)
+		node = window.Document().CreateTextNode(vdom.tag)
 	} else {
 		isSvg = isSvg || vdom.tag == "svg"
-		options := Option[ElementCreationOptions]{}
+		var options *window.ElementCreationOptions
 		if props.Has("is") {
-			options.V.Is = fmt.Sprint(props.Get("is").V)
-			options.OK = true
+			options = &window.ElementCreationOptions{
+				Is: fmt.Sprint(props.Get("is").V),
+			}
 		}
 		if isSvg {
-			node = driver.CreateElementNS(svgNS, vdom.tag, options)
+			node = window.Document().CreateElementNS(svgNS, vdom.tag, options)
 		} else {
-			node = driver.CreateElement(vdom.tag, options)
+			node = window.Document().CreateElement(vdom.tag, options)
 		}
 	}
 
-	keys := hPropsKeys(props)
+	keys := mergeAndSortHPropsKeys(props)
 	for _, k := range keys {
 		patchProperty(node, k, nil, props[k], listener, isSvg)
 	}
@@ -271,7 +280,6 @@ func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isS
 		vdom.children[i] = maybeVNode(vdom.children[i], nil)
 		node.AppendChild(
 			createNode(
-				driver,
 				vdom.children[i],
 				listener,
 				isSvg,
@@ -282,7 +290,7 @@ func createNode(driver Driver, vdom *VNode, listener eventListenerGenerator, isS
 	return node
 }
 
-func equalProps(a, b Option[interface{}]) bool {
+func equalProps(a, b util.Option[interface{}]) bool {
 	if a.OK != b.OK {
 		return false
 	}
@@ -302,14 +310,13 @@ func equalProps(a, b Option[interface{}]) bool {
 }
 
 func patch(
-	driver Driver,
-	parent Node,
-	node Node,
+	parent window.Element,
+	node window.Element,
 	oldVNode *VNode,
 	newVNode *VNode,
 	listener eventListenerGenerator,
 	isSvg bool,
-) Node {
+) window.Element {
 	if oldVNode == newVNode {
 		// Do nothing
 	} else if oldVNode != nil && oldVNode.kind == TextNode && newVNode.kind == TextNode {
@@ -319,18 +326,18 @@ func patch(
 	} else if oldVNode == nil || oldVNode.tag != newVNode.tag {
 		newVNode = maybeVNode(newVNode, nil)
 		node = parent.InsertBefore(
-			createNode(driver, newVNode, listener, isSvg),
+			createNode(newVNode, listener, isSvg),
 			node,
 		)
 		if oldVNode != nil {
-			parent.RemoveChild(oldVNode.node)
+			removeChild(parent, oldVNode.node)
 		}
 	} else {
 		var tmpVKid *VNode
 		var oldVKid *VNode
 
-		var oldKey Option[string]
-		var newKey Option[string]
+		var oldKey util.Option[string]
+		var newKey util.Option[string]
 
 		oldProps := oldVNode.props
 		newProps := newVNode.props
@@ -345,9 +352,9 @@ func patch(
 
 		isSvg := isSvg || newVNode.tag == "svg"
 
-		allKeys := hPropsKeys(oldProps, newProps)
+		allKeys := mergeAndSortHPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
-			var cmpVal Option[interface{}]
+			var cmpVal util.Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
 				cmpVal = node.Get(i)
 			} else {
@@ -369,7 +376,6 @@ func patch(
 				oldVKids[oldHead],
 			)
 			patch(
-				driver,
 				node,
 				oldVKids[oldHead].node,
 				oldVKids[oldHead],
@@ -391,7 +397,6 @@ func patch(
 				oldVKids[oldTail],
 			)
 			patch(
-				driver,
 				node,
 				oldVKids[oldTail].node,
 				oldVKids[oldTail],
@@ -407,14 +412,13 @@ func patch(
 			for newHead <= newTail {
 				newVKids[newHead] = maybeVNode(newVKids[newHead], nil)
 				oldVKid = nil
-				var oldVKidNode Node
+				var oldVKidNode window.Element
 				if oldHead < len(oldVKids) {
 					oldVKid = oldVKids[oldHead]
 					oldVKidNode = oldVKid.node
 				}
 				node.InsertBefore(
 					createNode(
-						driver,
 						newVKids[newHead],
 						listener,
 						isSvg,
@@ -425,12 +429,12 @@ func patch(
 			}
 		} else if newHead > newTail {
 			for oldHead <= oldTail {
-				node.RemoveChild(oldVKids[oldHead].node)
+				removeChild(node, oldVKids[oldHead].node)
 				oldHead++
 			}
 		} else {
 			keyed := map[string]*VNode{}
-			newKeyed := Set[string]{}
+			newKeyed := util.Set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key()
 				if oldKey.OK {
@@ -446,7 +450,7 @@ func patch(
 
 				if (newKeyed.Has(oldKey.V)) || (newKey.OK && newKey == oldVKids.getKey(oldHead+1)) {
 					if !oldKey.OK {
-						node.RemoveChild(oldVKid.node)
+						removeChild(node, oldVKid.node)
 					}
 					oldHead++
 					continue
@@ -454,12 +458,11 @@ func patch(
 
 				if !newKey.OK || oldVNode.kind == SSRNode {
 					if !oldKey.OK {
-						var oldVKidNode Node
+						var oldVKidNode window.Element
 						if oldVKid != nil {
 							oldVKidNode = oldVKid.node
 						}
 						patch(
-							driver,
 							node,
 							oldVKidNode,
 							oldVKid,
@@ -473,7 +476,6 @@ func patch(
 				} else {
 					if oldKey == newKey {
 						patch(
-							driver,
 							node,
 							oldVKid.node,
 							oldVKid,
@@ -487,7 +489,6 @@ func patch(
 						tmpVKid = keyed[newKey.V]
 						if tmpVKid != nil {
 							patch(
-								driver,
 								node,
 								node.InsertBefore(tmpVKid.node, oldVKid.node),
 								tmpVKid,
@@ -498,7 +499,6 @@ func patch(
 							newKeyed.Add(newKey.V)
 						} else {
 							patch(
-								driver,
 								node,
 								oldVKid.node,
 								nil,
@@ -515,14 +515,14 @@ func patch(
 			for oldHead <= oldTail {
 				oldVKid = oldVKids.get(oldHead)
 				if !oldVKids.getKey(oldHead).OK {
-					node.RemoveChild(oldVKid.node)
+					removeChild(node, oldVKid.node)
 				}
 				oldHead++
 			}
 
 			for i := range keyed {
 				if !newKeyed.Has(i) {
-					node.RemoveChild(keyed[i].node)
+					removeChild(node, keyed[i].node)
 				}
 			}
 		}
@@ -548,7 +548,7 @@ func maybeVNode(newVNode, oldVNode *VNode) *VNode {
 			return newVNode
 		}
 	} else {
-		return text("", nil)
+		return text("", window.Element{})
 	}
 }
 
@@ -564,21 +564,21 @@ func update[S State](appProps *AppProps[S], newState S) {
 		}
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
-			appProps.Driver.Window().RequestAnimationFrame(appProps.render)
+			window.RequestAnimationFrame(appProps.render)
 		}
 	}
 }
 
-type eventListenerGenerator func(this Node) EventListener
+type eventListenerGenerator func(this window.Element) window.EventListener
 
 func app[S State](appProps AppProps[S]) Dispatch {
 	appProps.init()
 
 	appProps.vdom = recycleNode(appProps.Node)
 
-	listener := func(this Node) EventListener {
-		return func(event Event) {
-			appProps.dispatch(this.Events().Get(event.Type()), event)
+	listener := func(this window.Element) window.EventListener {
+		return func(event window.Event) {
+			appProps.dispatch(getEvents(this).get(event.Type()), event)
 		}
 	}
 
@@ -587,7 +587,6 @@ func app[S State](appProps AppProps[S]) Dispatch {
 		appProps.vdom = appProps.View(appProps.state)
 		appProps.busy = false
 		appProps.Node = patch(
-			appProps.Driver,
 			appProps.Node.ParentNode(),
 			appProps.Node,
 			vdomOld,
