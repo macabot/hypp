@@ -99,8 +99,11 @@ func recycleNode(node window.Element) *VNode {
 	}
 }
 
-func shouldRestart(a, b Payload) bool {
-	return a != b // TODO implement
+func equalPayload(a, b Payload) bool {
+	defer func() {
+		recover()
+	}()
+	return a == b
 }
 
 type subscriptions []Subscription
@@ -112,6 +115,8 @@ func (s subscriptions) Index(i int) Subscription {
 	return Subscription{Disabled: true}
 }
 
+// patchSubs loops over the oldSubs and newSubs and compares the subscriptions at the same index.
+// It compares the Disabled field and Payload field. It does not compare the Subscriber field, because Go can't compare functions.
 func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription {
 	var subs []Subscription
 	for i := 0; i < len(oldSubs) || i < len(newSubs); i++ {
@@ -119,7 +124,7 @@ func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription
 		newSub := newSubs.Index(i)
 		var sub Subscription
 		if !newSub.Disabled {
-			if oldSub.Disabled || &newSub.Subscriber != &oldSub.Subscriber || shouldRestart(newSub.Payload, oldSub.Payload) {
+			if oldSub.Disabled || !equalPayload(newSub.Payload, oldSub.Payload) {
 				if !oldSub.Disabled {
 					oldSub.unsubscribe()
 				}
