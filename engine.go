@@ -99,11 +99,13 @@ func recycleNode(node window.Element) *VNode {
 	}
 }
 
-func equalPayload(a, b Payload) bool {
+// shouldRestart returns true if a is not equal to b.
+// If a and b are not comparable it always returns false.
+func shouldRestart(a, b Payload) bool {
 	defer func() {
 		recover()
 	}()
-	return a == b
+	return a != b
 }
 
 type subscriptions []Subscription
@@ -124,7 +126,7 @@ func patchSubs(oldSubs, newSubs subscriptions, dispatch Dispatch) []Subscription
 		newSub := newSubs.Index(i)
 		var sub Subscription
 		if !newSub.Disabled {
-			if oldSub.Disabled || !equalPayload(newSub.Payload, oldSub.Payload) {
+			if oldSub.Disabled || shouldRestart(newSub.Payload, oldSub.Payload) {
 				if !oldSub.Disabled {
 					oldSub.unsubscribe()
 				}
