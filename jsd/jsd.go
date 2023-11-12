@@ -45,10 +45,7 @@ func (_ Driver) Undefined() hyppjs.Value {
 }
 
 func (_ Driver) ValueOf(x any) hyppjs.Value {
-	if v, ok := x.(hyppjs.Value); ok {
-		return v
-	}
-	return Value{js.ValueOf(x)}
+	return Value{js.ValueOf(convertArg(x))}
 }
 
 // Err is an alias for js.Error.
