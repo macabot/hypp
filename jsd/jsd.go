@@ -48,53 +48,6 @@ func (_ Driver) ValueOf(x any) hyppjs.Value {
 	return Value{js.ValueOf(convertArg(x))}
 }
 
-// Err is an alias for js.Error.
-// When directly embedding js.Error in type Error we cannot have a method named Error: the name would already be taken by the embedded value.
-// Instead we embed the alias Err.
-type Err js.Error
-
-type Error struct {
-	Err
-}
-
-var _ hyppjs.Error = Error{}
-
-func (e Error) Call(m string, args ...any) hyppjs.Value {
-	return Value{e.Err.Value}.Call(m, args...)
-}
-
-func (e Error) Equal(w hyppjs.Value) bool {
-	return Value{e.Err.Value}.Equal(w)
-}
-
-func (e Error) Get(p string) hyppjs.Value {
-	return Value{e.Err.Value}.Get(p)
-}
-
-func (e Error) Index(i int) hyppjs.Value {
-	return Value{e.Err.Value}.Index(i)
-}
-
-func (e Error) InstanceOf(t hyppjs.Value) bool {
-	return Value{e.Err.Value}.InstanceOf(t)
-}
-
-func (e Error) Invoke(args ...any) hyppjs.Value {
-	return Value{e.Err.Value}.Invoke(args...)
-}
-
-func (e Error) New(args ...any) hyppjs.Value {
-	return Value{e.Err.Value}.New(args...)
-}
-
-func (e Error) Type() hyppjs.Type {
-	return Value{e.Err.Value}.Type()
-}
-
-func (e Error) Error() string {
-	return js.Error(e.Err).Error()
-}
-
 type Func struct {
 	js.Func
 }
@@ -146,7 +99,7 @@ var _ hyppjs.Value = Value{}
 func convertArg(arg any) any {
 	switch v := arg.(type) {
 	case hyppjs.Error:
-		return v.(Error).Error
+		return v.Value
 	case hyppjs.Func:
 		return v.(Func).Func
 	case hyppjs.Value:
