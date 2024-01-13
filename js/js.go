@@ -23,7 +23,9 @@ func d() Driver {
 
 // Register registers the driver that will be used by this package.
 // A common use case is to register the jsd driver
-//   import _ "github.com/macabot/hypp/jsd"
+//
+//	import _ "github.com/macabot/hypp/jsd"
+//
 // Make sure to import it from your main package.
 func Register(d Driver) {
 	driver = d
@@ -62,9 +64,13 @@ func ValueOf(x any) Value {
 	return d().ValueOf(x)
 }
 
-type Error interface {
+type Error struct {
 	Value
-	Error() string
+}
+
+// Error implements the error interface.
+func (e Error) Error() string {
+	return "JavaScript error: " + e.Get("message").String()
 }
 
 type Func interface {
