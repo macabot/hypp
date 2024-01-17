@@ -10,6 +10,8 @@ type Driver interface {
 	Null() Value
 	Undefined() Value
 	ValueOf(x any) Value
+	DefaultValueDriver() ValueDriver
+	DefaultFuncDriver() FuncDriver
 }
 
 var driver Driver
@@ -73,9 +75,29 @@ func (e Error) Error() string {
 	return "JavaScript error: " + e.Get("message").String()
 }
 
-type Func interface {
-	Value
+type FuncDriver interface {
+	ValueDriver() ValueDriver
 	Release()
+}
+
+type Func struct {
+	Value
+	driver FuncDriver
+}
+
+func MakeFunc(driver FuncDriver) Func {
+	return Func{Value: MakeValue(driver.ValueDriver()), driver: driver}
+}
+
+func (f Func) Driver() FuncDriver {
+	if f.driver == nil {
+		return d().DefaultFuncDriver()
+	}
+	return f.driver
+}
+
+func (f Func) Release() {
+	f.Driver().Release()
 }
 
 // Type is based on syscall/js.Type.
@@ -119,11 +141,7 @@ func (t Type) String() string {
 	}
 }
 
-// Value represents a JavaScript value.
-// It is based on type syscall/js.Value.
-// It allows you to use the JavaScript environment without the js/wasm build constraint.
-// See https://pkg.go.dev/syscall/js#Value for the method definitions.
-type Value interface {
+type ValueDriver interface {
 	Bool() bool
 	Call(m string, args ...any) Value
 	Delete(p string)
@@ -144,6 +162,105 @@ type Value interface {
 	String() string
 	Truthy() bool
 	Type() Type
+}
+
+// Value represents a JavaScript value.
+// It is based on type syscall/js.Value.
+// It allows you to use the JavaScript environment without the js/wasm build constraint.
+// See https://pkg.go.dev/syscall/js#Value for the method definitions.
+type Value struct {
+	driver ValueDriver
+}
+
+func MakeValue(driver ValueDriver) Value {
+	return Value{driver}
+}
+
+func (v Value) Driver() ValueDriver {
+	if v.driver == nil {
+		return d().DefaultValueDriver()
+	}
+	return v.driver
+}
+
+func (v Value) Bool() bool {
+	return v.Driver().Bool()
+}
+
+func (v Value) Call(m string, args ...any) Value {
+	return v.Driver().Call(m, args...)
+}
+
+func (v Value) Delete(p string) {
+	v.Driver().Delete(p)
+}
+
+func (v Value) Equal(w Value) bool {
+	return v.Driver().Equal(w)
+}
+
+func (v Value) Float() float64 {
+	return v.Driver().Float()
+}
+
+func (v Value) Get(p string) Value {
+	return v.Driver().Get(p)
+}
+
+func (v Value) Index(i int) Value {
+	return v.Driver().Index(i)
+}
+
+func (v Value) InstanceOf(t Value) bool {
+	return v.Driver().InstanceOf(t)
+}
+
+func (v Value) Int() int {
+	return v.Driver().Int()
+}
+
+func (v Value) Invoke(args ...any) Value {
+	return v.Driver().Invoke(args...)
+}
+
+func (v Value) IsNaN() bool {
+	return v.Driver().IsNaN()
+}
+
+func (v Value) IsNull() bool {
+	return v.Driver().IsNull()
+}
+
+func (v Value) IsUndefined() bool {
+	return v.Driver().IsUndefined()
+}
+
+func (v Value) Length() int {
+	return v.Driver().Length()
+}
+
+func (v Value) New(args ...any) Value {
+	return v.Driver().New(args...)
+}
+
+func (v Value) Set(p string, x any) {
+	v.Driver().Set(p, x)
+}
+
+func (v Value) SetIndex(i int, x any) {
+	v.Driver().SetIndex(i, x)
+}
+
+func (v Value) String() string {
+	return v.Driver().String()
+}
+
+func (v Value) Truthy() bool {
+	return v.Driver().Truthy()
+}
+
+func (v Value) Type() Type {
+	return v.Driver().Type()
 }
 
 type ValueError struct {

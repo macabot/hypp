@@ -168,9 +168,6 @@ func (e Element) EventListenerID(kind string) EventListenerID {
 		return EventListenerID{}
 	}
 	listener := listeners.Get(kind)
-	if listener.IsUndefined() {
-		return EventListenerID{}
-	}
 	return EventListenerID{listener}
 }
 
