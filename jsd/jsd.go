@@ -13,7 +13,7 @@ func init() {
 func convertArg(arg any) any {
 	switch v := arg.(type) {
 	case hyppjs.Error:
-		return v.Value
+		return js.Error{Value: v.Value.Driver().(Value).Value}
 	case hyppjs.Func:
 		return v.Driver().(Func).Func
 	case hyppjs.Value:
