@@ -31,8 +31,8 @@ func convertArg(arg any) any {
 		return l
 	case map[string]any:
 		m := make(map[string]any, len(v))
-		for k, v := range v {
-			m[k] = convertArg(v)
+		for key, value := range v {
+			m[key] = convertArg(value)
 		}
 		return m
 	default:
