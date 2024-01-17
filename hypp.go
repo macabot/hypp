@@ -18,6 +18,7 @@ import (
 // It must be comparable and [Dispatchable].
 //
 // Most often you will embed the [EmptyState]:
+//
 //	package example
 //
 //	type State struct {
@@ -25,6 +26,7 @@ import (
 //	}
 //
 // Alternatively, you can explicitly make your state Dispatchable:
+//
 //	package example
 //
 //	type State string
@@ -37,6 +39,7 @@ type State interface {
 
 // EmptyState implements the [State] constraint.
 // Embed the EmptyState in your state to implement the State constraint:
+//
 //	package example
 //
 //	type State struct {
@@ -47,7 +50,7 @@ type State interface {
 type EmptyState struct{}
 
 // IAmDispatchable makes the EmptyState Dispatchable.
-func (_ EmptyState) IAmDispatchable() {}
+func (EmptyState) IAmDispatchable() {}
 
 // App creates a new application.
 func App[S State](props AppProps[S]) Dispatch {
@@ -57,6 +60,7 @@ func App[S State](props AppProps[S]) Dispatch {
 // HProps are the properties to create a *VNode.
 //
 // The allowed value type depends on the key:
+//
 //	| Key               | Value type                                            |
 //	| ----------------- | ----------------------------------------------------- |
 //	| Starts with "on"  | Dispatchable                                          |
@@ -114,6 +118,7 @@ func (h *HProps) Set(key string, value interface{}) {
 // H creates a new *VNode specified by tag.
 //
 // See the tag package for functions that create specific tags:
+//
 //	package main
 //
 //	import (
@@ -184,8 +189,8 @@ func (a AppProps[S]) Validate() error {
 		return errors.New("hypp: Driver in hypp/js cannot be nil")
 	} else if a.View == nil {
 		return errors.New("hypp: AppProps.View cannot be nil")
-	} else if a.Node.Value == nil {
-		return errors.New("hypp: AppProps.Node.Value cannot be nil")
+	} else if !a.Node.Truthy() {
+		return errors.New("hypp: AppProps.Node cannot be falsy")
 	} else if a.Node.ParentNode().IsNull() {
 		return errors.New("hypp: AppProps.Node must have a parent node")
 	}
@@ -208,11 +213,11 @@ type Dispatch func(dispatchable Dispatchable, payload Payload)
 
 // Dispatchable is implemented by types that, when dispatched, change the state.
 // There are four Dispatchable types:
-//	- Types that implement the State constraint.
-//	  For example, types that embed the EmptyState.
-//	- StateAndEffects
-//	- Action
-//	- ActionAndPayload
+//   - Types that implement the State constraint.
+//     For example, types that embed the EmptyState.
+//   - StateAndEffects
+//   - Action
+//   - ActionAndPayload
 type Dispatchable interface {
 	IAmDispatchable()
 }

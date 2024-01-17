@@ -127,7 +127,7 @@ func validateValue(value any) {
 	case nil, bool, int, float64, string:
 		// Do nothing
 	default:
-		panic(fmt.Errorf("hypp/window: expected nil, bool, int, float64 or string. Got %+v of type %T\n", value, value))
+		panic(fmt.Errorf("hypp/window: expected nil, bool, int, float64 or string. Got %+v of type %T", value, value))
 	}
 }
 
@@ -168,9 +168,6 @@ func (e Element) EventListenerID(kind string) EventListenerID {
 		return EventListenerID{}
 	}
 	listener := listeners.Get(kind)
-	if listener.IsUndefined() {
-		return EventListenerID{}
-	}
 	return EventListenerID{listener}
 }
 

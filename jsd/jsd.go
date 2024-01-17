@@ -10,80 +10,90 @@ func init() {
 	hyppjs.Register(Driver{})
 }
 
+func convertArg(arg any) any {
+	switch v := arg.(type) {
+	case hyppjs.Error:
+		return js.Error{Value: v.Value.Driver().(Value).Value}
+	case hyppjs.Func:
+		return v.Driver().(Func).Func
+	case hyppjs.Value:
+		return v.Driver().(Value).Value
+	case hyppjs.ValueError:
+		return js.ValueError{
+			Method: v.Method,
+			Type:   js.Type(v.Type),
+		}
+	case []any:
+		l := make([]any, len(v))
+		for i, x := range v {
+			l[i] = convertArg(x)
+		}
+		return l
+	case map[string]any:
+		m := make(map[string]any, len(v))
+		for key, value := range v {
+			m[key] = convertArg(value)
+		}
+		return m
+	default:
+		return arg
+	}
+}
+
 type Driver struct{}
 
 var _ hyppjs.Driver = Driver{}
 
-func (_ Driver) CopyBytesToGo(dst []byte, src hyppjs.Value) int {
-	return js.CopyBytesToGo(dst, src.(Value).Value)
+func (Driver) CopyBytesToGo(dst []byte, src hyppjs.Value) int {
+	return js.CopyBytesToGo(dst, src.Driver().(Value).Value)
 }
 
-func (_ Driver) CopyBytesToJS(dst hyppjs.Value, src []byte) int {
-	return js.CopyBytesToJS(dst.(Value).Value, src)
+func (Driver) CopyBytesToJS(dst hyppjs.Value, src []byte) int {
+	return js.CopyBytesToJS(dst.Driver().(Value).Value, src)
 }
 
-func (_ Driver) FuncOf(fn func(hyppjs.Value, []hyppjs.Value) interface{}) hyppjs.Func {
-	return Func{js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func (Driver) FuncOf(fn func(hyppjs.Value, []hyppjs.Value) any) hyppjs.Func {
+	return hyppjs.MakeFunc(Func{js.FuncOf(func(this js.Value, args []js.Value) any {
 		input := make([]hyppjs.Value, len(args))
 		for i, a := range args {
-			input[i] = Value{a}
+			input[i] = hyppjs.MakeValue(Value{a})
 		}
-		return fn(Value{this}, input)
-	})}
+		return fn(hyppjs.MakeValue(Value{this}), input)
+	})})
 }
 
-func (_ Driver) Global() hyppjs.Value {
-	return Value{js.Global()}
+func (Driver) Global() hyppjs.Value {
+	return hyppjs.MakeValue(Value{js.Global()})
 }
 
-func (_ Driver) Null() hyppjs.Value {
-	return Value{js.Null()}
+func (Driver) Null() hyppjs.Value {
+	return hyppjs.MakeValue(Value{js.Null()})
 }
 
-func (_ Driver) Undefined() hyppjs.Value {
-	return Value{js.Undefined()}
+func (Driver) Undefined() hyppjs.Value {
+	return hyppjs.MakeValue(Value{js.Undefined()})
 }
 
-func (_ Driver) ValueOf(x any) hyppjs.Value {
-	return Value{js.ValueOf(convertArg(x))}
+func (Driver) ValueOf(x any) hyppjs.Value {
+	return hyppjs.MakeValue(Value{js.ValueOf(convertArg(x))})
+}
+
+func (Driver) DefaultValueDriver() hyppjs.ValueDriver {
+	return Value{}
+}
+
+func (Driver) DefaultFuncDriver() hyppjs.FuncDriver {
+	return Func{}
 }
 
 type Func struct {
 	js.Func
 }
 
-var _ hyppjs.Func = Func{}
+var _ hyppjs.FuncDriver = Func{}
 
-func (f Func) Call(m string, args ...any) hyppjs.Value {
-	return Value{f.Func.Value}.Call(m, args...)
-}
-
-func (f Func) Equal(w hyppjs.Value) bool {
-	return Value{f.Func.Value}.Equal(w)
-}
-
-func (f Func) Get(p string) hyppjs.Value {
-	return Value{f.Func.Value}.Get(p)
-}
-
-func (f Func) Index(i int) hyppjs.Value {
-	return Value{f.Func.Value}.Index(i)
-}
-
-func (f Func) InstanceOf(t hyppjs.Value) bool {
-	return Value{f.Func.Value}.InstanceOf(t)
-}
-
-func (f Func) Invoke(args ...any) hyppjs.Value {
-	return Value{f.Func.Value}.Invoke(args...)
-}
-
-func (f Func) New(args ...any) hyppjs.Value {
-	return Value{f.Func.Value}.New(args...)
-}
-
-func (f Func) Type() hyppjs.Type {
-	return Value{f.Func.Value}.Type()
+func (f Func) ValueDriver() hyppjs.ValueDriver {
+	return Value{f.Func.Value}
 }
 
 func (f Func) Release() {
@@ -94,60 +104,30 @@ type Value struct {
 	js.Value
 }
 
-var _ hyppjs.Value = Value{}
-
-func convertArg(arg any) any {
-	switch v := arg.(type) {
-	case hyppjs.Error:
-		return v.Value
-	case hyppjs.Func:
-		return v.(Func).Func
-	case hyppjs.Value:
-		return v.(Value).Value
-	case hyppjs.ValueError:
-		return js.ValueError{
-			Method: v.Method,
-			Type:   js.Type(v.Type),
-		}
-	case []interface{}:
-		l := make([]interface{}, len(v))
-		for i, x := range v {
-			l[i] = convertArg(x)
-		}
-		return l
-	case map[string]interface{}:
-		m := make(map[string]interface{}, len(v))
-		for k, v := range v {
-			m[k] = convertArg(v)
-		}
-		return m
-	default:
-		return arg
-	}
-}
+var _ hyppjs.ValueDriver = Value{}
 
 func (v Value) Call(m string, args ...any) hyppjs.Value {
 	converted := make([]any, len(args))
 	for i, a := range args {
 		converted[i] = convertArg(a)
 	}
-	return Value{v.Value.Call(m, converted...)}
+	return hyppjs.MakeValue(Value{v.Value.Call(m, converted...)})
 }
 
 func (v Value) Equal(w hyppjs.Value) bool {
-	return v.Value.Equal(w.(Value).Value)
+	return v.Value.Equal(w.Driver().(Value).Value)
 }
 
 func (v Value) Get(p string) hyppjs.Value {
-	return Value{v.Value.Get(p)}
+	return hyppjs.MakeValue(Value{v.Value.Get(p)})
 }
 
 func (v Value) Index(i int) hyppjs.Value {
-	return Value{v.Value.Index(i)}
+	return hyppjs.MakeValue(Value{v.Value.Index(i)})
 }
 
 func (v Value) InstanceOf(t hyppjs.Value) bool {
-	return v.Value.InstanceOf(t.(Value).Value)
+	return v.Value.InstanceOf(t.Driver().(Value).Value)
 }
 
 func (v Value) Invoke(args ...any) hyppjs.Value {
@@ -155,7 +135,7 @@ func (v Value) Invoke(args ...any) hyppjs.Value {
 	for i, a := range args {
 		converted[i] = convertArg(a)
 	}
-	return Value{v.Value.Invoke(converted...)}
+	return hyppjs.MakeValue(Value{v.Value.Invoke(converted...)})
 }
 
 func (v Value) New(args ...any) hyppjs.Value {
@@ -163,7 +143,7 @@ func (v Value) New(args ...any) hyppjs.Value {
 	for i, a := range args {
 		converted[i] = convertArg(a)
 	}
-	return Value{v.Value.New(converted...)}
+	return hyppjs.MakeValue(Value{v.Value.New(converted...)})
 }
 
 func (v Value) Set(p string, x any) {
