@@ -12,6 +12,16 @@ import (
 	"golang.org/x/net/html"
 )
 
+func validateWriter(w io.Writer) error {
+	// TODO
+	return nil
+}
+
+func validateNode(node *hypp.VNode) error {
+	// TODO
+	return nil
+}
+
 // Render renders the node to the given writer.
 // It is based on https://pkg.go.dev/golang.org/x/net/html#Render
 func Render(w io.Writer, node *hypp.VNode) error {
@@ -103,6 +113,7 @@ func nodeToVNode(node *html.Node) (*hypp.VNode, error) {
 		}
 		var children []*hypp.VNode
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			// TODO skip if child is nil
 			childNode, err := nodeToVNode(child)
 			if err != nil {
 				return nil, err
