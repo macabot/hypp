@@ -3,7 +3,7 @@
 ## Tests
 
 ```shell
-$ go test . ./examples/.../app ./examples/.../html ./tag/...
+go test . ./examples/.../app ./examples/.../html ./tag/...
 ```
 
 ## License

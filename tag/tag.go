@@ -2,6 +2,7 @@ package tag
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -12,9 +13,20 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	ErrNilWriter = errors.New("writer cannot be nil")
+	ErrNilReader = errors.New("reader cannot be nil")
+)
+
 // Render renders the node to the given writer.
 // It is based on https://pkg.go.dev/golang.org/x/net/html#Render
 func Render(w io.Writer, node *hypp.VNode) error {
+	if w == nil {
+		return ErrNilWriter
+	}
+	if node == nil {
+		return nil
+	}
 	element, err := vNodeToNode(node, nil)
 	if err != nil {
 		return err
@@ -24,6 +36,9 @@ func Render(w io.Writer, node *hypp.VNode) error {
 
 // RenderToString renders the node to a string.
 func RenderToString(node *hypp.VNode) (string, error) {
+	if node == nil {
+		return "", nil
+	}
 	w := &bytes.Buffer{}
 	if err := Render(w, node); err != nil {
 		return "", err
@@ -33,6 +48,9 @@ func RenderToString(node *hypp.VNode) (string, error) {
 
 // RenderFragment renders a fragment of nodes to the given writer.
 func RenderFragment(w io.Writer, fragment []*hypp.VNode) error {
+	if w == nil {
+		return ErrNilWriter
+	}
 	for _, node := range fragment {
 		if err := Render(w, node); err != nil {
 			return err
@@ -70,6 +88,9 @@ func ParseFromString(s string) (*hypp.VNode, error) {
 // If the fragment is the InnerHTML for an existing element, pass that element as context.
 // It is based on https://pkg.go.dev/golang.org/x/net/html#ParseFragment
 func ParseFragment(r io.Reader, context *html.Node) ([]*hypp.VNode, error) {
+	if r == nil {
+		return nil, ErrNilReader
+	}
 	nodes, err := html.ParseFragment(r, context)
 	if err != nil {
 		return nil, err
@@ -156,7 +177,6 @@ func vNodeToNode(node *hypp.VNode, parent *html.Node) (*html.Node, error) {
 			Data: node.Tag(),
 		}, nil
 	case hypp.SSRNode:
-
 		element := &html.Node{
 			Parent: parent,
 			Type:   html.ElementNode,
@@ -166,19 +186,20 @@ func vNodeToNode(node *hypp.VNode, parent *html.Node) (*html.Node, error) {
 		var firstChild *html.Node
 		var lastChild *html.Node
 		children := node.Children()
-		childElements := make([]*html.Node, len(children))
-		for i, child := range children {
+		var childElements []*html.Node
+		for _, child := range children {
+			if child == nil {
+				continue
+			}
 			childElement, err := vNodeToNode(child, parent)
 			if err != nil {
 				return nil, err
 			}
-			childElements[i] = childElement
-			if i == 0 {
+			childElements = append(childElements, childElement)
+			if firstChild == nil {
 				firstChild = childElement
 			}
-			if i == len(children)-1 {
-				lastChild = childElement
-			}
+			lastChild = childElement
 		}
 		for i := range childElements {
 			var prevSibling *html.Node
