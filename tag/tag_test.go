@@ -55,3 +55,27 @@ func TestRenderWithStyle(t *testing.T) {
 		output,
 	)
 }
+
+func TestRenderWithNilChild(t *testing.T) {
+	node := hypp.H(
+		"div",
+		nil,
+		hypp.H("h1", nil),
+		nil,
+		hypp.H("h2", nil),
+	)
+	output, err := tag.RenderToString(node)
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		`<div><h1></h1><h2></h2></div>`,
+		output,
+	)
+}
+
+func TestRenderNilNode(t *testing.T) {
+	output, err := tag.RenderToString(nil)
+	require.NoError(t, err)
+	assert.Equal(t, "", output)
+}
