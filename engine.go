@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/macabot/hypp/js"
-	"github.com/macabot/hypp/util"
 	"github.com/macabot/hypp/window"
 )
 
@@ -298,7 +297,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 	return node
 }
 
-func equalProps(a, b util.Option[interface{}]) bool {
+func equalProps(a, b option[interface{}]) bool {
 	if a.OK != b.OK {
 		return false
 	}
@@ -317,42 +316,25 @@ func equalProps(a, b util.Option[interface{}]) bool {
 	}
 }
 
-// set is an unordered collections of items.
-type set[T comparable] map[T]struct{}
-
-// Has returns true if the set contains the given value.
-func (s set[T]) Has(v T) bool {
-	if s == nil {
-		return false
-	}
-	_, ok := s[v]
-	return ok
-}
-
-// Add adds the given value to the set if not present already.
-func (s set[T]) Add(v T) {
-	s[v] = struct{}{}
-}
-
-func elementGet(e window.Element, name string) util.Option[any] {
+func elementGet(e window.Element, name string) option[any] {
 	if !e.In(name) {
-		return util.Option[any]{}
+		return option[any]{}
 	}
 	v := e.Value.Get(name)
 	kind := v.Type()
 	switch kind {
 	case js.TypeUndefined, js.TypeNull:
-		return util.Option[any]{OK: true}
+		return option[any]{OK: true}
 	case js.TypeBoolean:
-		return util.Option[any]{V: v.Bool(), OK: true}
+		return option[any]{V: v.Bool(), OK: true}
 	case js.TypeNumber:
 		if js.Global().Get("Number").Call("isInteger", v).Bool() {
-			return util.Option[any]{V: v.Int(), OK: true}
+			return option[any]{V: v.Int(), OK: true}
 		} else {
-			return util.Option[any]{V: v.Float(), OK: true}
+			return option[any]{V: v.Float(), OK: true}
 		}
 	case js.TypeString:
-		return util.Option[any]{V: v.String(), OK: true}
+		return option[any]{V: v.String(), OK: true}
 	default:
 		panic(fmt.Errorf("hypp: cannot get property of window.Element with type '%s'", kind))
 	}
@@ -385,8 +367,8 @@ func patch(
 		var tmpVKid *VNode
 		var oldVKid *VNode
 
-		var oldKey util.Option[string]
-		var newKey util.Option[string]
+		var oldKey option[string]
+		var newKey option[string]
 
 		oldProps := oldVNode.props
 		newProps := newVNode.props
@@ -403,7 +385,7 @@ func patch(
 
 		allKeys := mergeAndSortHPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
-			var cmpVal util.Option[interface{}]
+			var cmpVal option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
 				cmpVal = elementGet(node, i)
 			} else {

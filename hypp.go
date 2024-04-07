@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	"github.com/macabot/hypp/js"
-	"github.com/macabot/hypp/util"
 	"github.com/macabot/hypp/window"
 )
 
@@ -71,11 +70,11 @@ type HProps map[string]interface{}
 
 // key returns the "key" property, if available.
 // The value is always converted into a string.
-func (h HProps) key() util.Option[string] {
+func (h HProps) key() option[string] {
 	if key := h.get("key"); key.OK {
-		return util.Option[string]{V: fmt.Sprint(key.V), OK: true}
+		return option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
-	return util.Option[string]{}
+	return option[string]{}
 }
 
 // clone returns a shallow clone of the HProps.
@@ -88,12 +87,12 @@ func (h HProps) clone() HProps {
 }
 
 // get returns the requested key, if available.
-func (h HProps) get(key string) util.Option[interface{}] {
+func (h HProps) get(key string) option[interface{}] {
 	if h == nil {
-		return util.Option[interface{}]{}
+		return option[interface{}]{}
 	}
 	v, ok := h[key]
-	return util.Option[interface{}]{V: v, OK: ok}
+	return option[interface{}]{V: v, OK: ok}
 }
 
 // Has returns true if the requested key is found.
@@ -287,17 +286,17 @@ func (n VNode) Kind() int {
 	return n.kind
 }
 
-func (n VNode) key() util.Option[string] {
+func (n VNode) key() option[string] {
 	return n.props.key()
 }
 
 type vKids []*VNode
 
-func (v vKids) getKey(i int) util.Option[string] {
+func (v vKids) getKey(i int) option[string] {
 	if i < len(v) {
 		return v[i].key()
 	}
-	return util.Option[string]{}
+	return option[string]{}
 }
 
 func (v vKids) get(i int) *VNode {
