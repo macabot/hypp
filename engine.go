@@ -13,6 +13,9 @@ import (
 
 const svgNS = "http://www.w3.org/2000/svg"
 
+// ValidateHProps validates the given [HProps].
+// It returns an error if any of the keys have an invalid value.
+// See the description of [HProps] for a table of the keys and their allowed value types.
 func ValidateHProps(props HProps) error {
 	for key, value := range props {
 		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
@@ -42,6 +45,7 @@ func ValidateHProps(props HProps) error {
 	return nil
 }
 
+// MustValidateHProps calls [ValidateHProps] and panics if an error is returned.
 func MustValidateHProps(props HProps) {
 	if err := ValidateHProps(props); err != nil {
 		panic(err)
