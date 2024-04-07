@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/macabot/hypp/js"
 	"github.com/macabot/hypp/util"
 	"github.com/macabot/hypp/window"
 )
@@ -333,6 +334,30 @@ func (s set[T]) Add(v T) {
 	s[v] = struct{}{}
 }
 
+func elementGet(e window.Element, name string) util.Option[any] {
+	if !e.In(name) {
+		return util.Option[any]{}
+	}
+	v := e.Value.Get(name)
+	kind := v.Type()
+	switch kind {
+	case js.TypeUndefined, js.TypeNull:
+		return util.Option[any]{OK: true}
+	case js.TypeBoolean:
+		return util.Option[any]{V: v.Bool(), OK: true}
+	case js.TypeNumber:
+		if js.Global().Get("Number").Call("isInteger", v).Bool() {
+			return util.Option[any]{V: v.Int(), OK: true}
+		} else {
+			return util.Option[any]{V: v.Float(), OK: true}
+		}
+	case js.TypeString:
+		return util.Option[any]{V: v.String(), OK: true}
+	default:
+		panic(fmt.Errorf("hypp: cannot get property of window.Element with type '%s'", kind))
+	}
+}
+
 func patch(
 	parent window.Element,
 	node window.Element,
@@ -380,7 +405,7 @@ func patch(
 		for _, i := range allKeys {
 			var cmpVal util.Option[interface{}]
 			if i == "value" || i == "selected" || i == "checked" {
-				cmpVal = node.Get(i)
+				cmpVal = elementGet(node, i)
 			} else {
 				cmpVal = oldProps.get(i)
 			}

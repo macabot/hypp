@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/macabot/hypp/js"
-	"github.com/macabot/hypp/util"
 )
 
 // Element represents an HTML element.
@@ -86,30 +85,6 @@ func (e Element) InsertBefore(newNode, referenceNode Element) Element {
 // See https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild
 func (e Element) RemoveChild(child Element) {
 	e.Value.Call("removeChild", child.Value)
-}
-
-func (e Element) Get(name string) util.Option[any] {
-	if !e.In(name) {
-		return util.Option[any]{}
-	}
-	v := e.Value.Get(name)
-	kind := v.Type()
-	switch kind {
-	case js.TypeUndefined, js.TypeNull:
-		return util.Option[any]{OK: true}
-	case js.TypeBoolean:
-		return util.Option[any]{V: v.Bool(), OK: true}
-	case js.TypeNumber:
-		if js.Global().Get("Number").Call("isInteger", v).Bool() {
-			return util.Option[any]{V: v.Int(), OK: true}
-		} else {
-			return util.Option[any]{V: v.Float(), OK: true}
-		}
-	case js.TypeString:
-		return util.Option[any]{V: v.String(), OK: true}
-	default:
-		panic(fmt.Errorf("hypp/window: cannot get node property of type '%s'", kind))
-	}
 }
 
 func (e Element) In(name string) bool {
