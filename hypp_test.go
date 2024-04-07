@@ -47,7 +47,7 @@ func TestKeepKeyOnVNodeShallowClone(t *testing.T) {
 	assert.Equal(
 		t,
 		util.Option[string]{V: "foo", OK: true},
-		spanClone.Props().Key(),
+		spanClone.Props().key(),
 	)
 }
 

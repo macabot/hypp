@@ -69,9 +69,9 @@ func App[S State](props AppProps[S]) Dispatch {
 //	| Other             | bool, int, float64, string                            |
 type HProps map[string]interface{}
 
-// Key returns the "key" property, if available.
+// key returns the "key" property, if available.
 // The value is always converted into a string.
-func (h HProps) Key() util.Option[string] {
+func (h HProps) key() util.Option[string] {
 	if key := h.Get("key"); key.OK {
 		return util.Option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
@@ -288,7 +288,7 @@ func (n VNode) Kind() int {
 }
 
 func (n VNode) key() util.Option[string] {
-	return n.props.Key()
+	return n.props.key()
 }
 
 type vKids []*VNode
