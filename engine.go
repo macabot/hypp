@@ -316,6 +316,23 @@ func equalProps(a, b util.Option[interface{}]) bool {
 	}
 }
 
+// set is an unordered collections of items.
+type set[T comparable] map[T]struct{}
+
+// Has returns true if the set contains the given value.
+func (s set[T]) Has(v T) bool {
+	if s == nil {
+		return false
+	}
+	_, ok := s[v]
+	return ok
+}
+
+// Add adds the given value to the set if not present already.
+func (s set[T]) Add(v T) {
+	s[v] = struct{}{}
+}
+
 func patch(
 	parent window.Element,
 	node window.Element,
@@ -441,7 +458,7 @@ func patch(
 			}
 		} else {
 			keyed := map[string]*VNode{}
-			newKeyed := util.Set[string]{}
+			newKeyed := set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key()
 				if oldKey.OK {
