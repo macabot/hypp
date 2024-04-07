@@ -89,7 +89,7 @@ func title(text string) *hypp.VNode {
 }
 
 func img(src string) *hypp.VNode {
-	return html.Img(map[string]any{"src": src})
+	return html.Img(hypp.HProps{"src": src})
 }
 
 func p(text string) *hypp.VNode {
