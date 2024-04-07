@@ -96,8 +96,8 @@ func (h HProps) get(key string) util.Option[interface{}] {
 	return util.Option[interface{}]{V: v, OK: ok}
 }
 
-// has returns true if the requested key is found.
-func (h HProps) has(key string) bool {
+// Has returns true if the requested key is found.
+func (h HProps) Has(key string) bool {
 	if h == nil {
 		return false
 	}
