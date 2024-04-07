@@ -57,7 +57,7 @@ func every(delay time.Duration, dispatchable hypp.Dispatchable) hypp.Subscriptio
 	}
 }
 
-func titlef(format string, args ...interface{}) *hypp.VNode {
+func titlef(format string, args ...any) *hypp.VNode {
 	return html.H1(nil, hypp.Textf(format, args...))
 }
 

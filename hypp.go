@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	"github.com/macabot/hypp/js"
-	"github.com/macabot/hypp/util"
 	"github.com/macabot/hypp/window"
 )
 
@@ -67,15 +66,15 @@ func App[S State](props AppProps[S]) Dispatch {
 //	| "class"           | bool, int, float64, string, []string, map[string]bool |
 //	| "style"           | map[string]string                                     |
 //	| Other             | bool, int, float64, string                            |
-type HProps map[string]interface{}
+type HProps map[string]any
 
-// Key returns the "key" property, if available.
+// key returns the "key" property, if available.
 // The value is always converted into a string.
-func (h HProps) Key() util.Option[string] {
-	if key := h.Get("key"); key.OK {
-		return util.Option[string]{V: fmt.Sprint(key.V), OK: true}
+func (h HProps) key() option[string] {
+	if key := h.get("key"); key.OK {
+		return option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
-	return util.Option[string]{}
+	return option[string]{}
 }
 
 // clone returns a shallow clone of the HProps.
@@ -87,13 +86,13 @@ func (h HProps) clone() HProps {
 	return clone
 }
 
-// Get returns the requested key, if available.
-func (h HProps) Get(key string) util.Option[interface{}] {
+// get returns the requested key, if available.
+func (h HProps) get(key string) option[any] {
 	if h == nil {
-		return util.Option[interface{}]{}
+		return option[any]{}
 	}
 	v, ok := h[key]
-	return util.Option[interface{}]{V: v, OK: ok}
+	return option[any]{V: v, OK: ok}
 }
 
 // Has returns true if the requested key is found.
@@ -107,7 +106,7 @@ func (h HProps) Has(key string) bool {
 
 // Set sets the given key value pair.
 // It is safe to call this method on a nil value.
-func (h *HProps) Set(key string, value interface{}) {
+func (h *HProps) Set(key string, value any) {
 	if *h == nil {
 		*h = HProps{}
 	}
@@ -149,12 +148,12 @@ func Text(value string) *VNode {
 }
 
 // Textf creates a text *VNode by interpolating the format with the arguments.
-func Textf(format string, a ...interface{}) *VNode {
+func Textf(format string, a ...any) *VNode {
 	return Text(fmt.Sprintf(format, a...))
 }
 
 // Payload is the value that is dispatched.
-type Payload interface{}
+type Payload any
 
 // Action is a function that is Dispatchable.
 // When called it returns a Dispatchable that will change the state.
@@ -287,17 +286,17 @@ func (n VNode) Kind() int {
 	return n.kind
 }
 
-func (n VNode) key() util.Option[string] {
-	return n.props.Key()
+func (n VNode) key() option[string] {
+	return n.props.key()
 }
 
 type vKids []*VNode
 
-func (v vKids) getKey(i int) util.Option[string] {
+func (v vKids) getKey(i int) option[string] {
 	if i < len(v) {
 		return v[i].key()
 	}
-	return util.Option[string]{}
+	return option[string]{}
 }
 
 func (v vKids) get(i int) *VNode {

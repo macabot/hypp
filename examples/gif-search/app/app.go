@@ -89,7 +89,7 @@ func title(text string) *hypp.VNode {
 }
 
 func img(src string) *hypp.VNode {
-	return html.Img(map[string]interface{}{"src": src})
+	return html.Img(hypp.HProps{"src": src})
 }
 
 func p(text string) *hypp.VNode {
@@ -180,7 +180,7 @@ func Run(node window.Element) {
 						Action:  getURL,
 						Payload: strings.TrimSpace(value),
 					}
-				}, map[string]interface{}{
+				}, map[string]any{
 					"placeholder": "Search GIFs...",
 					"type":        "text",
 				}),

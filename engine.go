@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/macabot/hypp/util"
+	"github.com/macabot/hypp/js"
 	"github.com/macabot/hypp/window"
 )
 
@@ -51,7 +51,7 @@ func MustValidateHProps(props HProps) {
 func h(tag string, props HProps, children vKids) *VNode {
 	MustValidateHProps(props)
 	props = props.clone()
-	if classOption := props.Get("class"); classOption.OK {
+	if classOption := props.get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))
 	}
 	return &VNode{
@@ -166,7 +166,7 @@ func mergeAndSortHPropsKeys(propsSlice ...HProps) []string {
 	return keys
 }
 
-func stylePairKeys(x, y interface{}) []string {
+func stylePairKeys(x, y any) []string {
 	seen := map[string]struct{}{}
 	var keys []string
 
@@ -189,7 +189,7 @@ func stylePairKeys(x, y interface{}) []string {
 	return keys
 }
 
-func createClass(obj interface{}) string {
+func createClass(obj any) string {
 	var parts []string
 	switch v := obj.(type) {
 	case string:
@@ -209,11 +209,11 @@ func createClass(obj interface{}) string {
 	return strings.Join(parts, " ")
 }
 
-func isFalsy(v interface{}) bool {
+func isFalsy(v any) bool {
 	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
 }
 
-func patchProperty(node window.Element, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
+func patchProperty(node window.Element, key string, oldValue, newValue any, listener eventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// no-op
 	} else if key == "style" {
@@ -268,7 +268,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 		var options *window.ElementCreationOptions
 		if props.Has("is") {
 			options = &window.ElementCreationOptions{
-				Is: fmt.Sprint(props.Get("is").V),
+				Is: fmt.Sprint(props.get("is").V),
 			}
 		}
 		if isSvg {
@@ -297,7 +297,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 	return node
 }
 
-func equalProps(a, b util.Option[interface{}]) bool {
+func equalProps(a, b option[any]) bool {
 	if a.OK != b.OK {
 		return false
 	}
@@ -313,6 +313,30 @@ func equalProps(a, b util.Option[interface{}]) bool {
 		return ok && v == bBool
 	default:
 		return false
+	}
+}
+
+func elementGet(e window.Element, name string) option[any] {
+	if !e.In(name) {
+		return option[any]{}
+	}
+	v := e.Value.Get(name)
+	kind := v.Type()
+	switch kind {
+	case js.TypeUndefined, js.TypeNull:
+		return option[any]{OK: true}
+	case js.TypeBoolean:
+		return option[any]{V: v.Bool(), OK: true}
+	case js.TypeNumber:
+		if js.Global().Get("Number").Call("isInteger", v).Bool() {
+			return option[any]{V: v.Int(), OK: true}
+		} else {
+			return option[any]{V: v.Float(), OK: true}
+		}
+	case js.TypeString:
+		return option[any]{V: v.String(), OK: true}
+	default:
+		panic(fmt.Errorf("hypp: cannot get property of window.Element with type '%s'", kind))
 	}
 }
 
@@ -343,8 +367,8 @@ func patch(
 		var tmpVKid *VNode
 		var oldVKid *VNode
 
-		var oldKey util.Option[string]
-		var newKey util.Option[string]
+		var oldKey option[string]
+		var newKey option[string]
 
 		oldProps := oldVNode.props
 		newProps := newVNode.props
@@ -361,14 +385,14 @@ func patch(
 
 		allKeys := mergeAndSortHPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
-			var cmpVal util.Option[interface{}]
+			var cmpVal option[any]
 			if i == "value" || i == "selected" || i == "checked" {
-				cmpVal = node.Get(i)
+				cmpVal = elementGet(node, i)
 			} else {
-				cmpVal = oldProps.Get(i)
+				cmpVal = oldProps.get(i)
 			}
-			if !equalProps(cmpVal, newProps.Get(i)) {
-				patchProperty(node, i, oldProps.Get(i).V, newProps.Get(i).V, listener, isSvg)
+			if !equalProps(cmpVal, newProps.get(i)) {
+				patchProperty(node, i, oldProps.get(i).V, newProps.get(i).V, listener, isSvg)
 			}
 		}
 
@@ -441,7 +465,7 @@ func patch(
 			}
 		} else {
 			keyed := map[string]*VNode{}
-			newKeyed := util.Set[string]{}
+			newKeyed := set[string]{}
 			for i := oldHead; i <= oldTail; i++ {
 				oldKey = oldVKids[i].key()
 				if oldKey.OK {

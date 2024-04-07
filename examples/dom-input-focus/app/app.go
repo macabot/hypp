@@ -48,7 +48,7 @@ func justFocus(_ hypp.Dispatch, payload hypp.Payload) {
 	window.RequestAnimationFrame(func() {
 		window.Document().
 			GetElementById(props.id).
-			Call("focus", map[string]interface{}{
+			Call("focus", map[string]any{
 				"preventScroll": props.preventScroll,
 			})
 	})
