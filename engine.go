@@ -166,7 +166,7 @@ func mergeAndSortHPropsKeys(propsSlice ...HProps) []string {
 	return keys
 }
 
-func stylePairKeys(x, y interface{}) []string {
+func stylePairKeys(x, y any) []string {
 	seen := map[string]struct{}{}
 	var keys []string
 
@@ -189,7 +189,7 @@ func stylePairKeys(x, y interface{}) []string {
 	return keys
 }
 
-func createClass(obj interface{}) string {
+func createClass(obj any) string {
 	var parts []string
 	switch v := obj.(type) {
 	case string:
@@ -209,11 +209,11 @@ func createClass(obj interface{}) string {
 	return strings.Join(parts, " ")
 }
 
-func isFalsy(v interface{}) bool {
+func isFalsy(v any) bool {
 	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
 }
 
-func patchProperty(node window.Element, key string, oldValue, newValue interface{}, listener eventListenerGenerator, isSvg bool) {
+func patchProperty(node window.Element, key string, oldValue, newValue any, listener eventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// no-op
 	} else if key == "style" {
@@ -297,7 +297,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 	return node
 }
 
-func equalProps(a, b option[interface{}]) bool {
+func equalProps(a, b option[any]) bool {
 	if a.OK != b.OK {
 		return false
 	}
@@ -385,7 +385,7 @@ func patch(
 
 		allKeys := mergeAndSortHPropsKeys(oldProps, newProps)
 		for _, i := range allKeys {
-			var cmpVal option[interface{}]
+			var cmpVal option[any]
 			if i == "value" || i == "selected" || i == "checked" {
 				cmpVal = elementGet(node, i)
 			} else {

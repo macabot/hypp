@@ -60,7 +60,7 @@ func title(text string) *hypp.VNode {
 	return html.H1(nil, hypp.Text(text))
 }
 
-func titlef(format string, args ...interface{}) *hypp.VNode {
+func titlef(format string, args ...any) *hypp.VNode {
 	return html.H1(nil, hypp.Textf(format, args...))
 }
 

@@ -7,7 +7,7 @@ import "github.com/macabot/hypp/js"
 func RequestAnimationFrame(f func()) int {
 	return js.Global().Call(
 		"requestAnimationFrame",
-		js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		js.FuncOf(func(this js.Value, args []js.Value) any {
 			f()
 			return nil
 		}),

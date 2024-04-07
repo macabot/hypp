@@ -66,7 +66,7 @@ func App[S State](props AppProps[S]) Dispatch {
 //	| "class"           | bool, int, float64, string, []string, map[string]bool |
 //	| "style"           | map[string]string                                     |
 //	| Other             | bool, int, float64, string                            |
-type HProps map[string]interface{}
+type HProps map[string]any
 
 // key returns the "key" property, if available.
 // The value is always converted into a string.
@@ -87,12 +87,12 @@ func (h HProps) clone() HProps {
 }
 
 // get returns the requested key, if available.
-func (h HProps) get(key string) option[interface{}] {
+func (h HProps) get(key string) option[any] {
 	if h == nil {
-		return option[interface{}]{}
+		return option[any]{}
 	}
 	v, ok := h[key]
-	return option[interface{}]{V: v, OK: ok}
+	return option[any]{V: v, OK: ok}
 }
 
 // Has returns true if the requested key is found.
@@ -106,7 +106,7 @@ func (h HProps) Has(key string) bool {
 
 // Set sets the given key value pair.
 // It is safe to call this method on a nil value.
-func (h *HProps) Set(key string, value interface{}) {
+func (h *HProps) Set(key string, value any) {
 	if *h == nil {
 		*h = HProps{}
 	}
@@ -148,12 +148,12 @@ func Text(value string) *VNode {
 }
 
 // Textf creates a text *VNode by interpolating the format with the arguments.
-func Textf(format string, a ...interface{}) *VNode {
+func Textf(format string, a ...any) *VNode {
 	return Text(fmt.Sprintf(format, a...))
 }
 
 // Payload is the value that is dispatched.
-type Payload interface{}
+type Payload any
 
 // Action is a function that is Dispatchable.
 // When called it returns a Dispatchable that will change the state.
