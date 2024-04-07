@@ -266,7 +266,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 	} else {
 		isSvg = isSvg || vdom.tag == "svg"
 		var options *window.ElementCreationOptions
-		if props.Has("is") {
+		if props.has("is") {
 			options = &window.ElementCreationOptions{
 				Is: fmt.Sprint(props.get("is").V),
 			}
