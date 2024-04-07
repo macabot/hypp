@@ -72,7 +72,7 @@ type HProps map[string]interface{}
 // key returns the "key" property, if available.
 // The value is always converted into a string.
 func (h HProps) key() util.Option[string] {
-	if key := h.Get("key"); key.OK {
+	if key := h.get("key"); key.OK {
 		return util.Option[string]{V: fmt.Sprint(key.V), OK: true}
 	}
 	return util.Option[string]{}
@@ -87,8 +87,8 @@ func (h HProps) clone() HProps {
 	return clone
 }
 
-// Get returns the requested key, if available.
-func (h HProps) Get(key string) util.Option[interface{}] {
+// get returns the requested key, if available.
+func (h HProps) get(key string) util.Option[interface{}] {
 	if h == nil {
 		return util.Option[interface{}]{}
 	}

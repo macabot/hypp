@@ -51,7 +51,7 @@ func MustValidateHProps(props HProps) {
 func h(tag string, props HProps, children vKids) *VNode {
 	MustValidateHProps(props)
 	props = props.clone()
-	if classOption := props.Get("class"); classOption.OK {
+	if classOption := props.get("class"); classOption.OK {
 		props.Set("class", createClass(classOption.V))
 	}
 	return &VNode{
@@ -268,7 +268,7 @@ func createNode(vdom *VNode, listener eventListenerGenerator, isSvg bool) window
 		var options *window.ElementCreationOptions
 		if props.Has("is") {
 			options = &window.ElementCreationOptions{
-				Is: fmt.Sprint(props.Get("is").V),
+				Is: fmt.Sprint(props.get("is").V),
 			}
 		}
 		if isSvg {
@@ -382,10 +382,10 @@ func patch(
 			if i == "value" || i == "selected" || i == "checked" {
 				cmpVal = node.Get(i)
 			} else {
-				cmpVal = oldProps.Get(i)
+				cmpVal = oldProps.get(i)
 			}
-			if !equalProps(cmpVal, newProps.Get(i)) {
-				patchProperty(node, i, oldProps.Get(i).V, newProps.Get(i).V, listener, isSvg)
+			if !equalProps(cmpVal, newProps.get(i)) {
+				patchProperty(node, i, oldProps.get(i).V, newProps.get(i).V, listener, isSvg)
 			}
 		}
 
