@@ -58,7 +58,7 @@ func h(tag string, props HProps, children vKids) *VNode {
 		tag:      tag,
 		props:    props,
 		children: children,
-		kind:     SSRNode,
+		kind:     ElementNode,
 	}
 }
 
@@ -82,7 +82,7 @@ func dispatchWrapperID(dispatch Dispatch) Dispatch {
 }
 
 func recycleNode(node window.Element) *VNode {
-	if node.NodeType() == TextNode {
+	if node.NodeType() == int(TextNode) {
 		return text(node.NodeValue(), node)
 	} else {
 		childNodes := node.ChildNodes()
@@ -93,7 +93,7 @@ func recycleNode(node window.Element) *VNode {
 		return &VNode{
 			tag:      strings.ToLower(node.NodeName()),
 			children: children,
-			kind:     SSRNode,
+			kind:     ElementNode,
 			node:     node,
 		}
 	}
@@ -487,7 +487,7 @@ func patch(
 					continue
 				}
 
-				if !newKey.OK || oldVNode.kind == SSRNode {
+				if !newKey.OK || oldVNode.kind == ElementNode {
 					if !oldKey.OK {
 						var oldVKidNode window.Element
 						if oldVKid != nil {

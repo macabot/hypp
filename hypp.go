@@ -249,10 +249,19 @@ type Subscription struct {
 
 type Unsubscribe func()
 
-// VNode kinds.
+// VNodeKind indicates the type of [VNode].
+type VNodeKind int
+
+// Each constant corresponds to an element's [nodeType].
+// Use [H] to create an ElementNode VNode.
+// Use [Text] or [Textf] to create a TextNode VNode.
+//
+// [nodeType]: https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 const (
-	SSRNode  = 1
-	TextNode = 3
+	// ElementNode indicates a VNode that renders an element node.
+	ElementNode VNodeKind = 1
+	// TextNode indicates a VNode that renders text inside an element node.
+	TextNode VNodeKind = 3
 )
 
 type VNode struct {
@@ -262,7 +271,7 @@ type VNode struct {
 	tag      string
 	memoView func(data MemoData) *VNode
 	memoData MemoData
-	kind     int
+	kind     VNodeKind
 }
 
 // Props returns the VNode's properties.
@@ -280,9 +289,8 @@ func (n VNode) Tag() string {
 	return n.tag
 }
 
-// Kind returns the VNode's kind.
-// It is either SSRNode or TextNode.
-func (n VNode) Kind() int {
+// Kind returns the VNode's [VNodeKind].
+func (n VNode) Kind() VNodeKind {
 	return n.kind
 }
 

@@ -176,7 +176,7 @@ func vNodeToNode(node *hypp.VNode, parent *html.Node) (*html.Node, error) {
 			Type: html.TextNode,
 			Data: node.Tag(),
 		}, nil
-	case hypp.SSRNode:
+	case hypp.ElementNode:
 		element := &html.Node{
 			Parent: parent,
 			Type:   html.ElementNode,
