@@ -48,7 +48,7 @@ type State interface {
 //	}
 type EmptyState struct{}
 
-// IAmDispatchable makes the EmptyState Dispatchable.
+// IAmDispatchable makes the EmptyState [Dispatchable].
 func (EmptyState) IAmDispatchable() {}
 
 // App creates a new application.
@@ -56,7 +56,7 @@ func App[S State](props AppProps[S]) Dispatch {
 	return app(props)
 }
 
-// HProps are the properties to create a *VNode.
+// HProps are the properties to create a [VNode].
 //
 // The allowed value type depends on the key:
 //
@@ -114,7 +114,7 @@ func (h *HProps) Set(key string, value any) {
 	m[key] = value
 }
 
-// H creates a new *VNode specified by tag.
+// H creates a new [VNode] specified by tag.
 //
 // See the tag package for functions that create specific tags:
 //
@@ -142,12 +142,12 @@ func Memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 	return memo(view, data)
 }
 
-// Text creates a text *VNode.
+// Text creates a text [VNode].
 func Text(value string) *VNode {
 	return text(value, window.Element{})
 }
 
-// Textf creates a text *VNode by interpolating the format with the arguments.
+// Textf creates a text [VNode] by interpolating the format with the arguments.
 func Textf(format string, a ...any) *VNode {
 	return Text(fmt.Sprintf(format, a...))
 }
@@ -155,15 +155,16 @@ func Textf(format string, a ...any) *VNode {
 // Payload is the value that is dispatched.
 type Payload any
 
-// Action is a function that is Dispatchable.
-// When called it returns a Dispatchable that will change the state.
-// The action is called with the current State and a Payload.
-// The type of the Payload depends on the Payload that was sent when dispatching the Action.
-// If the Action was dispatched by a DOM event, then the Payload is an Event.
-// Otherwise, the type is specified when dispatching the Action.
+// Action is a function which describes a transition between the current state and the next state.
+// It must not perform any side-effects, but it may return side-effects using [StateAndEffects].
+//
+// An action is dispatched by either a DOM event, the effecter of an [Effect], or the subscriber of a [Subscription].
+// When dispatched, an action always receives the current [State] as its first argument and an optional [Payload] as its second argument.
+// An action that is dispatched by a DOM event will receive a [window.Event] as payload.
+// An action that is dispatched by an [ActionAndPayload] will receive the 'Payload' field as payload.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
-// IAmDispatchable makes Action Dispatchable.
+// IAmDispatchable makes Action [Dispatchable].
 func (_ Action[S]) IAmDispatchable() {}
 
 type Subscriptions[S State] func(state S) []Subscription
@@ -211,12 +212,12 @@ func (a *AppProps[S]) init() {
 type Dispatch func(dispatchable Dispatchable, payload Payload)
 
 // Dispatchable is implemented by types that, when dispatched, change the state.
-// There are four Dispatchable types:
-//   - Types that implement the State constraint.
-//     For example, types that embed the EmptyState.
-//   - StateAndEffects
-//   - Action
-//   - ActionAndPayload
+// There are four dispatchable types:
+//   - Types that implement the [State] constraint.
+//     For example, types that embed the [EmptyState].
+//   - [StateAndEffects]
+//   - [Action]
+//   - [ActionAndPayload]
 type Dispatchable interface {
 	IAmDispatchable()
 }
@@ -226,13 +227,17 @@ type StateAndEffects[S State] struct {
 	Effects []Effect
 }
 
+// IAmDispatchable makes StateAndEffects [Dispatchable].
 func (_ StateAndEffects[S]) IAmDispatchable() {}
 
+// ActionAndPayload contains an [Action] and [Payload].
+// When the action is dispatched, it receives the current state as its first argument and the payload as its second argument.
 type ActionAndPayload[S State] struct {
 	Action  Action[S]
 	Payload Payload
 }
 
+// IAmDispatchable makes ActionAndPayload [Dispatchable].
 func (_ ActionAndPayload[S]) IAmDispatchable() {}
 
 type Effect struct {
