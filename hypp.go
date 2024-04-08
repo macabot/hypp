@@ -52,6 +52,9 @@ type EmptyState struct{}
 func (EmptyState) IAmDispatchable() {}
 
 // App creates a new application.
+//
+// It panics if the [js.GetDriver] returns nil.
+// It also panics if [AppProps.Validate] returns an error for the given props.
 func App[S State](props AppProps[S]) Dispatch {
 	return app(props)
 }
@@ -169,12 +172,20 @@ func (_ Action[S]) IAmDispatchable() {}
 
 type Subscriptions[S State] func(state S) []Subscription
 
+// AppProps is passed as an argument when creating an [App].
 type AppProps[S State] struct {
-	Init            Dispatchable
-	Subscriptions   Subscriptions[S]
+	// Init is the dispatchable that initializes the app.
+	// If Init is nil, it is replaced with the EmptyState.
+	Init Dispatchable
+	// Optional slice of subscriptions.
+	Subscriptions Subscriptions[S]
+	// Optional function that wraps the Dispatch function.
 	DispatchWrapper func(dispatch Dispatch) Dispatch
-	View            func(state S) *VNode
-	Node            window.Element
+	// View renders the app given the state.
+	// It cannot be nil.
+	View func(state S) *VNode
+	// Node must have a parentNode that is not null.
+	Node window.Element
 
 	vdom     *VNode
 	dispatch Dispatch
@@ -184,15 +195,24 @@ type AppProps[S State] struct {
 	state    S
 }
 
+// Validate returns an error if one of the following is true:
+//   - View is nil.
+//   - Node is falsy.
+//   - Node has a null parentNode.
 func (a AppProps[S]) Validate() error {
-	if js.GetDriver() == nil {
-		return errors.New("hypp: Driver in hypp/js cannot be nil")
-	} else if a.View == nil {
+	if a.View == nil {
 		return errors.New("hypp: AppProps.View cannot be nil")
 	} else if !a.Node.Truthy() {
 		return errors.New("hypp: AppProps.Node cannot be falsy")
 	} else if a.Node.ParentNode().IsNull() {
 		return errors.New("hypp: AppProps.Node must have a parent node")
+	}
+	return nil
+}
+
+func validateDriver() error {
+	if js.GetDriver() == nil {
+		return errors.New("hypp: Driver in hypp/js cannot be nil")
 	}
 	return nil
 }
@@ -203,6 +223,9 @@ func (a *AppProps[S]) init() {
 	}
 	if a.Init == nil {
 		a.Init = EmptyState{}
+	}
+	if err := validateDriver(); err != nil {
+		panic(err)
 	}
 	if err := a.Validate(); err != nil {
 		panic(err)
