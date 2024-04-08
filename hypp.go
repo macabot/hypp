@@ -232,6 +232,7 @@ func (a *AppProps[S]) init() {
 	}
 }
 
+// Dispatch is a function that controls Hypp's core dispatching process which executes actions, applies state transitions, runs effects, and starts/stops subscriptions that need it.
 type Dispatch func(dispatchable Dispatchable, payload Payload)
 
 // Dispatchable is implemented by types that, when dispatched, change the state.
