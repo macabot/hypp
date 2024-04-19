@@ -264,7 +264,13 @@ type ActionAndPayload[S State] struct {
 // IAmDispatchable makes ActionAndPayload [Dispatchable].
 func (_ ActionAndPayload[S]) IAmDispatchable() {}
 
+// Effect is used to deal with impure asynchronous interactions with the outside world in a safe, pure, and immutable way.
+// Creating an HTTP request, giving focus to a DOM element, saving data to local storage, sending data over a WebSocket, and so on, are all examples of effects at a conceptual level.
+//
+// An [Action] can associate its state transition with a list of one or more effects to run alongside the transition.
+// It does this by returning a [StateAndEffects].
 type Effect struct {
+	// Effecter is the function that actually carries out an effect.
 	Effecter func(dispatch Dispatch, payload Payload)
 	Payload  Payload
 }
