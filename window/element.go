@@ -87,16 +87,6 @@ func (e Element) RemoveChild(child Element) {
 	e.Value.Call("removeChild", child.Value)
 }
 
-func (e Element) In(name string) bool {
-	getPrototypeOf := js.Global().Get("Object").Get("getPrototypeOf")
-	for v := e.Value; !v.IsNull(); v = getPrototypeOf.Invoke(v) {
-		if v.Call("hasOwnProperty", name).Bool() {
-			return true
-		}
-	}
-	return false
-}
-
 func validateValue(value any) {
 	switch value.(type) {
 	case nil, bool, int, float64, string:

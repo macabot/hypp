@@ -217,6 +217,18 @@ func isFalsy(v any) bool {
 	return v == false || v == 0 || v == 0.0 || v == "" || v == nil
 }
 
+// propertyInObject returns true if the specified property is in the specified object or its prototype chain.
+// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/in
+func propertyInObject(property string, object js.Value) bool {
+	getPrototypeOf := js.Global().Get("Object").Get("getPrototypeOf")
+	for v := object; !v.IsNull(); v = getPrototypeOf.Invoke(v) {
+		if v.Call("hasOwnProperty", property).Bool() {
+			return true
+		}
+	}
+	return false
+}
+
 func patchProperty(node window.Element, key string, oldValue, newValue any, listener eventListenerGenerator, isSvg bool) {
 	if key == "key" {
 		// no-op
@@ -247,7 +259,7 @@ func patchProperty(node window.Element, key string, oldValue, newValue any, list
 				node.SetEventListenerID(key, id)
 			}
 		}
-	} else if !isSvg && key != "list" && key != "form" && node.In(key) {
+	} else if !isSvg && key != "list" && key != "form" && propertyInObject(key, node.Value) {
 		if isFalsy(newValue) {
 			node.Set(key, "")
 		} else {
@@ -321,7 +333,7 @@ func equalProps(a, b option[any]) bool {
 }
 
 func elementGet(e window.Element, name string) option[any] {
-	if !e.In(name) {
+	if !propertyInObject(name, e.Value) {
 		return option[any]{}
 	}
 	v := e.Value.Get(name)
