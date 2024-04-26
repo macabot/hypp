@@ -17,6 +17,19 @@ Note that Hypp is NOT published under the MIT License.
 
 ## Development
 
+### Setup
+
+Run the following to configure the git hooks.
+This ensures everyone is using the same git hooks:
+
+```shell
+git config core.hooksPath ./hooks
+```
+
+The pre-commit hook will run the tests if a Go file is changed.
+
+### Package dependency graph
+
 Below you'll find the package dependency graph.
 Red nodes directly or indirectly import `syscall/js`.
 
