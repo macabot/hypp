@@ -129,9 +129,9 @@ func (h *HProps) Set(key string, value any) {
 //	)
 //
 //	func main() {
-//		hypp.H("main", hypp.HProps{"class": "main"})
+//		hypp.H("main", hypp.HProps{"class": "example"})
 //		// Is equivalent to
-//		html.Main(hypp.HProps{"class": "main"})
+//		html.Main(hypp.HProps{"class": "example"})
 //	}
 func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
