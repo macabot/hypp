@@ -3,7 +3,7 @@
 ## Tests
 
 ```shell
-go test . ./examples/.../app ./examples/.../html ./tag/...
+go test $(go list ./... 2>/dev/null | grep -vE 'cmd|jsd')
 ```
 
 ## License
