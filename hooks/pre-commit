@@ -13,7 +13,7 @@ if git diff --cached --name-only | grep -qE '\.go$|^go\.(mod|sum)$'; then
 
 	(
 		cd "$tmp_dir"
-		readarray -t packages < <(GOOS=js GOARCH=wasm go list ./... | grep -vE 'cmd|jsd')
+		readarray -t packages < <(GOOS=js GOARCH=wasm go list ./... | grep -vE 'cmd/js|jsd')
 		go test "${packages[@]}"
 	)
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/macabot/hypp/examples/gif-search/app"
-	_ "github.com/macabot/hypp/js"
+	_ "github.com/macabot/hypp/jsd"
 	"github.com/macabot/hypp/window"
 )
 
