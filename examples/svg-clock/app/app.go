@@ -14,7 +14,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	time time.Time
 }
 
@@ -77,7 +76,7 @@ func Run(node window.Element) {
 		Init: hypp.StateAndEffects[*State]{
 			State: &State{},
 			Effects: []hypp.Effect{
-				now(hypp.Action[*State](tick)),
+				now(tick),
 			},
 		},
 		View: func(state *State) *hypp.VNode {
@@ -106,7 +105,7 @@ func Run(node window.Element) {
 		},
 		Subscriptions: func(state *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				every(time.Second, hypp.Action[*State](tick)),
+				every(time.Second, tick),
 			}
 		},
 		Node: node,

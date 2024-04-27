@@ -14,42 +14,10 @@ import (
 )
 
 // State constrains the state that is used in the hypp application.
-// It must be comparable and [Dispatchable].
-//
-// Most often you will embed the [EmptyState]:
-//
-//	package example
-//
-//	type State struct {
-//		hypp.EmptyState
-//	}
-//
-// Alternatively, you can explicitly make your state Dispatchable:
-//
-//	package example
-//
-//	type State string
-//
-//	func(_ State) IAmDispatchable() {}
+// It must be comparable.
 type State interface {
 	comparable
-	Dispatchable
 }
-
-// EmptyState implements the [State] constraint.
-// Embed the EmptyState in your state to implement the State constraint:
-//
-//	package example
-//
-//	type State struct {
-//		hypp.EmptyState
-//		Foo string
-//		Bar int
-//	}
-type EmptyState struct{}
-
-// IAmDispatchable makes the EmptyState [Dispatchable].
-func (EmptyState) IAmDispatchable() {}
 
 // App creates a new application.
 //
@@ -167,15 +135,11 @@ type Payload any
 // An action that is dispatched by an [ActionAndPayload] will receive the 'Payload' field as payload.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
-// IAmDispatchable makes Action [Dispatchable].
-func (_ Action[S]) IAmDispatchable() {}
-
 type Subscriptions[S State] func(state S) []Subscription
 
 // AppProps is passed as an argument when creating an [App].
 type AppProps[S State] struct {
 	// Init is the dispatchable that initializes the app.
-	// If Init is nil, it is replaced with the EmptyState.
 	Init Dispatchable
 	// Optional slice of subscriptions.
 	Subscriptions Subscriptions[S]
@@ -221,9 +185,6 @@ func (a *AppProps[S]) init() {
 	if a.DispatchWrapper == nil {
 		a.DispatchWrapper = dispatchWrapperID
 	}
-	if a.Init == nil {
-		a.Init = EmptyState{}
-	}
 	if err := validateDriver(); err != nil {
 		panic(err)
 	}
@@ -238,21 +199,15 @@ type Dispatch func(dispatchable Dispatchable, payload Payload)
 // Dispatchable is implemented by types that, when dispatched, change the state.
 // There are four dispatchable types:
 //   - Types that implement the [State] constraint.
-//     For example, types that embed the [EmptyState].
 //   - [StateAndEffects]
-//   - [Action]
+//   - [Action] or 'func(state S, payload Payload) Dispatchable'
 //   - [ActionAndPayload]
-type Dispatchable interface {
-	IAmDispatchable()
-}
+type Dispatchable any
 
 type StateAndEffects[S State] struct {
 	State   S
 	Effects []Effect
 }
-
-// IAmDispatchable makes StateAndEffects [Dispatchable].
-func (_ StateAndEffects[S]) IAmDispatchable() {}
 
 // ActionAndPayload contains an [Action] and [Payload].
 // When the action is dispatched, it receives the current state as its first argument and the payload as its second argument.
@@ -260,9 +215,6 @@ type ActionAndPayload[S State] struct {
 	Action  Action[S]
 	Payload Payload
 }
-
-// IAmDispatchable makes ActionAndPayload [Dispatchable].
-func (_ ActionAndPayload[S]) IAmDispatchable() {}
 
 // Effect is used to deal with impure asynchronous interactions with the outside world in a safe, pure, and immutable way.
 // Creating an HTTP request, giving focus to a DOM element, saving data to local storage, sending data over a WebSocket, and so on, are all examples of effects at a conceptual level.

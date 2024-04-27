@@ -17,7 +17,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	isFetching bool
 	query      string
 	err        error
@@ -77,10 +76,13 @@ func getJSON(url string, props requestProps) hypp.Effect {
 	}
 }
 
-func input[S hypp.State](oninput func(value string) hypp.ActionAndPayload[S], props hypp.HProps) *hypp.VNode {
-	props.Set("oninput", hypp.Action[*State](func(_ *State, payload hypp.Payload) hypp.Dispatchable {
+func input[S hypp.State](
+	oninput func(value string) hypp.Dispatchable,
+	props hypp.HProps,
+) *hypp.VNode {
+	props.Set("oninput", func(_ S, payload hypp.Payload) hypp.Dispatchable {
 		return oninput(payload.(window.Event).Target().Value())
-	}))
+	})
 	return html.Input(props)
 }
 
@@ -175,7 +177,7 @@ func Run(node window.Element) {
 			return html.Main(
 				nil,
 				title("GIF Search 💬💁‍♂️"),
-				input(func(value string) hypp.ActionAndPayload[*State] {
+				input[*State](func(value string) hypp.Dispatchable {
 					return hypp.ActionAndPayload[*State]{
 						Action:  getURL,
 						Payload: strings.TrimSpace(value),

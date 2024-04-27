@@ -11,7 +11,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	x          int
 	y          int
 	isTracking bool
@@ -107,11 +106,11 @@ func Run(node window.Element) {
 			)
 		},
 		Subscriptions: func(state *State) []hypp.Subscription {
-			move := onMouseMove(hypp.Action[*State](move))
+			move := onMouseMove(move)
 			move.Disabled = !state.isTracking
 			return []hypp.Subscription{
 				move,
-				onClick(hypp.Action[*State](toggle)),
+				onClick(toggle),
 			}
 		},
 		Node: node,
