@@ -3,7 +3,7 @@
 ## Tests
 
 ```shell
-go test $(go list ./... 2>/dev/null | grep -vE 'cmd|jsd')
+go test $(GOOS=js GOARCH=wasm go list ./... | grep -vE 'cmd|jsd')
 ```
 
 ## License
