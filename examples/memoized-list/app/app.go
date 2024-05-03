@@ -21,7 +21,6 @@ func (l List) Hash() string {
 }
 
 type State struct {
-	hypp.EmptyState
 	List    List
 	Counter int
 }
@@ -71,11 +70,11 @@ func View(state *State) *hypp.VNode {
 	return html.Main(
 		nil,
 		html.Button(
-			hypp.HProps{"onclick": hypp.Action[*State](moreItems)},
+			hypp.HProps{"onclick": moreItems},
 			hypp.Text("Grow list"),
 		),
 		html.Button(
-			hypp.HProps{"onclick": hypp.Action[*State](increment)},
+			hypp.HProps{"onclick": increment},
 			hypp.Text("+1 to counter"),
 		),
 		html.P(nil, hypp.Textf("Counter: %d", state.Counter)),

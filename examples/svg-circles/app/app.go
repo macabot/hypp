@@ -24,7 +24,7 @@ func use(href string, props hypp.HProps) *hypp.VNode {
 	return svg.Use(props)
 }
 
-func View(_ *hypp.EmptyState) *hypp.VNode {
+func View(_ *struct{}) *hypp.VNode {
 	return main(
 		html.Svg(
 			hypp.HProps{"viewBox": "0 0 30 10"},
@@ -47,8 +47,8 @@ func View(_ *hypp.EmptyState) *hypp.VNode {
 }
 
 func Run(node window.Element) {
-	hypp.App(hypp.AppProps[*hypp.EmptyState]{
-		Init: &hypp.EmptyState{},
+	hypp.App(hypp.AppProps[*struct{}]{
+		Init: &struct{}{},
 		View: View,
 		Node: node,
 	})

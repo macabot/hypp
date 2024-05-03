@@ -11,7 +11,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	content string
 	count   int
 }
@@ -52,7 +51,7 @@ func Run(node window.Element) {
 	hypp.App(hypp.AppProps[*State]{
 		Init: &State{count: maxLength},
 		View: func(state *State) *hypp.VNode {
-			var oninput hypp.Action[*State] = func(_ *State, payload hypp.Payload) hypp.Dispatchable {
+			oninput := func(_ *State, payload hypp.Payload) hypp.Dispatchable {
 				event := payload.(window.Event)
 				content := event.Target().Value()
 				return hypp.ActionAndPayload[*State]{

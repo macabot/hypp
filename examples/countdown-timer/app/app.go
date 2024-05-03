@@ -16,7 +16,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	Count  time.Duration
 	Paused bool
 }
@@ -61,7 +60,7 @@ func titlef(format string, args ...any) *hypp.VNode {
 	return html.H1(nil, hypp.Textf(format, args...))
 }
 
-func button(onclick hypp.Action[*State], text string) *hypp.VNode {
+func button(onclick hypp.Dispatchable, text string) *hypp.VNode {
 	return html.Button(hypp.HProps{"onclick": onclick}, hypp.Text(text))
 }
 
@@ -117,7 +116,7 @@ func Run(node window.Element) {
 		View: View,
 		Subscriptions: func(state *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				every(time.Second, hypp.Action[*State](tick)),
+				every(time.Second, tick),
 			}
 		},
 		Node: node,

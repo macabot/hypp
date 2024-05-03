@@ -12,7 +12,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	dragging bool
 	offsetX  int
 	offsetY  int
@@ -104,7 +103,7 @@ func Run(node window.Element) {
 			return html.Main(
 				nil,
 				draggable(draggableContent, hypp.HProps{
-					"onmousedown": hypp.Action[*State](drag),
+					"onmousedown": drag,
 					"style": map[string]string{
 						"cursor":     "move",
 						"left":       fmt.Sprintf("%dpx", state.x-state.offsetX),
@@ -118,8 +117,8 @@ func Run(node window.Element) {
 		},
 		Subscriptions: func(_ *State) []hypp.Subscription {
 			return []hypp.Subscription{
-				onMouseUp(hypp.Action[*State](drop)),
-				onMouseMove(hypp.Action[*State](move)),
+				onMouseUp(drop),
+				onMouseMove(move),
 			}
 		},
 		Node: node,

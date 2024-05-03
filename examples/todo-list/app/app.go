@@ -12,7 +12,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	todos []TodoItem
 	value string
 }

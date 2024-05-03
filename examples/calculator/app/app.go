@@ -13,7 +13,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	fn       string
 	carry    float64
 	value    float64
@@ -111,11 +110,11 @@ func digitsView(digits []float64) []*hypp.VNode {
 }
 
 func acView() *hypp.VNode {
-	return html.Button(hypp.HProps{"onclick": hypp.Action[*State](clear)}, hypp.Text("AC"))
+	return html.Button(hypp.HProps{"onclick": clear}, hypp.Text("AC"))
 }
 
 func eqView() *hypp.VNode {
-	return html.Button(hypp.HProps{"onclick": hypp.Action[*State](equal), "class": "equal"}, hypp.Text("="))
+	return html.Button(hypp.HProps{"onclick": equal, "class": "equal"}, hypp.Text("="))
 }
 
 func View(state *State) *hypp.VNode {

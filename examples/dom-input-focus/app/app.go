@@ -14,7 +14,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	count int
 }
 
@@ -106,7 +105,7 @@ func Run(node window.Element) {
 			children = append(
 				children,
 				separator(),
-				button(hypp.Action[*State](addAndFocus), "Add new"),
+				button(addAndFocus, "Add new"),
 			)
 			return main(children...)
 		},

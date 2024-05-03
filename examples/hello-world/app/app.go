@@ -9,7 +9,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	message string
 }
 

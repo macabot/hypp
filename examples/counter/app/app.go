@@ -11,7 +11,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	count int
 }
 
@@ -36,11 +35,11 @@ func View(state *State) *hypp.VNode {
 		nil,
 		html.H1(nil, hypp.Textf("%d", state.count)),
 		html.Button(
-			hypp.HProps{"onclick": hypp.Action[*State](subtract)},
+			hypp.HProps{"onclick": subtract},
 			hypp.Text("ー"),
 		),
 		html.Button(
-			hypp.HProps{"onclick": hypp.Action[*State](add)},
+			hypp.HProps{"onclick": add},
 			hypp.Text("＋"),
 		),
 	)

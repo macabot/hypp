@@ -9,7 +9,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	lists [][3]int
 	index int
 }
@@ -27,7 +26,7 @@ func incrementIndex(state *State, payload hypp.Payload) hypp.Dispatchable {
 func button() *hypp.VNode {
 	return html.Button(
 		hypp.HProps{
-			"onclick": hypp.Action[*State](incrementIndex),
+			"onclick": incrementIndex,
 		},
 		hypp.Text("Next"),
 	)

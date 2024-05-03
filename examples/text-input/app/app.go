@@ -12,7 +12,6 @@ import (
 )
 
 type State struct {
-	hypp.EmptyState
 	message string
 }
 
@@ -26,7 +25,7 @@ func withPayload[S hypp.State](filter func(payload hypp.Payload) hypp.Dispatchab
 	}
 }
 
-func input[S hypp.State](oninput hypp.Action[S], props hypp.HProps) *hypp.VNode {
+func input(oninput hypp.Dispatchable, props hypp.HProps) *hypp.VNode {
 	props.Set("oninput", oninput)
 	return html.Input(props)
 }
