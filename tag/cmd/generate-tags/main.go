@@ -20,12 +20,6 @@ var funcTemplate = `func %s(props hypp.HProps, children ...*hypp.VNode) *hypp.VN
 }
 `
 
-func panicIf(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
 	packageName := os.Args[1]
 	funcs := make([]string, len(os.Args)-2)
