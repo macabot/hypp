@@ -6,7 +6,6 @@ package app
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,7 +18,7 @@ import (
 type State struct {
 	isFetching bool
 	query      string
-	err        error
+	errMsg     string
 	url        string
 }
 
@@ -105,7 +104,7 @@ func downloadGif(query string) hypp.Effect {
 			onErr: func(err error) hypp.Dispatchable {
 				return hypp.ActionAndPayload[*State]{
 					Action:  gotError,
-					Payload: err,
+					Payload: err.Error(),
 				}
 			},
 			onOK: func(body giphyBody) hypp.Dispatchable {
@@ -122,16 +121,14 @@ func downloadGif(query string) hypp.Effect {
 	)
 }
 
-var errUnexpected = errors.New("Unexpected error, try again later?")
-
 func gotError(state *State, payload hypp.Payload) hypp.Dispatchable {
-	err := payload.(error)
+	errMsg := payload.(string)
 	state = state.clone()
 	state.isFetching = false
-	if err != nil {
-		state.err = err
+	if errMsg != "" {
+		state.errMsg = errMsg
 	} else {
-		state.err = errUnexpected
+		state.errMsg = "Unexpected error, try again later?"
 	}
 	state.url = ""
 	return state
@@ -154,7 +151,7 @@ func getURL(state *State, payload hypp.Payload) hypp.Dispatchable {
 	state = state.clone()
 	state.isFetching = true
 	state.query = query
-	state.err = nil
+	state.errMsg = ""
 	state.url = ""
 	return hypp.StateAndEffects[*State]{
 		State: state,
@@ -169,8 +166,8 @@ func Run(node window.Element) {
 		Init: &State{},
 		View: func(state *State) *hypp.VNode {
 			var content *hypp.VNode
-			if state.err != nil {
-				content = p(state.err.Error())
+			if state.errMsg != "" {
+				content = p(state.errMsg)
 			} else {
 				content = img(state.url)
 			}
