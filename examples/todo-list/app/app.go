@@ -21,9 +21,7 @@ func (m State) clone() *State {
 }
 
 type TodoItem struct {
-	isEditing bool
-	lastValue string
-	value     string
+	value string
 }
 
 func preventDefault[S hypp.State](action hypp.Action[S]) hypp.Action[S] {
