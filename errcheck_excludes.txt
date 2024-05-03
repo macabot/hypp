@@ -1,0 +1,2 @@
+// Ignore the error of 'res.Body.Close()'.
+(io.ReadCloser).Close

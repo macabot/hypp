@@ -17,6 +17,10 @@ Note that Hypp is NOT published under the MIT License.
 
 ## Development
 
+Dependencies:
+
+- [errcheck](https://github.com/kisielk/errcheck)
+
 ### Setup
 
 Run the following to configure the git hooks.

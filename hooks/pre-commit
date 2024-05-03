@@ -2,17 +2,20 @@
 
 set -e
 
-# When committing a Go file, run the tests.
+# When committing a Go file or a hook, run the tests.
 # Tests are run in a temporary directory containing only the stages changes.
 # See http://newartisans.com/2009/02/building-a-better-pre-commit-hook-for-git/
-if git diff --cached --name-only | grep -qE '\.go$|^go\.(mod|sum)$'; then
+if git diff --cached --name-only | grep -qE '\.go$|^go\.(mod|sum)$|\bhooks/'; then
 	tmp_dir=$(mktemp --directory)
-	echo "tmp_dir: ${tmp_dir}" >&2
+	echo "tmp dir: ${tmp_dir}" >&2
 
 	git checkout-index --prefix="${tmp_dir}/" -af
 
 	(
 		cd "$tmp_dir"
+
+		GOOS=js GOARCH=wasm errcheck -exclude errcheck_excludes.txt ./...
+
 		readarray -t packages < <(GOOS=js GOARCH=wasm go list ./... | grep -vE 'cmd/js|jsd')
 		go test "${packages[@]}"
 	)

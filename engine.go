@@ -107,7 +107,7 @@ func recycleNode(node window.Element) *VNode {
 // If a and b are not comparable it always returns false.
 func shouldRestart(a, b Payload) bool {
 	defer func() {
-		recover()
+		_ = recover()
 	}()
 	return a != b
 }
