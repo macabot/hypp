@@ -1,0 +1,8 @@
+dir: 'mocks/{{replaceAll .PackagePath "github.com/macabot/" ""}}'
+with-expecter: true
+packages:
+    github.com/macabot/hypp/js:
+        interfaces:
+            Driver:
+            FuncDriver:
+            ValueDriver:
