@@ -50,11 +50,6 @@ func onClick(dispatchable hypp.Dispatchable) hypp.Subscription {
 	}
 }
 
-func draggable(content string, props hypp.HProps) *hypp.VNode {
-	props.Set("class", "draggable")
-	return html.Span(props, hypp.Text(content))
-}
-
 func title(text string) *hypp.VNode {
 	return html.H1(nil, hypp.Text(text))
 }

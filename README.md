@@ -20,6 +20,7 @@ Note that Hypp is NOT published under the MIT License.
 Dependencies:
 
 - [errcheck](https://github.com/kisielk/errcheck)
+- [staticcheck](https://staticcheck.dev/)
 
 ### Setup
 

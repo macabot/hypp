@@ -35,10 +35,8 @@ func interval(dispatch hypp.Dispatch, payload hypp.Payload) hypp.Unsubscribe {
 	ticker := time.NewTicker(props.delay)
 	go func() {
 		for {
-			select {
-			case t := <-ticker.C:
-				dispatch(props.dispatchable, t)
-			}
+			t := <-ticker.C
+			dispatch(props.dispatchable, t)
 		}
 	}()
 	return func() {
