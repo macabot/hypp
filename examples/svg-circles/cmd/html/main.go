@@ -8,5 +8,5 @@ import (
 )
 
 func main() {
-	fmt.Println(tag.RenderToString(app.View(&struct{}{})))
+	fmt.Println(tag.RenderToString(app.View(struct{}{})))
 }

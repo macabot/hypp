@@ -151,12 +151,13 @@ type AppProps[S State] struct {
 	// Node must have a parentNode that is not null.
 	Node window.Element
 
-	vdom     *VNode
-	dispatch Dispatch
-	subs     []Subscription
-	render   func()
-	busy     bool
-	state    S
+	vdom               *VNode
+	dispatch           Dispatch
+	subs               []Subscription
+	render             func()
+	busy               bool
+	state              S
+	hasRequestedRender bool
 }
 
 // Validate returns an error if one of the following is true:
