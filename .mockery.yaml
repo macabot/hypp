@@ -1,4 +1,4 @@
-dir: 'mocks/{{replaceAll .PackagePath "github.com/macabot/" ""}}'
+dir: 'internal/mocks/{{replaceAll .PackagePath "github.com/macabot/" ""}}'
 with-expecter: true
 packages:
     github.com/macabot/hypp/js:
