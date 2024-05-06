@@ -15,22 +15,27 @@ import (
 //
 // E.g. this allows the state to be an empty struct.
 // The default value of 'struct{}' is 'struct{}{}'. Since it has no fields, it will never change. Nevertheless, we should expect the render function to be called at least once.
-func TestUpdateWillRenderIfNeverRenderedBefore(t *testing.T) {
-	mockDriver := mocks.NewMockDriver(t)
-	js.Register(mockDriver)
+func TestUpdateWillRenderAtLeastOnce(t *testing.T) {
+	driver := mocks.NewMockDriver(t)
+	js.Register(driver)
 
 	global := mocks.NewMockValueDriver(t)
 	globalValue := js.MakeValue(global)
-	mockDriver.EXPECT().Global().Return(globalValue)
-	mockDriver.EXPECT().FuncOf(mock.Anything).Return(js.Func{})
+	driver.EXPECT().Global().Return(globalValue)
+	jsFunc := mocks.NewMockFuncDriver(t)
+	jsFuncValue := mocks.NewMockValueDriver(t)
+	jsFunc.EXPECT().ValueDriver().Return(jsFuncValue)
+	driver.EXPECT().FuncOf(mock.Anything).Return(js.MakeFunc(jsFunc))
 	requestID := mocks.NewMockValueDriver(t)
 	global.EXPECT().Call("requestAnimationFrame", mock.Anything).Return(js.MakeValue(requestID))
 	requestID.EXPECT().Int().Return(1)
 
-	// TODO why is this needed?
-	defaultValue := mocks.NewMockValueDriver(t)
-	mockDriver.EXPECT().DefaultValueDriver().Return(js.MakeValue(defaultValue))
-	defaultValue.EXPECT().String().Return("DEBUG")
+	// The String() method is called due to the testify library.
+	// When comparing the arguments it calls fmt.Sprintf.
+	// See https://github.com/stretchr/testify/blob/v1.9.0/mock/mock.go#L939.
+	// Sprintf check if jsFuncValue implements the Stringer interface, which it does, and then calls it.
+	// Therefore we need to mock the call to String() as well.
+	jsFuncValue.EXPECT().String().Return("test func")
 
 	appProps := &AppProps[struct{}]{
 		View:               func(state struct{}) *VNode { return nil },
