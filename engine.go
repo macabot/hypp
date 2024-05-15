@@ -600,7 +600,7 @@ func maybeVNode(newVNode, oldVNode *VNode) *VNode {
 }
 
 func update[S State](appProps *AppProps[S], newState S) {
-	if appProps.state != newState {
+	if !appProps.hasRequestedRender || appProps.state != newState {
 		appProps.state = newState
 		if appProps.Subscriptions != nil {
 			appProps.subs = patchSubs(
@@ -612,6 +612,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 		if appProps.View != nil && !appProps.busy {
 			appProps.busy = true
 			window.RequestAnimationFrame(appProps.render)
+			appProps.hasRequestedRender = true
 		}
 	}
 }
