@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+//go:generate mockery
+
 // When creating AppProps, the state is initialized to its default value.
 // The dispatch function only renders if the state has changed.
 // This test ensures that the render function is called at least once, even if AppProps.Init resolves to the state's default value.
