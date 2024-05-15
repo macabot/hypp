@@ -14,10 +14,14 @@ if git diff --cached --name-only | grep -qE '\.go$|^go\.(mod|sum)$|\bhooks/'; th
 	(
 		cd "$tmp_dir"
 
+		echo "go vet" >&2
 		GOOS=js GOARCH=wasm go vet ./...
+		echo "errcheck" >&2
 		GOOS=js GOARCH=wasm errcheck -exclude errcheck_excludes.txt ./...
+		echo "staticcheck" >&2
 		GOOS=js GOARCH=wasm staticcheck ./...
 
+		echo "go test" >&2
 		readarray -t packages < <(GOOS=js GOARCH=wasm go list ./... | grep -vE 'cmd/js|jsd')
 		go test "${packages[@]}"
 	)
