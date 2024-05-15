@@ -31,9 +31,9 @@ func TestUpdateWillRenderAtLeastOnce(t *testing.T) {
 	requestID.EXPECT().Int().Return(1)
 
 	// The String() method is called due to the testify library.
-	// When comparing the arguments it calls fmt.Sprintf.
+	// When comparing the arguments, it calls fmt.Sprintf.
 	// See https://github.com/stretchr/testify/blob/v1.9.0/mock/mock.go#L939.
-	// Sprintf check if jsFuncValue implements the Stringer interface, which it does, and then calls it.
+	// Sprintf checks if jsFuncValue implements the Stringer interface, which it does, and then calls it.
 	// Therefore we need to mock the call to String() as well.
 	jsFuncValue.EXPECT().String().Return("test func")
 
