@@ -609,7 +609,7 @@ func update[S State](appProps *AppProps[S], newState S) {
 				appProps.dispatch,
 			)
 		}
-		if appProps.View != nil && !appProps.busy {
+		if !appProps.busy {
 			appProps.busy = true
 			window.RequestAnimationFrame(appProps.render)
 			appProps.hasRequestedRender = true
