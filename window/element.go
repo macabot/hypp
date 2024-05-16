@@ -16,6 +16,7 @@ type Element struct {
 // See https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener
 func (e Element) RemoveEventListener(kind string, listenerID EventListenerID) {
 	e.Value.Call("removeEventListener", kind, listenerID.Value)
+	listenerID.Release()
 }
 
 // AddEventListener sets up a function that will be called whenever the specified event is delivered to the [Node].
@@ -26,7 +27,7 @@ func (e Element) AddEventListener(kind string, listener EventListener) EventList
 		return nil
 	})
 	e.Value.Call("addEventListener", kind, f)
-	return EventListenerID{js.ValueOf(f)}
+	return EventListenerID{f}
 }
 
 // ParentNode returns the parent [Node].
@@ -125,24 +126,4 @@ func (e Element) SetStyleProperty(propertyName, value string) {
 
 func (e Element) SetStyle(name, value string) {
 	e.Value.Get("style").Set(name, value)
-}
-
-func (e Element) EventListenerID(kind string) EventListenerID {
-	listeners := e.Value.Get("eventListeners")
-	if listeners.IsUndefined() {
-		return EventListenerID{}
-	}
-	listener := listeners.Get(kind)
-	return EventListenerID{listener}
-}
-
-func (e Element) SetEventListenerID(kind string, eventListenerID EventListenerID) {
-	v := e.Value
-	id := eventListenerID.Value
-	listeners := v.Get("eventListeners")
-	if listeners.IsUndefined() {
-		v.Set("eventListeners", map[string]any{kind: id})
-	} else {
-		listeners.Set(kind, id)
-	}
 }

@@ -21,6 +21,7 @@ func RequestAnimationFrame(f func()) int {
 // See https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener
 func RemoveEventListener(kind string, listenerID EventListenerID) {
 	js.Global().Call("removeEventListener", kind, listenerID.Value)
+	listenerID.Release()
 }
 
 // AddEventListener sets up a function that will be called whenever the specified event is delivered to the [Node].
@@ -31,5 +32,5 @@ func AddEventListener(kind string, listener EventListener) EventListenerID {
 		return nil
 	})
 	js.Global().Call("addEventListener", kind, f)
-	return EventListenerID{js.ValueOf(f)}
+	return EventListenerID{f}
 }
