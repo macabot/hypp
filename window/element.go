@@ -14,6 +14,8 @@ type Element struct {
 
 // RemoveEventListener removes an [EventListener] previously registered with [Node.AddEventListener].
 // See https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener
+//
+// It frees up resources allocated for the event listener.
 func (e Element) RemoveEventListener(kind string, listenerID EventListenerID) {
 	e.Value.Call("removeEventListener", kind, listenerID.Value)
 	listenerID.Release()
@@ -21,6 +23,10 @@ func (e Element) RemoveEventListener(kind string, listenerID EventListenerID) {
 
 // AddEventListener sets up a function that will be called whenever the specified event is delivered to the [Node].
 // See https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+//
+// It returns an EventListenerID that contains the js.Func corresponding to the given EventListener.
+// Use this EventListenerID when calling [Element.RemoveEventListener].
+// This ensures the resources allocated by the js.Func are released.
 func (e Element) AddEventListener(kind string, listener EventListener) EventListenerID {
 	f := js.FuncOf(func(this js.Value, args []js.Value) any {
 		listener(Event{args[0]})
