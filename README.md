@@ -36,7 +36,7 @@ This ensures everyone is using the same git hooks:
 git config core.hooksPath ./hooks
 ```
 
-The pre-commit hook will run the tests if a Go file is changed.
+The pre-commit hook will run the linters and tests.
 
 ### Package dependency graph
 
