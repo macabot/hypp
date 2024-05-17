@@ -68,44 +68,61 @@ func newPropertyRepo[T any](v js.Value, r *repo[T]) *propertyRepo[T] {
 	return &propertyRepo[T]{value: v, repo: r}
 }
 
-// set sets the property with the given name to the index corresponding to the given value.
-func (r *propertyRepo[T]) set(name string, value T) {
+// set sets the property with the given key to the index corresponding to the given value.
+func (r *propertyRepo[T]) set(key string, value T) {
 	v := r.value
-	if p := v.Get(name); p.Type() == js.TypeNumber {
+	if p := v.Get(key); p.Type() == js.TypeNumber {
 		r.repo.set(p.Int(), value)
 	} else {
 		i := r.repo.add(value)
-		v.Set(name, i)
+		v.Set(key, i)
 	}
 }
 
-// get gets the value linked to the property with the given name.
+// get gets the value linked to the property with the given key.
 // If no property is found, it returns the empty value of T.
-func (r *propertyRepo[T]) get(name string) T {
+func (r *propertyRepo[T]) get(key string) T {
 	v := r.value
-	if p := v.Get(name); p.Type() == js.TypeNumber {
+	if p := v.Get(key); p.Type() == js.TypeNumber {
 		return r.repo.get(p.Int())
 	}
 	var empty T
 	return empty
 }
 
-// del deletes the property with the given name.
+// del deletes the property with the given key.
 // Nothing happens if the property is not found.
-func (r *propertyRepo[T]) del(name string) {
+func (r *propertyRepo[T]) del(key string) {
 	v := r.value
-	if p := v.Get(name); p.Type() == js.TypeNumber {
+	if p := v.Get(key); p.Type() == js.TypeNumber {
 		r.repo.del(p.Int())
-		v.Delete(name)
+		v.Delete(key)
 	}
+}
+
+// keys returns the keys.
+func (r *propertyRepo[T]) keys() []string {
+	keysValue := js.Global().Get("Object").Call("keys", r.value)
+	keys := make([]string, keysValue.Length())
+	for i := 0; i < len(keys); i++ {
+		keys[i] = keysValue.Index(i).String()
+	}
+	return keys
 }
 
 // deleteAll deletes all properties.
 func (r *propertyRepo[T]) deleteAll() {
-	names := js.Global().Get("Object").Call("keys", r.value)
-	l := names.Length()
-	for i := 0; i < l; i++ {
-		name := names.Index(i).String()
-		r.del(name)
+	for _, key := range r.keys() {
+		r.del(key)
 	}
+}
+
+// toMap converts the keys and values into a map.
+func (r *propertyRepo[T]) toMap() map[string]T {
+	keys := r.keys()
+	items := make(map[string]T, len(keys))
+	for _, key := range keys {
+		items[key] = r.get(key)
+	}
+	return items
 }

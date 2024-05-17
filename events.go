@@ -12,7 +12,13 @@ var (
 // removeChild deletes all events and eventListeners before removing the child from its parent.
 func removeChild(parent, child window.Element) {
 	getEvents(child).deleteAll()
-	getEventListeners(child).deleteAll()
+
+	eventListeners := getEventListeners(child)
+	for key, id := range eventListeners.toMap() {
+		child.RemoveEventListener(key, id)
+	}
+	eventListeners.deleteAll()
+
 	parent.RemoveChild(child)
 }
 
