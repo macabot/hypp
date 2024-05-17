@@ -41,49 +41,18 @@ The pre-commit hook will run the tests if a Go file is changed.
 ### Package dependency graph
 
 Below you'll find the package dependency graph.
-Red nodes directly or indirectly import `syscall/js`.
+Note that `jsd` depends on `syscall/js`, which only builds with `GOOS=js GOARCH=wasm`.
 
 ```mermaid
 flowchart TD
 
-hypp
-subgraph hypp-dir["hypp"]
-    subgraph driver-dir["driver"]
-        driver-html["html"]
-        driver-js["js"]
-    end
+jsd --> js
+jsd --> syscall-js["syscall/js"]
 
-    subgraph examples-dir["examples"]
-        subgraph helloWorld-dir["hello-world"]
-            examples-helloWorld-app["app"]
-            subgraph helloWorld-cmd["cmd"]
-                examples-calculator-cmd-html["html"]
-                examples-calculator-cmd-js["js"]
-            end
-        end
-    end
+tag --> hypp
 
-    subgraph tag-dir["tag"]
-        subgraph tag-cmd-dir["cmd"]
-            tag-cmd-generateTags["generate-tags"]
-        end
-        tag-html["html"]
-        tag-svg["svg"]
-    end
-end
+window --> js
 
-examples-calculator-cmd-html --> hypp
-examples-calculator-cmd-html --> driver-html
-examples-calculator-cmd-html --> examples-helloWorld-app
-
-examples-calculator-cmd-js --> driver-js
-examples-calculator-cmd-js --> examples-helloWorld-app
-
-tag-html --> hypp
-tag-html <-.-> tag-cmd-generateTags
-tag-svg --> hypp
-tag-svg <-.-> tag-cmd-generateTags
-
-classDef syscallJS fill:#f00;
-class examples-calculator-cmd-js,driver-js syscallJS;
+hypp --> js
+hypp --> window
 ```
