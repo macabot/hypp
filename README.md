@@ -1,5 +1,9 @@
 # Hypp
 
+Hypp (pronounced `/haɪp/`, like 'hype') is a library for building user interfaces.
+Its API is based on [Hyperapp](https://github.com/jorgebucaran/hyperapp).
+Its name is a combination of the first two letters and last two letters of **Hy**pera**pp**.
+
 ## Tests
 
 ```shell
