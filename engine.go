@@ -249,14 +249,14 @@ func patchProperty(node window.Element, key string, oldValue, newValue any, list
 		key := key[2:]
 		if isFalsy(newValue) {
 			getEvents(node).del(key)
-			if id := node.EventListenerID(key); !id.IsUndefined() {
+			if id := getEventListeners(node).get(key); !id.IsUndefined() {
 				node.RemoveEventListener(key, id)
 			}
 		} else {
 			getEvents(node).set(key, newValue.(Dispatchable))
 			if isFalsy(oldValue) {
 				id := node.AddEventListener(key, listener(node))
-				node.SetEventListenerID(key, id)
+				getEventListeners(node).set(key, id)
 			}
 		}
 	} else if !isSvg && key != "list" && key != "form" && propertyInObject(key, node.Value) {

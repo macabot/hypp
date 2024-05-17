@@ -49,7 +49,7 @@ func (e Event) Target() EventTarget {
 }
 
 type EventListenerID struct {
-	js.Value
+	js.Func
 }
 
 type EventListener func(Event)
