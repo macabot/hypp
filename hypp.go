@@ -13,7 +13,7 @@ import (
 	"github.com/macabot/hypp/window"
 )
 
-// State constrains the state that is used in the hypp application.
+// State constrains the state that is used in the Hypp application.
 // It must be comparable.
 type State interface {
 	comparable
@@ -105,10 +105,14 @@ func H(tag string, props HProps, children ...*VNode) *VNode {
 	return h(tag, props, children)
 }
 
+// MemoData is the data passed when creating a [Memo].
+// The Memo will only rerender the view if Hash returns a different value.
 type MemoData interface {
 	Hash() string
 }
 
+// Memo is a wrapper function to cache views based on properties you pass into them.
+// This is an optimization technique known as memoization.
 func Memo(view func(data MemoData) *VNode, data MemoData) *VNode {
 	return memo(view, data)
 }
@@ -135,6 +139,9 @@ type Payload any
 // An action that is dispatched by an [ActionAndPayload] will receive the 'Payload' field as payload.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
+// Subscriptions returns the [Subscription] slice of for the current state.
+// The slice must always have the same size and each Subscription must always stay in the same position.
+// Use a Subscription's Disabled field to disable a conditional Subscription.
 type Subscriptions[S State] func(state S) []Subscription
 
 // AppProps is passed as an argument when creating an [App].
@@ -205,6 +212,7 @@ type Dispatch func(dispatchable Dispatchable, payload Payload)
 //   - [ActionAndPayload]
 type Dispatchable any
 
+// StateAndEffects contains a [State] and an [Effect] slice.
 type StateAndEffects[S State] struct {
 	State   S
 	Effects []Effect
@@ -228,6 +236,12 @@ type Effect struct {
 	Payload  Payload
 }
 
+// Subscription is used to deal with impure, asynchronous interactions with the outside world in a safe, pure, and immutable way. It is a streamlined way of responding to events happening outside our application such as time or location changes.
+// It handles resource management for us that we would otherwise need to worry about, like adding and removing event listeners, closing connections, etc.
+//
+// You can control if a subscription is active or not by using the Disabled field.
+//
+// The Payload field will be passed as second argument to the Subscriber function.
 type Subscription struct {
 	Subscriber  func(dispatch Dispatch, payload Payload) Unsubscribe
 	Payload     Payload
