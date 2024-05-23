@@ -139,7 +139,7 @@ type Payload any
 // An action that is dispatched by an [ActionAndPayload] will receive the 'Payload' field as payload.
 type Action[S State] func(state S, payload Payload) Dispatchable
 
-// Subscriptions returns the [Subscription] slice of for the current state.
+// Subscriptions returns the [Subscription] slice for the current state.
 // The slice must always have the same size and each Subscription must always stay in the same position.
 // Use a Subscription's Disabled field to disable a conditional Subscription.
 type Subscriptions[S State] func(state S) []Subscription
@@ -239,9 +239,23 @@ type Effect struct {
 // Subscription is used to deal with impure, asynchronous interactions with the outside world in a safe, pure, and immutable way. It is a streamlined way of responding to events happening outside our application such as time or location changes.
 // It handles resource management for us that we would otherwise need to worry about, like adding and removing event listeners, closing connections, etc.
 //
-// You can control if a subscription is active or not by using the Disabled field.
+// On every state change, Hypp will check each subscription to see if it's active and compare that with how it was in the previous state. This comparison determines how subscriptions are handled.
 //
-// The Payload field will be passed as second argument to the Subscriber function.
+//	| Previously Active | Currently Active | What Happens                                 |
+//	| ----------------- | ---------------- | -------------------------------------------- |
+//	| no                | no               | Nothing.                                     |
+//	| no                | yes              | Subscription starts up.                      |
+//	| yes               | no               | Subscription shuts down and gets cleaned up. |
+//	| yes               | yes              | Subscription remains active.                 |
+//
+// To restart a subscription you must first deactivate it and then, during the next state change, reactivate it.
+//
+// A Subscription consists of a Subscriber, a Payload and the Disabled field.
+//   - The Subscriber is the function which implements the active subscription.
+//     A Subscriber is allowed to use side-effects and can manually dispatch actions in order to inform your app of any pertinent results from their execution.
+//     It returns an [Unsubscribe] function to clean up the subscription if it gets cancelled.
+//   - The Payload field will be passed as second argument to the Subscriber function.
+//   - The Disabled field is used to control whether a subscription is active or not.
 type Subscription struct {
 	Subscriber  func(dispatch Dispatch, payload Payload) Unsubscribe
 	Payload     Payload
@@ -249,6 +263,7 @@ type Subscription struct {
 	Disabled    bool
 }
 
+// Unsubscribe is a function that cleans up a [Subscription] when cancelled.
 type Unsubscribe func()
 
 // VNodeKind indicates the type of [VNode].
@@ -266,6 +281,7 @@ const (
 	TextNode VNodeKind = 3
 )
 
+// VNode is a virtual node that corresponds to a DOM element.
 type VNode struct {
 	props    HProps
 	children vKids
