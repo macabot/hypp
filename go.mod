@@ -1,11 +1,13 @@
 module github.com/macabot/hypp
 
-go 1.18
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.39.0
 )
 
 require (
