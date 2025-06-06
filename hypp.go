@@ -85,6 +85,28 @@ func (h *HProps) Set(key string, value any) {
 	m[key] = value
 }
 
+// Merge merges the other HProps into the current HProps.
+func (h *HProps) Merge(other HProps) {
+	if *h == nil {
+		*h = make(HProps)
+	}
+	for k, v := range other {
+		(*h)[k] = v
+	}
+}
+
+// MergeHProps merges a slice of HProps into a new HProps.
+//
+// The resulting HProps contains all key value pairs of the given HProps.
+// If a key is present in multiple HProps, the value of the last HProps will be used.
+func MergeHProps(props ...HProps) HProps {
+	merged := make(HProps)
+	for _, p := range props {
+		merged.Merge(p)
+	}
+	return merged
+}
+
 // H creates a new [VNode] specified by tag.
 //
 // See the tag package for functions that create specific tags:
