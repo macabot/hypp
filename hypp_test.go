@@ -58,3 +58,46 @@ func TestDontPanicOnShortPropertyKey(t *testing.T) {
 func TestValidateHPropsReturnsErrorIfOtherHasInvalidType(t *testing.T) {
 	assert.Error(t, ValidateHProps(HProps{"x": []string{"foo"}}))
 }
+
+func TestMergeNilHPropsIntoNilHProps(t *testing.T) {
+	var props1 HProps = nil
+	var props2 HProps = nil
+	props1.Merge(props2)
+	assert.Equal(t, HProps{}, props1)
+}
+
+func TestMergeHPropsIntoNilHProps(t *testing.T) {
+	var props1 HProps = nil
+	var props2 HProps = HProps{"foo": "bar"}
+	props1.Merge(props2)
+	assert.Equal(t, HProps{"foo": "bar"}, props1)
+}
+
+func TestMergeNilHPropsIntoHProps(t *testing.T) {
+	var props1 HProps = HProps{"foo": "bar"}
+	var props2 HProps = nil
+	props1.Merge(props2)
+	assert.Equal(t, HProps{"foo": "bar"}, props1)
+}
+
+func TestMergeHPropsIntoHProps(t *testing.T) {
+	var props1 HProps = HProps{"foo": "bar"}
+	var props2 HProps = HProps{"baz": "qux"}
+	props1.Merge(props2)
+	assert.Equal(t, HProps{"foo": "bar", "baz": "qux"}, props1)
+}
+
+func TestMergeHPropsWithSameKeyIntoHProps(t *testing.T) {
+	var props1 HProps = HProps{"foo": "bar"}
+	var props2 HProps = HProps{"foo": "qux"}
+	props1.Merge(props2)
+	assert.Equal(t, HProps{"foo": "qux"}, props1)
+}
+
+func TestMergeHPropsSlice(t *testing.T) {
+	props1 := HProps{"foo": "bar"}
+	props2 := HProps{"baz": "qux"}
+	props3 := HProps{"quux": "corge", "foo": "qux"}
+	props := MergeHProps(props1, props2, props3)
+	assert.Equal(t, HProps{"foo": "qux", "baz": "qux", "quux": "corge"}, props)
+}
