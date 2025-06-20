@@ -19,6 +19,9 @@ const svgNS = "http://www.w3.org/2000/svg"
 func ValidateHProps(props HProps) error {
 	for key, value := range props {
 		if len(key) >= 2 && key[0] == 'o' && key[1] == 'n' {
+			if value == nil {
+				continue
+			}
 			if _, ok := value.(Dispatchable); !ok {
 				return fmt.Errorf("hypp: expected HProps key '%s' to have Dispatchable value. Got %#v", key, value)
 			}

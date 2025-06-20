@@ -59,6 +59,10 @@ func TestValidateHPropsReturnsErrorIfOtherHasInvalidType(t *testing.T) {
 	assert.Error(t, ValidateHProps(HProps{"x": []string{"foo"}}))
 }
 
+func TestVAlidateHPRopsDoesNotReturnErrorOnNilEventListener(t *testing.T) {
+	assert.NoError(t, ValidateHProps(HProps{"onclick": nil}))
+}
+
 func TestMergeNilHPropsIntoNilHProps(t *testing.T) {
 	var props1 HProps = nil
 	var props2 HProps = nil

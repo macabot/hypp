@@ -33,7 +33,7 @@ func App[S State](props AppProps[S]) Dispatch {
 //
 //	| Key               | Value type                                            |
 //	| ----------------- | ----------------------------------------------------- |
-//	| Starts with "on"  | Dispatchable                                          |
+//	| Starts with "on"  | Dispatchable, nil                                     |
 //	| "class"           | bool, int, float64, string, []string, map[string]bool |
 //	| "style"           | map[string]string                                     |
 //	| Other             | bool, int, float64, string                            |
