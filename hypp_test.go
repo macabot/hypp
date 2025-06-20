@@ -59,7 +59,7 @@ func TestValidateHPropsReturnsErrorIfOtherHasInvalidType(t *testing.T) {
 	assert.Error(t, ValidateHProps(HProps{"x": []string{"foo"}}))
 }
 
-func TestVAlidateHPRopsDoesNotReturnErrorOnNilEventListener(t *testing.T) {
+func TestValidateHPropsDoesNotReturnErrorOnNilEventListener(t *testing.T) {
 	assert.NoError(t, ValidateHProps(HProps{"onclick": nil}))
 }
 
